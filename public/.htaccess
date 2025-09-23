@@ -1,0 +1,18 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Enable rewriting
+    RewriteBase /KRS3/public/
+
+    # If the requested filename is not a real file or directory
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+
+    # Redirect everything to index.php
+    RewriteRule ^(.*)$ index.php?url=$1 [QSA,L]
+</IfModule>
+
+# Fix for Apache 2.4
+<IfModule mod_authz_core.c>
+    Require all granted
+</IfModule>
