@@ -1,4 +1,5 @@
 <?php
+//app/Controllers/ArticleController.php
 declare(strict_types=1);
 
 namespace App\Controllers;
@@ -89,29 +90,41 @@ HTML;
         }
     }
 
-public function showArticles(): string
-{
-    $this->requireAdmin();
+    public function showArticles(): string
+    {
+        $this->requireAdmin();
 
-    // Přidej tab pro zobrazení koše
-    $trashTab = '';
-    if (isset($_GET['show']) && $_GET['show'] === 'trash') {
-        $articles = $this->articleService->getDeletedArticles();
-        $trashTab = '?show=trash';
-    } else {
-        $articles = $this->articleService->getAllArticles();
-    }
+        // Zjisti, zda se má zobrazit koš
+        $isTrashView = isset($_GET['show']) && $_GET['show'] === 'trash';
 
-    $message = '';
-    if (isset($_GET['restored'])) {
-        $message = '<div class="alert alert-success">Článek byl obnoven!</div>';
-    }
-	$activeClass = 'active';
-	$isTrashActive = isset($_GET['show']) && $_GET['show'] === 'trash';
-	$isMainActive = !$isTrashActive;
+        if ($isTrashView) {
+            $articles = $this->articleService->getDeletedArticles();
+        } else {
+            $articles = $this->articleService->getAllArticles();
+        }
 
+        // Připrav zprávy
+        $message = '';
+        if (isset($_GET['restored'])) {
+            $message = '<div class="alert alert-success">Článek byl obnoven!</div>';
+        } elseif (isset($_GET['deleted'])) {
+            $message = '<div class="alert alert-success">Článek byl smazán!</div>';
+        } elseif (isset($_GET['error'])) {
+            $message = '<div class="alert alert-error">Došlo k chybě!</div>';
+        }
 
-    $html = <<<HTML
+        // Připrav proměnné pro tabs
+        $activeClass = 'active';
+        $mainTabClass = !$isTrashView ? $activeClass : '';
+        $trashTabClass = $isTrashView ? $activeClass : '';
+
+        // Připrav proměnné pro obsah
+        $emptyStateTitle = $isTrashView ? 'Koš je prázdný' : 'Žádné články';
+        $emptyStateText = $isTrashView ? 'Nejsou žádné smazané články.' : 'Zatím nemáte žádné články. Vytvořte první!';
+        $emptyStateButton = $isTrashView ? '' : "<a href='{$this->baseUrl}/admin/articles/new' class='btn btn-primary'>Vytvořit první článek</a>";
+        $tableHeader = $isTrashView ? 'Smazáno' : 'Vytvořeno';
+
+        $html = <<<HTML
 <div class="page-header">
     <h1>Správa článků</h1>
     <a href="{$this->baseUrl}/admin/articles/new" class="btn btn-primary">
@@ -120,13 +133,13 @@ public function showArticles(): string
 </div>
 
 {$message}
-<-->
+
 <!-- TABS -->
 <div class="tabs">
-	<a href="{$this->baseUrl}/admin/articles" class="tab {$isMainActive ? $activeClass : ''}">
+    <a href="{$this->baseUrl}/admin/articles" class="tab {$mainTabClass}">
         Aktivní články
     </a>
-    <a href="{$this->baseUrl}/admin/articles?show=trash" class="tab {$isTrashActive ? $activeClass : ''}">
+    <a href="{$this->baseUrl}/admin/articles?show=trash" class="tab {$trashTabClass}">
         Koš
     </a>
 </div>
@@ -134,16 +147,16 @@ public function showArticles(): string
 <div class="articles-container">
 HTML;
 
-    if (empty($articles)) {
-        $html .= <<<HTML
+        if (empty($articles)) {
+            $html .= <<<HTML
 <div class="empty-state">
-    <h3>{$_GET['show'] === 'trash' ? 'Koš je prázdný' : 'Žádné články'}</h3>
-    <p>{$_GET['show'] === 'trash' ? 'Nejsou žádné smazané články.' : 'Zatím nemáte žádné články. Vytvořte první!'}</p>
-    {$_GET['show'] !== 'trash' ? "<a href='{$this->baseUrl}/admin/articles/new' class='btn btn-primary'>Vytvořit první článek</a>" : ''}
+    <h3>{$emptyStateTitle}</h3>
+    <p>{$emptyStateText}</p>
+    {$emptyStateButton}
 </div>
 HTML;
-    } else {
-        $html .= <<<HTML
+        } else {
+            $html .= <<<HTML
 <div class="articles-table-container">
     <table class="articles-table">
         <thead>
@@ -151,22 +164,22 @@ HTML;
                 <th>Název</th>
                 <th>Stav</th>
                 <th>Autor</th>
-                <th>{$_GET['show'] === 'trash' ? 'Smazáno' : 'Vytvořeno'}</th>
+                <th>{$tableHeader}</th>
                 <th>Akce</th>
             </tr>
         </thead>
         <tbody>
 HTML;
 
-        foreach ($articles as $article) {
-            $dateColumn = $_GET['show'] === 'trash'
-                ? date('j. n. Y H:i', strtotime($article['deleted_at']))
-                : date('j. n. Y H:i', strtotime($article['created_at']));
+            foreach ($articles as $article) {
+                $dateColumn = $isTrashView
+                    ? date('j. n. Y H:i', strtotime($article['deleted_at']))
+                    : date('j. n. Y H:i', strtotime($article['created_at']));
 
-            $statusBadge = $this->getStatusBadge($article['status']);
+                $statusBadge = $this->getStatusBadge($article['status']);
 
-            if ($_GET['show'] === 'trash') {
-                $actions = <<<HTML
+                if ($isTrashView) {
+                    $actions = <<<HTML
 <div class="action-buttons">
     <a href="{$this->baseUrl}/admin/articles/restore/{$article['id']}"
        class="btn btn-sm btn-success" title="Obnovit">
@@ -180,8 +193,8 @@ HTML;
     </a>
 </div>
 HTML;
-            } else {
-                $actions = <<<HTML
+                } else {
+                    $actions = <<<HTML
 <div class="action-buttons">
     <a href="{$this->baseUrl}/admin/articles/edit/{$article['id']}"
        class="btn btn-sm btn-primary" title="Editovat">
@@ -195,9 +208,9 @@ HTML;
     </a>
 </div>
 HTML;
-            }
+                }
 
-            $html .= <<<HTML
+                $html .= <<<HTML
 <tr>
     <td>
         <div class="article-title">{$this->escape($article['title'])}</div>
@@ -209,19 +222,20 @@ HTML;
     <td>{$actions}</td>
 </tr>
 HTML;
-        }
+            }
 
-        $html .= <<<HTML
+            $html .= <<<HTML
         </tbody>
     </table>
 </div>
 HTML;
+        }
+
+        $html .= '</div>';
+
+        return $this->adminLayout->wrap($html, 'Správa článků');
     }
 
-    $html .= '</div>';
-
-    return $this->adminLayout->wrap($html, 'Správa článků');
-}
     public function showEditForm(int $id): string
     {
         $this->requireAdmin();
@@ -336,6 +350,34 @@ HTML;
         exit;
     }
 
+    public function restoreArticle(int $id): void
+    {
+        $this->requireAdmin();
+
+        $success = $this->articleService->restoreArticle($id);
+
+        if ($success) {
+            header("Location: {$this->baseUrl}/admin/articles?show=trash&restored=1");
+        } else {
+            header("Location: {$this->baseUrl}/admin/articles?show=trash&error=1");
+        }
+        exit;
+    }
+
+    public function permanentDeleteArticle(int $id): void
+    {
+        $this->requireAdmin();
+
+        $success = $this->articleService->permanentDeleteArticle($id);
+
+        if ($success) {
+            header("Location: {$this->baseUrl}/admin/articles?show=trash&deleted=1");
+        } else {
+            header("Location: {$this->baseUrl}/admin/articles?show=trash&error=1");
+        }
+        exit;
+    }
+
     private function requireAdmin(): void
     {
         if (!$this->authService->isLoggedIn()) {
@@ -374,36 +416,4 @@ HTML;
 
         return '<span class="badge ' . $statusInfo['class'] . '">' . $statusInfo['text'] . '</span>';
     }
-
-	public function restoreArticle(int $id): void
-	{
-	    $this->requireAdmin();
-
-	    $success = $this->articleService->restoreArticle($id);
-
-	    if ($success) {
-	        header("Location: {$this->baseUrl}/admin/articles?show=trash&restored=1");
-	    } else {
-	        header("Location: {$this->baseUrl}/admin/articles?show=trash&error=1");
-	    }
-	    exit;
-	}
-
-	public function permanentDeleteArticle(int $id): void
-	{
-	    $this->requireAdmin();
-
-	    $success = $this->articleService->permanentDeleteArticle($id);
-
-	    if ($success) {
-	        header("Location: {$this->baseUrl}/admin/articles?show=trash&deleted=1");
-	    } else {
-	        header("Location: {$this->baseUrl}/admin/articles?show=trash&error=1");
-	    }
-	    exit;
-	}
-
-
-
-
 }

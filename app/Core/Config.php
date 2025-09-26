@@ -32,4 +32,28 @@ class Config
     {
         return self::get("site.{$key}", $default);
     }
+
+
+	/**
+     * Získá text z konfigurace texts.php s možností nahrazení parametrù
+     */
+    public static function text(string $key, array $replace = [], string $default = ''): string
+    {
+        $value = self::get('texts.' . $key, $default);
+
+        // Nahrazení parametrù {param} ve formátu
+        foreach ($replace as $search => $replacement) {
+            $value = str_replace('{' . $search . '}', (string)$replacement, $value);
+        }
+
+        return $value;
+    }
+
+    /**
+     * Zkontroluje, zda text existuje v konfiguraci
+     */
+    public static function hasText(string $key): bool
+    {
+        return self::has('texts.' . $key);
+    }
 }

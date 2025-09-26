@@ -1,6 +1,5 @@
 <?php
-//app/Core/Router.php
-
+// app/Core/Router.php
 declare(strict_types=1);
 
 namespace App\Core;
@@ -11,12 +10,15 @@ use App\Security\CsrfProtection;
 use App\Controllers\AuthController;
 use App\Controllers\AdminController;
 use App\Controllers\ArticleController;
+use App\Controllers\HomeController;
 use App\Services\ArticleService;
+
 
 
 class Router
 {
-private string $baseUrl;
+    private string $baseUrl;
+    private Template $template;
 
     public function __construct(
         private LoginService $authService,
@@ -24,51 +26,183 @@ private string $baseUrl;
         private CsrfProtection $csrf,
         private AdminLayout $adminLayout
     ) {
-        // Získej base URL z konfigurace
         $this->baseUrl = Config::site('base_path', '');
+        $this->template = new Template();
     }
-    public function requireLoggedIn(): void {
+
+    public function handleRequest(string $path, array $urlParts): string
+    {
+        $page = $urlParts[0] ?? 'home';
+
+        switch ($page) {
+            case '':
+            case 'home':
+                return $this->handleHomepage();
+
+            case 'login':
+                return $this->handleLogin();
+
+            case 'logout':
+                return $this->handleLogout();
+
+            case 'admin':
+                return $this->handleAdmin($urlParts);
+
+            case 'clanek':
+                return $this->handleArticleDetail($urlParts);
+
+            default:
+                return $this->handleNotFound();
+        }
+    }
+
+    private function handleHomepage(): string
+    {
+        $articleService = new ArticleService($this->db);
+        $homeController = new HomeController($articleService, $this->template, $this->baseUrl);
+        return $homeController->showHomepage();
+    }
+
+    private function handleLogin(): string
+    {
+        $authController = new AuthController(
+			$this->authService,
+			$this->csrf,
+			$this->baseUrl,
+			$this->template,
+		);
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $authController->processLogin();
+            return '';
+        }
+
+        return $authController->showLoginForm();
+    }
+
+    private function handleLogout(): string
+    {
+        $authController = new AuthController(
+			$this->authService,
+			$this->csrf,
+			$this->baseUrl,
+			$this->template
+		);
+        $authController->logout();
+        return '';
+    }
+
+    private function handleAdmin(array $urlParts): string
+    {
+        $this->requireLoggedIn();
+
+        $subPage = $urlParts[1] ?? 'dashboard';
+        $action = $urlParts[2] ?? '';
+        $id = $urlParts[3] ?? null;
+
+        switch ($subPage) {
+            case 'articles':
+                return $this->handleAdminArticles($action, $id);
+
+            case 'dashboard':
+            default:
+                $adminController = new AdminController($this->authService, $this->baseUrl, $this->adminLayout);
+                return $adminController->dashboard();
+        }
+    }
+
+    private function handleAdminArticles(string $action, ?string $id): string
+    {
+        $articleService = new ArticleService($this->db);
+        $articleController = new ArticleController(
+            $articleService,
+            $this->authService,
+            $this->csrf,
+            $this->baseUrl,
+            $this->adminLayout
+        );
+
+        switch ($action) {
+            case 'new':
+                return $articleController->showCreateForm();
+
+            case 'create':
+                $articleController->createArticle();
+                return '';
+
+            case 'edit':
+                if ($id) {
+                    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+                        $articleController->updateArticle((int)$id);
+                        return '';
+                    }
+                    return $articleController->showEditForm((int)$id);
+                }
+                break;
+
+            case 'delete':
+                if ($id) {
+                    $articleController->deleteArticle((int)$id);
+                    return '';
+                }
+                break;
+
+            case 'restore':
+                if ($id) {
+                    $articleController->restoreArticle((int)$id);
+                    return '';
+                }
+                break;
+
+            case 'permanent-delete':
+                if ($id) {
+                    $articleController->permanentDeleteArticle((int)$id);
+                    return '';
+                }
+                break;
+
+            default:
+                return $articleController->showArticles();
+        }
+
+        header("Location: {$this->baseUrl}/admin/articles");
+        return '';
+    }
+
+    private function handleArticleDetail(array $urlParts): string
+    {
+        $slug = $urlParts[1] ?? '';
+        if ($slug) {
+            $articleService = new ArticleService($this->db);
+            $homeController = new HomeController($articleService, $this->template, $this->baseUrl);
+            return $homeController->showArticleDetail($slug);
+        }
+
+        header("Location: {$this->baseUrl}/");
+        return '';
+    }
+
+private function handleNotFound(): string
+{
+    http_response_code(404);
+
+    return $this->template->render('layouts/frontend.php', [
+        'title' => \App\Core\Config::text('pages.404', ['site_name' => \App\Core\Config::site('name')]),
+        'content' => $this->template->render('pages/404.php', [
+            'baseUrl' => $this->baseUrl,
+            'message' => \App\Core\Config::text('messages.404'),
+            'backLinkText' => \App\Core\Config::text('ui.back_to_home')
+        ]),
+        'baseUrl' => $this->baseUrl,
+        'siteName' => \App\Core\Config::site('name'),
+        'user' => ['isLoggedIn' => false]
+    ]);
+}
+    private function requireLoggedIn(): void
+    {
         if (!$this->authService->isLoggedIn()) {
             header('Location: ' . $this->baseUrl . '/login');
             exit;
         }
     }
-
-    public function showHomepage(): void {
-        echo "<!DOCTYPE html>
-        <html lang='cs'>
-        <head>
-            <meta charset='UTF-8'>
-            <title>KRS Redakční systém</title>
-            <style>
-                body { font-family: Arial, sans-serif; margin: 40px; }
-                .menu { background: #f4f4f4; padding: 15px; margin-bottom: 20px; }
-                .menu a { margin-right: 15px; text-decoration: none; color: #333; }
-                .menu a:hover { color: #007bff; }
-            </style>
-        </head>
-        <body>
-            <div class='menu'>" . $this->generateMenu() . "</div>
-            <h1>Vítejte v redakčním systému!</h1>
-            <p>Toto je úvodní stránka vašeho redakčního systému.</p>
-            <p>Zkuste si: <a href='{$this->baseUrl}/login'>Přihlášení</a></p>
-        </body>
-        </html>";
-    }
-
-    public function generateMenu(): string {
-        $menu = "<a href='{$this->baseUrl}/'>Domů</a>";
-
-        if ($this->authService->isLoggedIn()) {
-            $user = $this->authService->getUser();
-            $menu .= "<a href='{$this->baseUrl}/admin'>Administrace</a>";
-            $menu .= "<a href='{$this->baseUrl}/logout'>Odhlásit ({$user['username']})</a>";
-        } else {
-            $menu .= "<a href='{$this->baseUrl}/login'>Přihlásit</a>";
-        }
-
-        return $menu;
-    }
-
-
 }

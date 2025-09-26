@@ -12,25 +12,28 @@ use App\Core\AdminMenu;
 use App\Core\AdminLayout;
 use App\Core\Router;
 use App\Core\Config;
+use App\Core\Template;
 
 // Získání URL
 $url = $_GET['url'] ?? '';
 if (empty($url)) {
     $url = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-    $basePath = Config::site('base_path', '');
+    $basePath = Config::site('base_path') ?? '';
     $url = str_replace($basePath, '', $url);
     $url = ltrim($url, '/');
 }
 
+// Base URL pro odkazy
+$baseUrl = Config::site('base_path') ?? '';
+
 // Inicializace služeb
 $session = new SessionManager();
-$db = new DatabaseConnection(Config::database());
+$db = new DatabaseConnection(Config::get('database'));
 $csrf = new CsrfProtection($session);
 $authService = new LoginService($db, $session, $csrf);
-
-// Inicializace layoutu
-$adminMenu = new AdminMenu($authService, Config::site('base_path'));
-$adminLayout = new AdminLayout($adminMenu, Config::site('base_path'));
+$template = new Template(Config::get('templates')['dir']);
+$adminMenu = new AdminMenu($authService); // ← Předáme pouze authService
+$adminLayout = new AdminLayout($authService, $baseUrl); // ← Správné parametry
 
 // Vytvoření routeru a zpracování požadavku
 $router = new Router($authService, $db, $csrf, $adminLayout);

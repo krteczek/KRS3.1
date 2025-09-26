@@ -1,5 +1,5 @@
 <?php
-//app/Core/AdminMenu.php
+// app/Core/AdminMenu.php
 declare(strict_types=1);
 
 namespace App\Core;
@@ -8,12 +8,15 @@ use App\Auth\LoginService;
 
 class AdminMenu
 {
-	public function __construct(
-	    private LoginService $authService
-	) {
-	    // Získej base URL z konfigurace
-	    $this->baseUrl = Config::site('base_path', '');
-	}
+    private LoginService $authService;
+    private string $baseUrl;
+
+    public function __construct(LoginService $authService)
+    {
+        $this->authService = $authService;
+        $this->baseUrl = Config::site('base_path', '');
+    }
+
     public function render(): string
     {
         if (!$this->authService->isLoggedIn()) {
@@ -22,7 +25,7 @@ class AdminMenu
 
         $user = $this->authService->getUser();
 
-	return <<<HTML
+        return <<<HTML
 <nav class="admin-menu">
     <div class="menu-header">
         <strong>Administrace</strong>

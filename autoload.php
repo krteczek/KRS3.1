@@ -13,12 +13,19 @@ require_once __DIR__ . '/app/Session/SessionManager.php';
 require_once __DIR__ . '/app/Database/DatabaseConnection.php';
 require_once __DIR__ . '/app/Security/CsrfProtection.php';
 require_once __DIR__ . '/app/Auth/LoginService.php';
+
 require_once __DIR__ . '/app/Controllers/AuthController.php';
 require_once __DIR__ . '/app/Controllers/AdminController.php';
 require_once __DIR__ . '/app/Controllers/ArticleController.php';
+require_once __DIR__ . '/app/Controllers/BaseController.php';
+require_once __DIR__ . '/app/Controllers/HomeController.php';
+
 require_once __DIR__ . '/app/Services/ArticleService.php';
 require_once __DIR__ . '/app/Core/AdminMenu.php';
 require_once __DIR__ . '/app/Core/AdminLayout.php';
+require_once __DIR__ . '/app/Core/Router.php';
+require_once __DIR__ . '/app/Core/Template.php';
+
 
 // Debug mód (vypni na production!)
 define('DEBUG', true);

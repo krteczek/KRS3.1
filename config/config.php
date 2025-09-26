@@ -26,5 +26,10 @@ return [
     'security' => [
         'password_algo' => PASSWORD_DEFAULT,
         'password_cost' => 12
-    ]
+    ],
+
+	'templates' => [
+		'dir' => __DIR__ . '/../templates',
+		'cache' => __DIR__ . '/../cache/templates' // pro budoucí caching
+	]
 ];
