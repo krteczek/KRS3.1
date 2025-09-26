@@ -191,7 +191,9 @@ private function handleNotFound(): string
         'content' => $this->template->render('pages/404.php', [
             'baseUrl' => $this->baseUrl,
             'message' => \App\Core\Config::text('messages.404'),
-            'backLinkText' => \App\Core\Config::text('ui.back_to_home')
+            'backLinkText' => \App\Core\Config::text('ui.back_to_home'),
+			'siteName' => \App\Core\Config::site('name'),
+	        'user' => ['isLoggedIn' => false]
         ]),
         'baseUrl' => $this->baseUrl,
         'siteName' => \App\Core\Config::site('name'),
