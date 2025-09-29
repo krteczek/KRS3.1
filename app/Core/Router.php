@@ -185,6 +185,7 @@ class Router
 private function handleNotFound(): string
 {
     http_response_code(404);
+	$siteName = \App\Core\Config::site('name');
 
     return $this->template->render('layouts/frontend.php', [
         'title' => \App\Core\Config::text('pages.404', ['site_name' => \App\Core\Config::site('name')]),
@@ -192,11 +193,11 @@ private function handleNotFound(): string
             'baseUrl' => $this->baseUrl,
             'message' => \App\Core\Config::text('messages.404'),
             'backLinkText' => \App\Core\Config::text('ui.back_to_home'),
-			'siteName' => \App\Core\Config::site('name'),
+			'siteName' => $siteName,
 	        'user' => ['isLoggedIn' => false]
         ]),
         'baseUrl' => $this->baseUrl,
-        'siteName' => \App\Core\Config::site('name'),
+        'siteName' => $siteName,
         'user' => ['isLoggedIn' => false]
     ]);
 }
