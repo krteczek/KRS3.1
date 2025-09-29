@@ -6,7 +6,7 @@
 
     <?= $error ?>
 
-    <form method="POST" action="<?= $baseUrl ?>/login">
+    <form method="POST" action="<?= $baseUrl ?>login">
         <div class="form-group">
             <label for="username">Uživatelské jméno:</label>
             <input type="text" id="username" name="username" class="form-input" required>
@@ -22,5 +22,5 @@
         <button type="submit" class="btn btn-primary btn-large">Přihlásit se</button>
     </form>
 
-    <a href="<?= $baseUrl ?>/" class="back-link">← Zpět na úvodní stránku</a>
+    <a href="<?= $baseUrl ?>" class="back-link">← Zpět na úvodní stránku</a>
 </div>
