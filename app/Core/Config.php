@@ -7,42 +7,12 @@ namespace App\Core;
 class Config
 {
     private static array $config = [];
-/**
+
     public static function load(string $configPath): void
     {
         $loadedConfig = require $configPath;
         self::$config = array_merge(self::$config, $loadedConfig); // ‹ MERGE místo pøepsání
     }
-**/
-
-public static function load(string $configPath): void
-{
-    echo "<!-- DEBUG Config::load: START loading '{$configPath}' -->";
-
-    if (!file_exists($configPath)) {
-        echo "
-		<!-- DEBUG Config::load: File not found -->";
-        return;
-    }
-
-    $loadedConfig = require $configPath;
-
-    // DEBUG pøedchozího configu
-    echo "
-	<!-- DEBUG Config::load: Previous config keys: " . implode(', ', array_keys(self::$config)) . " -->";
-
-    // DEBUG nového configu
-    echo "
-	<!-- DEBUG Config::load: New config keys from " . basename($configPath) . ": " . implode(', ', array_keys($loadedConfig)) . " -->";
-
-    self::$config = array_merge(self::$config, $loadedConfig);
-
-    // DEBUG výsledného configu
-    echo "
-	<!-- DEBUG Config::load: Merged config keys: " . implode(', ', array_keys(self::$config)) . " -->";
-    echo "
-	<!-- DEBUG Config::load: FINISHED loading '{$configPath}' -->";
-}
 
 
     public static function get(string $key, $default = null)

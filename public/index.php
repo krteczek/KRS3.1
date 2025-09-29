@@ -30,12 +30,6 @@ if (isset($_GET['lang'])) {
 Config::load($configPath);
 Config::load($textsPath);
 
-// ✅ TEST PO NAČTENÍ
-echo "<!-- DEBUG after load - site.name: " . Config::site('name') . " -->";
-echo "<!-- DEBUG after load - texts.messages.welcome: " . Config::text('messages.welcome', [], 'STILL_NOT_FOUND') . " -->";
-
-echo "<!-- DEBUG: site.name = " . Config::site('name') . " -->";
-echo "<!-- DEBUG: texts.messages.welcome = " . Config::text('messages.welcome', [], 'NOT_FOUND') . " -->";
 // Získání URL
 $url = $_GET['url'] ?? '';
 if (empty($url)) {
