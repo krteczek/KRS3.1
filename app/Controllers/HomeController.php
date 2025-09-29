@@ -7,15 +7,17 @@ namespace App\Controllers;
 use App\Services\ArticleService;
 use App\Core\Template;
 use App\Core\Config;
+use App\Auth\LoginService;
 
 class HomeController extends BaseController
 {
     public function __construct(
         private ArticleService $articleService,
         Template $template,
-        string $baseUrl
+        string $baseUrl,
+        LoginService $authService
     ) {
-        parent::__construct($template, $baseUrl);
+        parent::__construct($template, $baseUrl, $authService);
     }
 
     public function showHomepage(): string

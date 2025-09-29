@@ -26,7 +26,7 @@ class ArticleController
 
         $content = <<<HTML
 <h1>Nový článek</h1>
-<form method="POST" action="{$this->baseUrl}/admin/articles/create" class="article-form">
+<form method="POST" action="{$this->baseUrl}admin/articles/create" class="article-form">
     <div class="form-group">
         <label for="title">Název článku:</label>
         <input type="text" id="title" name="title" required class="form-control">
@@ -53,7 +53,7 @@ class ArticleController
     <div class="form-actions">
         {$csrfField}
         <button type="submit" class="btn btn-primary">Vytvořit článek</button>
-        <a href="{$this->baseUrl}/admin/articles" class="btn btn-secondary">Zrušit</a>
+        <a href="{$this->baseUrl}admin/articles" class="btn btn-secondary">Zrušit</a>
     </div>
 </form>
 HTML;
@@ -66,7 +66,7 @@ HTML;
         $this->requireAdmin();
 
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            header("Location: {$this->baseUrl}/admin/articles/new");
+            header("Location: {$this->baseUrl}admin/articles/new");
             exit;
         }
 
@@ -81,11 +81,11 @@ HTML;
                 'status' => $_POST['status'] ?? 'draft'
             ]);
 
-            header("Location: {$this->baseUrl}/admin/articles?created=1");
+            header("Location: {$this->baseUrl}admin/articles?created=1");
             exit;
 
         } catch (\Exception $e) {
-            header("Location: {$this->baseUrl}/admin/articles/new?error=1");
+            header("Location: {$this->baseUrl}admin/articles/new?error=1");
             exit;
         }
     }
@@ -127,7 +127,7 @@ HTML;
         $html = <<<HTML
 <div class="page-header">
     <h1>Správa článků</h1>
-    <a href="{$this->baseUrl}/admin/articles/new" class="btn btn-primary">
+    <a href="{$this->baseUrl}admin/articles/new" class="btn btn-primary">
         ＋ Nový článek
     </a>
 </div>
@@ -136,10 +136,10 @@ HTML;
 
 <!-- TABS -->
 <div class="tabs">
-    <a href="{$this->baseUrl}/admin/articles" class="tab {$mainTabClass}">
+    <a href="{$this->baseUrl}admin/articles" class="tab {$mainTabClass}">
         Aktivní články
     </a>
-    <a href="{$this->baseUrl}/admin/articles?show=trash" class="tab {$trashTabClass}">
+    <a href="{$this->baseUrl}admin/articles?show=trash" class="tab {$trashTabClass}">
         Koš
     </a>
 </div>
@@ -181,11 +181,11 @@ HTML;
                 if ($isTrashView) {
                     $actions = <<<HTML
 <div class="action-buttons">
-    <a href="{$this->baseUrl}/admin/articles/restore/{$article['id']}"
+    <a href="{$this->baseUrl}admin/articles/restore/{$article['id']}"
        class="btn btn-sm btn-success" title="Obnovit">
         ↶
     </a>
-    <a href="{$this->baseUrl}/admin/articles/permanent-delete/{$article['id']}"
+    <a href="{$this->baseUrl}admin/articles/permanent-delete/{$article['id']}"
        class="btn btn-sm btn-danger"
        onclick="return confirm('Opravdu NAVŽDY smazat článek „{$this->escapeJs($article['title'])}‟? Tato akce je nevratná!')"
        title="Smazat navždy">
@@ -196,11 +196,11 @@ HTML;
                 } else {
                     $actions = <<<HTML
 <div class="action-buttons">
-    <a href="{$this->baseUrl}/admin/articles/edit/{$article['id']}"
+    <a href="{$this->baseUrl}admin/articles/edit/{$article['id']}"
        class="btn btn-sm btn-primary" title="Editovat">
         ✏️
     </a>
-    <a href="{$this->baseUrl}/admin/articles/delete/{$article['id']}"
+    <a href="{$this->baseUrl}admin/articles/delete/{$article['id']}"
        class="btn btn-sm btn-danger"
        onclick="return confirm('Opravdu smazat článek „{$this->escapeJs($article['title'])}‟?')"
        title="Smazat">
@@ -242,7 +242,7 @@ HTML;
         $article = $this->articleService->getArticle($id);
 
         if (!$article) {
-            header("Location: {$this->baseUrl}/admin/articles?error=not_found");
+            header("Location: {$this->baseUrl}admin/articles?error=not_found");
             exit;
         }
 
@@ -254,7 +254,7 @@ HTML;
         $content = $article['content'] ?? '';
         $status = $article['status'] ?? 'draft';
 
-        $backButton = "<a href='{$this->baseUrl}/admin/articles' class='btn btn-secondary'>← Zpět na seznam</a>";
+        $backButton = "<a href='{$this->baseUrl}admin/articles' class='btn btn-secondary'>← Zpět na seznam</a>";
 
         $message = '';
         if (isset($_GET['saved'])) {
@@ -271,7 +271,7 @@ HTML;
 
 {$message}
 
-<form method="POST" action="{$this->baseUrl}/admin/articles/edit/{$id}" class="article-form">
+<form method="POST" action="{$this->baseUrl}admin/articles/edit/{$id}" class="article-form">
     <div class="form-group">
         <label for="title">Název článku:</label>
         <input type="text" id="title" name="title" value="{$this->escape($title)}" required>
@@ -298,7 +298,7 @@ HTML;
     <div class="form-actions">
         {$csrfField}
         <button type="submit" class="btn btn-primary">Uložit změny</button>
-        <a href="{$this->baseUrl}/admin/articles" class="btn btn-secondary">Zrušit</a>
+        <a href="{$this->baseUrl}admin/articles" class="btn btn-secondary">Zrušit</a>
     </div>
 </form>
 HTML;
@@ -311,7 +311,7 @@ HTML;
         $this->requireAdmin();
 
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            header("Location: {$this->baseUrl}/admin/articles/edit/{$id}");
+            header("Location: {$this->baseUrl}admin/articles/edit/{$id}");
             exit;
         }
 
@@ -324,14 +324,14 @@ HTML;
             ]);
 
             if ($success) {
-                header("Location: {$this->baseUrl}/admin/articles/edit/{$id}?saved=1");
+                header("Location: {$this->baseUrl}admin/articles/edit/{$id}?saved=1");
             } else {
-                header("Location: {$this->baseUrl}/admin/articles/edit/{$id}?error=1");
+                header("Location: {$this->baseUrl}admin/articles/edit/{$id}?error=1");
             }
             exit;
 
         } catch (\Exception $e) {
-            header("Location: {$this->baseUrl}/admin/articles/edit/{$id}?error=1");
+            header("Location: {$this->baseUrl}admin/articles/edit/{$id}?error=1");
             exit;
         }
     }
@@ -343,9 +343,9 @@ HTML;
         $success = $this->articleService->deleteArticle($id);
 
         if ($success) {
-            header("Location: {$this->baseUrl}/admin/articles?deleted=1");
+            header("Location: {$this->baseUrl}admin/articles?deleted=1");
         } else {
-            header("Location: {$this->baseUrl}/admin/articles?error=1");
+            header("Location: {$this->baseUrl}admin/articles?error=1");
         }
         exit;
     }
@@ -357,9 +357,9 @@ HTML;
         $success = $this->articleService->restoreArticle($id);
 
         if ($success) {
-            header("Location: {$this->baseUrl}/admin/articles?show=trash&restored=1");
+            header("Location: {$this->baseUrl}admin/articles?show=trash&restored=1");
         } else {
-            header("Location: {$this->baseUrl}/admin/articles?show=trash&error=1");
+            header("Location: {$this->baseUrl}admin/articles?show=trash&error=1");
         }
         exit;
     }
@@ -371,9 +371,9 @@ HTML;
         $success = $this->articleService->permanentDeleteArticle($id);
 
         if ($success) {
-            header("Location: {$this->baseUrl}/admin/articles?show=trash&deleted=1");
+            header("Location: {$this->baseUrl}admin/articles?show=trash&deleted=1");
         } else {
-            header("Location: {$this->baseUrl}/admin/articles?show=trash&error=1");
+            header("Location: {$this->baseUrl}admin/articles?show=trash&error=1");
         }
         exit;
     }
@@ -381,7 +381,7 @@ HTML;
     private function requireAdmin(): void
     {
         if (!$this->authService->isLoggedIn()) {
-            header("Location: {$this->baseUrl}/login");
+            header("Location: {$this->baseUrl}login");
             exit;
         }
     }

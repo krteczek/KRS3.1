@@ -32,11 +32,12 @@ class AdminMenu
         <span>({$user['username']})</span>
     </div>
     <ul>
-        <li><a href="{$this->baseUrl}/admin">Dashboard</a></li>
-        <li><a href="{$this->baseUrl}/admin/articles">Články</a></li>
-        <li><a href="{$this->baseUrl}/admin/gallery">Galerie</a></li>
-        <li><a href="{$this->baseUrl}/admin/users">Uživatelé</a></li>
-        <li><a href="{$this->baseUrl}/logout">Odhlásit se</a></li>
+		<li><a href="{$this->baseUrl}">Úvodní stránka</a></li>
+        <li><a href="{$this->baseUrl}admin">Dashboard</a></li>
+        <li><a href="{$this->baseUrl}admin/articles">Články</a></li>
+        <li><a href="{$this->baseUrl}admin/gallery">Galerie</a></li>
+        <li><a href="{$this->baseUrl}admin/users">Uživatelé</a></li>
+        <li><a href="{$this->baseUrl}logout">Odhlásit se</a></li>
     </ul>
 </nav>
 HTML;

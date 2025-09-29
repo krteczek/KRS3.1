@@ -24,9 +24,9 @@ class AdminController
 
 <h2>Rychlé akce:</h2>
 <ul>
-    <li><a href='{$this->baseUrl}/admin/articles'>Správa článků</a></li>
-    <li><a href='{$this->baseUrl}/admin/gallery'>Správa galerie</a></li>
-    <li><a href='{$this->baseUrl}/admin/users'>Správa uživatelů</a></li>
+    <li><a href='{$this->baseUrl}admin/articles'>Správa článků</a></li>
+    <li><a href='{$this->baseUrl}admin/gallery'>Správa galerie</a></li>
+    <li><a href='{$this->baseUrl}admin/users'>Správa uživatelů</a></li>
 </ul>
 HTML;
 

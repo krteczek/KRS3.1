@@ -59,7 +59,12 @@ class Router
     private function handleHomepage(): string
     {
         $articleService = new ArticleService($this->db);
-        $homeController = new HomeController($articleService, $this->template, $this->baseUrl);
+        $homeController = new HomeController(
+			$articleService,
+			$this->template,
+			$this->baseUrl,
+			$this->authService
+			);
         return $homeController->showHomepage();
     }
 
@@ -174,7 +179,12 @@ class Router
         $slug = $urlParts[1] ?? '';
         if ($slug) {
             $articleService = new ArticleService($this->db);
-            $homeController = new HomeController($articleService, $this->template, $this->baseUrl);
+            $homeController = new HomeController(
+				$articleService,
+				$this->template,
+				$this->baseUrl,
+				$this->authService
+			);
             return $homeController->showArticleDetail($slug);
         }
 

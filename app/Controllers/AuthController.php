@@ -66,7 +66,7 @@ class AuthController
     public function processLogin(): void
     {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            header('Location: ' . $this->baseUrl . '/login?error=invalid');
+            header('Location: ' . $this->baseUrl . 'login?error=invalid');
             exit;
         }
 
@@ -76,14 +76,14 @@ class AuthController
 
         try {
             if ($this->loginService->authenticate($username, $password, $csrfToken)) {
-                header('Location: ' . $this->baseUrl . '/admin');
+                header('Location: ' . $this->baseUrl . 'admin');
                 exit;
             } else {
-                header('Location: ' . $this->baseUrl . '/login?error=1');
+                header('Location: ' . $this->baseUrl . 'login?error=1');
                 exit;
             }
         } catch (\RuntimeException $e) {
-            header('Location: ' . $this->baseUrl . '/login?error=csrf');
+            header('Location: ' . $this->baseUrl . 'login?error=csrf');
             exit;
         }
     }
@@ -91,7 +91,7 @@ class AuthController
     public function logout(): void
     {
         $this->loginService->logout();
-        header('Location: ' . $this->baseUrl . '/login?logout=1');
+        header('Location: ' . $this->baseUrl . 'login?logout=1');
         exit;
     }
 }

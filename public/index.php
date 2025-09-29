@@ -23,9 +23,7 @@ Config::load(__DIR__ . '/../config/texts.php');
 // ✅ DEBUG CEST
 $configPath = __DIR__ . '/../config/config.php';
 $textsPath = __DIR__ . '/../config/texts.php';
-if (isset($_GET['lang'])) {
-    $_SESSION['language'] = $_GET['lang'];
-}
+
 // Načti configy
 Config::load($configPath);
 Config::load($textsPath);
@@ -55,4 +53,8 @@ $adminLayout = new AdminLayout($authService, $baseUrl); // ← Správné paramet
 $router = new Router($authService, $db, $csrf, $adminLayout);
 $urlParts = explode('/', $url);
 
+if (isset($_GET['lang']) && in_array($_GET['lang'], ['cs', 'en', 'de'])) {
+    $_SESSION['language'] = $_GET['lang'];
+}
+//print_r($_SESSION);
 echo $router->handleRequest($url, $urlParts);
