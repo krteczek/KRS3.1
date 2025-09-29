@@ -18,7 +18,7 @@
                         <span><?= date('j. n. Y', strtotime($article['created_at'])) ?></span>
                     </div>
                     <p class="excerpt"><?= htmlspecialchars($article['excerpt']) ?></p>
-                    <a href="<?= $baseUrl ?>/clanek/<?= htmlspecialchars($article['slug']) ?>" class="read-more">
+                    <a href="<?= $baseUrl ?>clanek/<?= htmlspecialchars($article['slug']) ?>" class="read-more">
                         <?= htmlspecialchars($readMoreText ?? 'Číst více') ?>
                     </a>
                 </div>

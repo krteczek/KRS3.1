@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 // Načti Config třídu
 require_once __DIR__ . '/app/Core/Config.php';
+require_once __DIR__ . '/config/config.php';
+require_once __DIR__ . '/config/texts.php'; // ← PŘIDEJ TUTO ŘÁDKU!
+
 
 // Inicializuj konfiguraci
 App\Core\Config::load(__DIR__ . '/config/config.php');

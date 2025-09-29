@@ -12,8 +12,30 @@ use App\Core\AdminMenu;
 use App\Core\AdminLayout;
 use App\Core\Router;
 use App\Core\Config;
+
 use App\Core\Template;
 
+
+// ✅ NAČTI OBA CONFIG SOUBORY
+Config::load(__DIR__ . '/../config/config.php');
+Config::load(__DIR__ . '/../config/texts.php');
+
+// ✅ DEBUG CEST
+$configPath = __DIR__ . '/../config/config.php';
+$textsPath = __DIR__ . '/../config/texts.php';
+if (isset($_GET['lang'])) {
+    $_SESSION['language'] = $_GET['lang'];
+}
+// Načti configy
+Config::load($configPath);
+Config::load($textsPath);
+
+// ✅ TEST PO NAČTENÍ
+echo "<!-- DEBUG after load - site.name: " . Config::site('name') . " -->";
+echo "<!-- DEBUG after load - texts.messages.welcome: " . Config::text('messages.welcome', [], 'STILL_NOT_FOUND') . " -->";
+
+echo "<!-- DEBUG: site.name = " . Config::site('name') . " -->";
+echo "<!-- DEBUG: texts.messages.welcome = " . Config::text('messages.welcome', [], 'NOT_FOUND') . " -->";
 // Získání URL
 $url = $_GET['url'] ?? '';
 if (empty($url)) {

@@ -15,36 +15,54 @@ class AuthController
         private string $baseUrl,
 		private Template $template
     ) {}
+	public function showLoginForm(): string
+	{
+	    if ($this->loginService->isLoggedIn()) {
+	        header('Location: ' . $this->baseUrl . '/admin');
+	        exit;
+	    }
 
-public function showLoginForm(): string
-{
-    if ($this->loginService->isLoggedIn()) {
-        header('Location: ' . $this->baseUrl . '/admin');
-        exit;
-    }
+	    $csrfField = $this->csrf->getTokenField();
+	    $error = $this->getLoginError();
 
-    $csrfField = $this->csrf->getTokenField();
-    $error = '';
+	    return $this->template->render('layouts/frontend.php', [
+	        'title' => \App\Core\Config::text('pages.login', ['site_name' => \App\Core\Config::site('name')]),
+	        'content' => $this->template->render('pages/login.php', [
+	            'csrfField' => $csrfField,
+	            'error' => $error,
+	            'baseUrl' => $this->baseUrl,
+	            'siteName' => \App\Core\Config::site('name'),
+	            'loginTitle' => \App\Core\Config::text('ui.login'),
+	            'usernameLabel' => \App\Core\Config::text('ui.username'),
+	            'passwordLabel' => \App\Core\Config::text('ui.password'),
+	            'submitText' => \App\Core\Config::text('ui.login'),
+	            'backLinkText' => \App\Core\Config::text('ui.back_to_home')
+	        ]),
+	        'baseUrl' => $this->baseUrl,
+	        'siteName' => \App\Core\Config::site('name'),
+	        'isLoginPage' => true // ← TOHLE JE DŮLEŽITÉ!
+	    ]);
+	}
 
-    if (isset($_GET['error'])) {
-        $error = match($_GET['error']) {
-            '1' => '<div class="error">Špatné přihlašovací údaje!</div>',
-            'csrf' => '<div class="error">Chyba zabezpečení CSRF!</div>',
-            default => '<div class="error">Neplatný požadavek!</div>'
-        };
-    }
+	private function getLoginError(): string
+	{
+	    if (!isset($_GET['error'])) {
+	        return '';
+	    }
 
-    return $this->template->render('layouts/frontend.php', [
-        'title' => 'Přihlášení - KRS',
-        'content' => $this->template->render('pages/login.php', [
-            'csrfField' => $csrfField,
-            'error' => $error,
-            'baseUrl' => $this->baseUrl
-        ]),
-        'baseUrl' => $this->baseUrl,
-        'siteName' => 'Redakční systém KRS'
-    ]);
-}
+	    $errorMessages = [
+	        '1' => \App\Core\Config::text('errors.login_failed'),
+	        'csrf' => \App\Core\Config::text('errors.csrf'),
+	        'default' => \App\Core\Config::text('errors.invalid_request')
+	    ];
+
+	    $errorKey = $_GET['error'];
+	    $errorMessage = $errorMessages[$errorKey] ?? $errorMessages['default'];
+
+	    return '<div class="error">' . htmlspecialchars($errorMessage) . '</div>';
+	}
+
+
     public function processLogin(): void
     {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {

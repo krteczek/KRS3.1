@@ -7,11 +7,43 @@ namespace App\Core;
 class Config
 {
     private static array $config = [];
-
+/**
     public static function load(string $configPath): void
     {
-        self::$config = require $configPath;
+        $loadedConfig = require $configPath;
+        self::$config = array_merge(self::$config, $loadedConfig); // ‹ MERGE místo pøepsání
     }
+**/
+
+public static function load(string $configPath): void
+{
+    echo "<!-- DEBUG Config::load: START loading '{$configPath}' -->";
+
+    if (!file_exists($configPath)) {
+        echo "
+		<!-- DEBUG Config::load: File not found -->";
+        return;
+    }
+
+    $loadedConfig = require $configPath;
+
+    // DEBUG pøedchozího configu
+    echo "
+	<!-- DEBUG Config::load: Previous config keys: " . implode(', ', array_keys(self::$config)) . " -->";
+
+    // DEBUG nového configu
+    echo "
+	<!-- DEBUG Config::load: New config keys from " . basename($configPath) . ": " . implode(', ', array_keys($loadedConfig)) . " -->";
+
+    self::$config = array_merge(self::$config, $loadedConfig);
+
+    // DEBUG výsledného configu
+    echo "
+	<!-- DEBUG Config::load: Merged config keys: " . implode(', ', array_keys(self::$config)) . " -->";
+    echo "
+	<!-- DEBUG Config::load: FINISHED loading '{$configPath}' -->";
+}
+
 
     public static function get(string $key, $default = null)
     {
@@ -33,27 +65,24 @@ class Config
         return self::get("site.{$key}", $default);
     }
 
+	public static function text(string $key, array $replace = [], string $default = ''): string
+	{
+	    $currentLang = $_SESSION['language'] ?? 'cs'; // nebo z URL/cookie
 
-	/**
-     * Získá text z konfigurace texts.php s možností nahrazení parametrù
-     */
-    public static function text(string $key, array $replace = [], string $default = ''): string
-    {
-        $value = self::get('texts.' . $key, $default);
+	    $value = self::get("texts.{$currentLang}.{$key}", $default);
 
-        // Nahrazení parametrù {param} ve formátu
-        foreach ($replace as $search => $replacement) {
-            $value = str_replace('{' . $search . '}', (string)$replacement, $value);
-        }
+	    foreach ($replace as $search => $replacement) {
+	        $value = str_replace('{' . $search . '}', (string)$replacement, $value);
+	    }
 
-        return $value;
-    }
+	    return $value;
+	}
 
-    /**
-     * Zkontroluje, zda text existuje v konfiguraci
-     */
+
     public static function hasText(string $key): bool
     {
         return self::has('texts.' . $key);
     }
+
+    // ODSTRAN loadTexts() - je zbyteèná když máme load()
 }
