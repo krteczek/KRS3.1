@@ -1,8 +1,8 @@
 <!-- app/views/pages/home.php -->
 <div class="hero">
     <h1><?= htmlspecialchars($welcomeMessage ?? 'Vítejte') ?></h1>
+    <p><?= \App\Core\Config::text('ui.discover_articles') ?></p>
 </div>
-
 <div class="articles-grid">
     <?php if (!empty($articles)): ?>
         <?php foreach ($articles as $article): ?>
@@ -15,7 +15,7 @@
                     </h3>
                     <div class="article-meta">
                         <span><?= date('j. n. Y', strtotime($article['created_at'])) ?></span>
-						<span class="author_name">Autor: <?= $article['author_name']; ?></span>
+						<span class="author_name"><?= \App\Core\Config::text('ui.author') ?>: <?= htmlspecialchars($article['author_name'] ?? '') ?></span>
                     </div>
                     <p class="excerpt"><?= htmlspecialchars($article['excerpt']) ?></p>
                     <a href="<?= $baseUrl ?>clanek/<?= htmlspecialchars($article['slug']) ?>" class="read-more">

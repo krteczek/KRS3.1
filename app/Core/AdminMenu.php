@@ -28,18 +28,23 @@ class AdminMenu
         return <<<HTML
 <nav class="admin-menu">
     <div class="menu-header">
-        <strong>Administrace</strong>
+        <strong>{$this->translate('admin.navigation.administration')}</strong>
         <span>({$user['username']})</span>
     </div>
     <ul>
-		<li><a href="{$this->baseUrl}">Úvodní stránka</a></li>
-        <li><a href="{$this->baseUrl}admin">Dashboard</a></li>
-        <li><a href="{$this->baseUrl}admin/articles">Články</a></li>
-        <li><a href="{$this->baseUrl}admin/gallery">Galerie</a></li>
-        <li><a href="{$this->baseUrl}admin/users">Uživatelé</a></li>
-        <li><a href="{$this->baseUrl}logout">Odhlásit se</a></li>
+        <li><a href="{$this->baseUrl}">{$this->translate('navigation.home')}</a></li>
+        <li><a href="{$this->baseUrl}admin">{$this->translate('admin.navigation.dashboard')}</a></li>
+        <li><a href="{$this->baseUrl}admin/articles">{$this->translate('admin.navigation.articles')}</a></li>
+        <li><a href="{$this->baseUrl}admin/gallery">{$this->translate('admin.navigation.gallery')}</a></li>
+        <li><a href="{$this->baseUrl}admin/users">{$this->translate('admin.navigation.users')}</a></li>
+        <li><a href="{$this->baseUrl}logout">{$this->translate('navigation.logout')}</a></li>
     </ul>
 </nav>
 HTML;
+    }
+
+    private function translate(string $key): string
+    {
+        return Config::text($key);
     }
 }
