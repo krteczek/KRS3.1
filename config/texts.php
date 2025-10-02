@@ -42,18 +42,9 @@ return [
                 ],
                 'messages' => [
                     'created' => ' byl úspěšně vytvořen',
-                    //'updated' => ' byl úspěšně upraven',
-                    // 'deleted' => ' byl smazán',
-                    'welcome_admin' => 'Vítejte v administraci redakčního systému',
-					'restored' => 'Článek byl úspěšně obnoven',
-                    'deleted' => 'Článek byl úspěšně smazán',
-                    'updated' => 'Článek byl úspěšně aktualizován',
-                    'error' => 'Došlo k chybě',
-                    'empty_trash' => 'Koš je prázdný',
-                    'empty_active' => 'Žádné články',
-                    'empty_text_trash' => 'V koši nejsou žádné smazané články.',
-                    'empty_text_active' => 'Zatím nemáte žádné články. Vytvořte první článek!',
-                    'create_first' => 'Vytvořit první článek',
+                    'updated' => ' byl úspěšně upraven',
+                    'deleted' => ' byl smazán',
+                    'welcome_admin' => 'Vítejte v administraci redakčního systému'
                 ],
                 'articles' => [
                     'create' => 'Vytvořit článek',
@@ -105,8 +96,27 @@ return [
                         'permanent_delete' => 'Opravdu chcete trvale smazat článek'
                     ],
 
+                    // Zprávy specifické pro články
+                    'messages' => [
+                        'restored' => 'Článek byl úspěšně obnoven',
+                        'deleted' => 'Článek byl úspěšně smazán',
+                        'updated' => 'Článek byl úspěšně aktualizován',
+                        'error' => 'Došlo k chybě',
+                        'empty_trash' => 'Koš je prázdný',
+                        'empty_active' => 'Žádné články',
+                        'empty_text_trash' => 'V koši nejsou žádné smazané články.',
+                        'empty_text_active' => 'Zatím nemáte žádné články. Vytvořte první článek!',
+                        'create_first' => 'Vytvořit první článek'
+                    ]
                 ],
-
+            ],
+            'article' => [
+                'author' => 'Autor',
+                'published' => 'Publikováno',
+                'read_more' => 'Číst více',
+                'back_to_articles' => 'Zpět na seznam článků',
+                'no_articles' => 'Žádné články k zobrazení',
+                'error_loading' => 'Chyba při načítání článku'
             ],
             'ui' => [
                 'read_more' => 'Číst více',
@@ -158,7 +168,6 @@ return [
                     'deleted' => ' was deleted',
                     'welcome_admin' => 'Welcome to the editorial system administration'
                 ],
-            // NEW KEYS FOR ADMIN ARTICLES
                 'articles' => [
                     'create' => 'Create Article',
                     'edit' => 'Edit Article',
@@ -209,7 +218,7 @@ return [
                         'permanent_delete' => 'Are you sure you want to permanently delete the article'
                     ],
 
-                    // Messages
+                    // Messages specific for articles
                     'messages' => [
                         'restored' => 'Article was successfully restored',
                         'deleted' => 'Article was successfully deleted',
@@ -220,11 +229,23 @@ return [
                         'empty_text_trash' => 'There are no deleted articles in trash.',
                         'empty_text_active' => 'You don\'t have any articles yet. Create your first article!',
                         'create_first' => 'Create first article'
-                    ],
+                    ]
                 ],
-			 ],
+            ],
+            'article' => [
+                'author' => 'Author',
+                'published' => 'Published',
+                'read_more' => 'Read more',
+                'back_to_articles' => 'Back to articles',
+                'no_articles' => 'No articles to display',
+                'error_loading' => 'Error loading article'
+            ],
+            'ui' => [
+                'read_more' => 'Read more',
+                'discover_articles' => 'Discover our latest articles',
+                'author' => 'Author',
+            ],
         ],
-
         'de' => [
             'pages' => [
                 'home' => 'Startseite',
@@ -269,7 +290,6 @@ return [
                     'deleted' => ' wurde gelöscht',
                     'welcome_admin' => 'Willkommen in der Redaktionssystem-Verwaltung'
                 ],
-            // NEUE SCHLÜSSEL FÜR ADMIN ARTIKEL
                 'articles' => [
                     'create' => 'Artikel erstellen',
                     'edit' => 'Artikel bearbeiten',
@@ -320,7 +340,7 @@ return [
                         'permanent_delete' => 'Möchten Sie den Artikel wirklich endgültig löschen'
                     ],
 
-                    // Nachrichten
+                    // Nachrichten spezifisch für Artikel
                     'messages' => [
                         'restored' => 'Artikel wurde erfolgreich wiederhergestellt',
                         'deleted' => 'Artikel wurde erfolgreich gelöscht',
@@ -331,15 +351,22 @@ return [
                         'empty_text_trash' => 'Es befinden sich keine gelöschten Artikel im Papierkorb.',
                         'empty_text_active' => 'Sie haben noch keine Artikel. Erstellen Sie Ihren ersten Artikel!',
                         'create_first' => 'Ersten Artikel erstellen'
-                    ],
+                    ]
                 ],
-
+            ],
+            'article' => [
+                'author' => 'Autor',
+                'published' => 'Veröffentlicht',
+                'read_more' => 'Weiterlesen',
+                'back_to_articles' => 'Zurück zur Artikelübersicht',
+                'no_articles' => 'Keine Artikel zum Anzeigen',
+                'error_loading' => 'Fehler beim Laden des Artikels'
             ],
             'ui' => [
                 'read_more' => 'Weiterlesen',
                 'discover_articles' => 'Entdecken Sie unsere neuesten Artikel',
                 'author' => 'Autor',
-            ]
-        ]
-    ]
+            ],
+        ],
+    ],
 ];
