@@ -45,4 +45,16 @@ class Template
     {
         return file_exists($this->templatesDir . '/' . ltrim($template, '/'));
     }
+
+	/**
+     * Přeloží textový klíč
+     *
+     * @param string $key Klíč pro překlad
+     * @param array $parametry Parametry pro nahrazení
+     * @return string Přeložený text
+     */
+    private function t(string $key, array $parametry = []): string
+    {
+        return Config::text($key, $parametry);
+    }
 }
