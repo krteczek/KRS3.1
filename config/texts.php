@@ -6,9 +6,17 @@ return [
             'pages' => [
                 'home' => 'Úvodní stránka',
                 'login' => 'Přihlášení',
+                'article_detail' => 'Článek: {title}',
+                'article_not_found' => 'Článek nenalezen'
             ],
             'messages' => [
                 'welcome' => 'Vítejte v našem systému',
+                'no_articles' => 'Žádné články k zobrazení',
+                'article_not_found' => 'Článek nebyl nalezen',
+				'invalid_csrf' => 'Neplatný CSRF token',
+				'login_failed' => 'Neplatné přihlašovací údaje',
+				'login_success' => 'Přihlášení proběhlo úspěšně',
+				'logout_success' => 'Odhlášení proběhlo úspěšně'
             ],
             'navigation' => [
                 'home' => 'Úvod',
@@ -122,16 +130,25 @@ return [
                 'read_more' => 'Číst více',
                 'discover_articles' => 'Objevte naše nejnovější články',
                 'author' => 'Autor',
+                'back_to_home' => 'Zpět na úvodní stránku'
             ],
         ],
         'en' => [
             'pages' => [
                 'home' => 'Homepage',
                 'login' => 'Login',
+                'article_detail' => 'Article: {title}',
+                'article_not_found' => 'Article not found'
             ],
             'messages' => [
                 'welcome' => 'Welcome to our system',
-            ],
+                'no_articles' => 'No articles to display',
+                'article_not_found' => 'Article not found',
+				'invalid_csrf' => 'Invalid CSRF token',
+				'login_failed' => 'Invalid login credentials',
+				'login_success' => 'Login successful',
+				'logout_success' => 'Logout successful',
+			],
             'navigation' => [
                 'home' => 'Home',
                 'articles' => 'Articles',
@@ -244,15 +261,24 @@ return [
                 'read_more' => 'Read more',
                 'discover_articles' => 'Discover our latest articles',
                 'author' => 'Author',
+                'back_to_home' => 'Back to homepage'
             ],
         ],
         'de' => [
             'pages' => [
                 'home' => 'Startseite',
                 'login' => 'Anmeldung',
+                'article_detail' => 'Artikel: {title}',
+                'article_not_found' => 'Artikel nicht gefunden'
             ],
             'messages' => [
                 'welcome' => 'Willkommen in unserem System',
+                'no_articles' => 'Keine Artikel zum Anzeigen',
+                'article_not_found' => 'Artikel nicht gefunden',
+				'invalid_csrf' => 'Ungültiges CSRF-Token',
+				'login_failed' => 'Ungültige Anmeldedaten',
+				'login_success' => 'Anmeldung erfolgreich',
+				'logout_success' => 'Abmeldung erfolgreich',
             ],
             'navigation' => [
                 'home' => 'Startseite',
@@ -366,6 +392,7 @@ return [
                 'read_more' => 'Weiterlesen',
                 'discover_articles' => 'Entdecken Sie unsere neuesten Artikel',
                 'author' => 'Autor',
+                'back_to_home' => 'Zurück zur Startseite'
             ],
         ],
     ],

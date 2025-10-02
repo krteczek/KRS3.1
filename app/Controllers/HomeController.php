@@ -9,8 +9,24 @@ use App\Core\Template;
 use App\Core\Config;
 use App\Auth\LoginService;
 
+/**
+ * Controller pro hlavní stránku a detail článku
+ *
+ * Zpracovává zobrazení úvodní stránky s přehledem článků
+ * a detailních stránek jednotlivých článků.
+ *
+ * @package App\Controllers
+ * @author KRS3
+ * @version 3.0
+ */
 class HomeController extends BaseController
 {
+    /**
+     * @param ArticleService $articleService Služba pro práci s články
+     * @param Template $template Šablonovací systém
+     * @param string $baseUrl Základní URL aplikace
+     * @param LoginService $authService Služba pro autentizaci uživatelů
+     */
     public function __construct(
         private ArticleService $articleService,
         Template $template,
@@ -20,6 +36,17 @@ class HomeController extends BaseController
         parent::__construct($template, $baseUrl, $authService);
     }
 
+    /**
+     * Zobrazí úvodní stránku s přehledem publikovaných článků
+     *
+     * Načte všechny publikované články a zobrazí je
+     * v přehledové stránce s úvodním textem.
+     *
+     * @return string HTML obsah úvodní stránky
+     *
+     * @uses ArticleService::getPublishedArticles()
+     * @uses BaseController::renderPage()
+     */
     public function showHomepage(): string
     {
         $articles = $this->articleService->getPublishedArticles();
@@ -32,6 +59,18 @@ class HomeController extends BaseController
         ], 'home');
     }
 
+    /**
+     * Zobrazí detailní stránku konkrétního článku podle slug
+     *
+     * Na základě URL slug najde a zobrazí detail článku.
+     * Pokud článek neexistuje, zobrazí chybovou stránku.
+     *
+     * @param string $slug URL identifikátor článku
+     * @return string HTML obsah detailu článku nebo chybové stránky
+     *
+     * @uses ArticleService::getArticleBySlug()
+     * @uses BaseController::renderPage()
+     */
     public function showArticleDetail(string $slug): string
     {
         $article = $this->articleService->getArticleBySlug($slug);
