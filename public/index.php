@@ -2,6 +2,18 @@
 // public/index.php
 declare(strict_types=1);
 
+/**
+ * Hlavní vstupní bod aplikace KRS3
+ *
+ * Tento soubor inicializuje všechny potřebné služby, načte konfiguraci
+ * a zpracuje příchozí HTTP požadavek pomocí routeru.
+ * Slouží jako front controller celé aplikace.
+ *
+ * @package public
+ * @author KRS3
+ * @version 3.0
+ */
+
 require_once __DIR__ . '/../autoload.php';
 
 use App\Database\DatabaseConnection;
@@ -12,15 +24,13 @@ use App\Core\AdminMenu;
 use App\Core\AdminLayout;
 use App\Core\Router;
 use App\Core\Config;
-
 use App\Core\Template;
 
-
-// ✅ NAČTI OBA CONFIG SOUBORY
+// ✅ NAČTENÍ KONFIGURAČNÍCH SOUBORŮ
 Config::load(__DIR__ . '/../config/config.php');
 Config::load(__DIR__ . '/../config/texts.php');
 
-// ✅ DEBUG CEST
+// ✅ DEBUG CEST (lze odstranit v produkci)
 $configPath = __DIR__ . '/../config/config.php';
 $textsPath = __DIR__ . '/../config/texts.php';
 
@@ -28,7 +38,7 @@ $textsPath = __DIR__ . '/../config/texts.php';
 Config::load($configPath);
 Config::load($textsPath);
 
-// Získání URL
+// ✅ ZPRACOVÁNÍ URL
 $url = $_GET['url'] ?? '';
 if (empty($url)) {
     $url = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
@@ -37,10 +47,10 @@ if (empty($url)) {
     $url = ltrim($url, '/');
 }
 
-// Base URL pro odkazy
+// Base URL pro odkazy v aplikaci
 $baseUrl = Config::site('base_path') ?? '';
 
-// Inicializace služeb
+// ✅ INICIALIZACE SLUŽEB A ZÁVISLOSTÍ
 $session = new SessionManager();
 $db = new DatabaseConnection(Config::get('database'));
 $csrf = new CsrfProtection($session);
@@ -49,12 +59,14 @@ $template = new Template(Config::get('templates')['dir']);
 $adminMenu = new AdminMenu($authService); // ← Předáme pouze authService
 $adminLayout = new AdminLayout($authService, $baseUrl); // ← Správné parametry
 
-// Vytvoření routeru a zpracování požadavku
+// ✅ VYTVOŘENÍ A SPUŠTĚNÍ ROUTERU
 $router = new Router($authService, $db, $csrf, $adminLayout);
 $urlParts = explode('/', $url);
 
+// ✅ SPRÁVA JAZYKŮ
 if (isset($_GET['lang']) && in_array($_GET['lang'], ['cs', 'en', 'de'])) {
     $_SESSION['language'] = $_GET['lang'];
 }
-//print_r($_SESSION);
+
+// ✅ ZPRACOVÁNÍ POŽADAVKU A VÝPIS VÝSLEDKU
 echo $router->handleRequest($url, $urlParts);
