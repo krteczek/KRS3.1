@@ -101,6 +101,13 @@ class Config
      */
     public static function text(string $key, array $replace = [], string $default = ''): string
     {
+		if (strpos($key, 'pages.login') !== false || strpos($key, 'ui.login') !== false) {
+		        $language = $_SESSION['language'] ?? $_GET['lang'] ?? 'cs';
+		    } else {
+		        $language = $_SESSION['language'] ?? 'cs';
+		    }
+
+		    $value = self::get("texts.{$language}.{$key}", $default);
         $currentLang = $_SESSION['language'] ?? 'cs'; // nebo z URL/cookie
 
         $value = self::get("texts.{$currentLang}.{$key}", $default);

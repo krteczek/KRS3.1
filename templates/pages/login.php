@@ -1,26 +1,26 @@
 <div class="login-container">
     <div class="login-header">
-        <h1>Přihlášení</h1>
-        <p>Redakční systém KRS</p>
+        <h1><?= $loginTitle ?></h1>
+        <p><?= $siteName ?></p>
     </div>
 
     <?= $error ?>
 
     <form method="POST" action="<?= $baseUrl ?>login">
         <div class="form-group">
-            <label for="username">Uživatelské jméno:</label>
+            <label for="username"><?= $usernameLabel ?>:</label>
             <input type="text" id="username" name="username" class="form-input" required>
         </div>
 
         <div class="form-group">
-            <label for="password">Heslo:</label>
+            <label for="password"><?= $passwordLabel ?>:</label>
             <input type="password" id="password" name="password" class="form-input" required>
         </div>
 
         <?= $csrfField ?>
 
-        <button type="submit" class="btn btn-primary btn-large">Přihlásit se</button>
+        <button type="submit" class="btn btn-primary btn-large"><?= $submitText ?></button>
     </form>
 
-    <a href="<?= $baseUrl ?>" class="back-link">← Zpět na úvodní stránku</a>
+    <a href="<?= $baseUrl ?>" class="back-link">← <?= $backLinkText ?></a>
 </div>

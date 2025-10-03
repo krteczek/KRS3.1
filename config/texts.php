@@ -130,8 +130,16 @@ return [
                 'read_more' => 'Číst více',
                 'discover_articles' => 'Objevte naše nejnovější články',
                 'author' => 'Autor',
-                'back_to_home' => 'Zpět na úvodní stránku'
+                'back_to_home' => 'Zpět na úvodní stránku',
+				'login' => 'Přihlášení',
+				'username' => 'Uživatelské jméno',
+				'password' => 'Heslo',
             ],
+			'errors' => [
+				'login_failed' => 'Neplatné přihlašovací údaje',
+			    'csrf' => 'Neplatný CSRF token',
+			    'invalid_request' => 'Neplatný požadavek',
+			]
         ],
         'en' => [
             'pages' => [
@@ -258,11 +266,19 @@ return [
                 'error_loading' => 'Error loading article'
             ],
             'ui' => [
-                'read_more' => 'Read more',
-                'discover_articles' => 'Discover our latest articles',
-                'author' => 'Author',
-                'back_to_home' => 'Back to homepage'
+				'read_more' => 'Read more',
+				'discover_articles' => 'Discover our latest articles',
+				'author' => 'Author',
+				'back_to_home' => 'Back to homepage',
+				'login' => 'Login',
+				'username' => 'Username',
+				'password' => 'Password',
             ],
+			'errors' => [
+			    'login_failed' => 'Invalid login credentials',
+			    'csrf' => 'Invalid CSRF token',
+			    'invalid_request' => 'Invalid request'
+			],
         ],
         'de' => [
             'pages' => [
@@ -389,11 +405,19 @@ return [
                 'error_loading' => 'Fehler beim Laden des Artikels'
             ],
             'ui' => [
-                'read_more' => 'Weiterlesen',
-                'discover_articles' => 'Entdecken Sie unsere neuesten Artikel',
-                'author' => 'Autor',
-                'back_to_home' => 'Zurück zur Startseite'
-            ],
-        ],
+				'read_more' => 'Weiterlesen',
+				'discover_articles' => 'Entdecken Sie unsere neuesten Artikel',
+				'author' => 'Autor',
+				'back_to_home' => 'Zurück zur Startseite',
+				'login' => 'Anmeldung',
+				'username' => 'Benutzername',
+				'password' => 'Passwort',            ],
+	        ],
+			'errors' => [
+			    'login_failed' => 'Ungültige Anmeldedaten',
+			    'csrf' => 'Ungültiges CSRF-Token',
+			    'invalid_request' => 'Ungültige Anfrage'
+			],
+
     ],
 ];
