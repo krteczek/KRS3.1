@@ -1,4 +1,16 @@
 <?php
+/**
+ * Instalační skript pro databázi KRS3 systému
+ *
+ * Tento skript automaticky vytvoří databázi, naimportuje schéma
+ * a výchozí data potřebná pro fungování redakčního systému.
+ * Používá se pro počáteční nastavení aplikace.
+ *
+ * @package Install
+ * @author KRS3
+ * @version 3.0
+ */
+
 // Vypnout zobrazení chyb (pro production)
 ini_set('display_errors', '0');
 
@@ -34,7 +46,7 @@ try {
 
     foreach ($queries as $query) {
         if (!empty($query)) {
-			print_r($query);
+            print_r($query);
             $pdo->exec($query);
         }
     }

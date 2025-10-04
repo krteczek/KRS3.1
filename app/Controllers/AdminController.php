@@ -8,14 +8,42 @@ use App\Core\AdminLayout;
 use App\Auth\LoginService;
 use App\Core\Config;
 
+/**
+ * Controller pro hlavní administraèní rozhraní
+ *
+ * Zpracovává zobrazení administraèního dashboardu s pøehledem
+ * rychlých akcí a základních informací o systému.
+ * Slouží jako vstupní bod do administraèní èásti aplikace.
+ *
+ * @package App\Controllers
+ * @author KRS3
+ * @version 3.0
+ */
 class AdminController
 {
+    /**
+     * @param LoginService $authService Služba pro ovìøení pøihlášení
+     * @param string $baseUrl Základní URL aplikace
+     * @param AdminLayout $adminLayout Layout administraèního rozhraní
+     */
     public function __construct(
         private LoginService $authService,
         private string $baseUrl,
         private \App\Core\AdminLayout $adminLayout
     ) {}
 
+    /**
+     * Zobrazí administraèní dashboard s pøehledem a rychlými akcemi
+     *
+     * Vytvoøí pøehledovou stránku administrace s uvítací zprávou
+     * a odkazy na hlavní správcovské sekce systému.
+     *
+     * @return string HTML obsah administraèního dashboardu
+     *
+     * @example
+     * $dashboard = $adminController->dashboard();
+     * echo $dashboard; // zobrazí administraèní pøehled
+     */
     public function dashboard(): string
     {
         $content = <<<HTML
@@ -33,6 +61,12 @@ HTML;
         return $this->adminLayout->wrap($content, $this->translate('admin.navigation.dashboard'));
     }
 
+    /**
+     * Pøeloží textový klíè pomocí konfiguraèního systému
+     *
+     * @param string $key Klíè pro pøeklad
+     * @return string Pøeložený text
+     */
     private function translate(string $key): string
     {
         return Config::text($key);
