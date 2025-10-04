@@ -9,7 +9,6 @@ use App\Security\CsrfProtection;
 use App\Session\SessionManager;
 use App\Core\Config;
 
-
 /**
  * Služba pro správu přihlašování a autentizace uživatelů
  *
@@ -19,7 +18,7 @@ use App\Core\Config;
  *
  * @package App\Auth
  * @author KRS3
- * @version 3.0
+ * @version 3.1
  */
 class LoginService
 {
@@ -52,8 +51,7 @@ class LoginService
     public function authenticate(string $username, string $password, string $csrfToken): bool
     {
         if (!$this->csrf->validateToken($csrfToken)) {
-
-			throw new \RuntimeException(Config::text('messages.invalid_csrf'));
+            throw new \RuntimeException(Config::text('messages.invalid_csrf'));
         }
 
         $user = $this->findUserByUsername($username);
@@ -80,14 +78,12 @@ class LoginService
      */
     private function findUserByUsername(string $username): ?array
     {
-        $stmt = $this->db->prepare("
-            SELECT id, username, password_hash, email, role
-            FROM users
-            WHERE username = :username AND active = 1
-        ");
+        $sql = "SELECT id, username, password_hash, email, role
+                FROM users
+                WHERE username = ? AND active = 1";
 
-        $stmt->execute([':username' => $username]);
-        return $stmt->fetch() ?: null;
+        $result = $this->db->query($sql, [$username]);
+        return $result->fetch() ?: null;
     }
 
     /**
@@ -123,14 +119,26 @@ class LoginService
     }
 
     /**
-     * Ověří, zda má přihlášený uživatel požadovanou roli nebo vyšší
+     * Ověří, zda má přihlášený uživatel požadovanou roli
      *
-     * @param int $requiredRole Požadovaná minimální úroveň role
-     * @return bool True pokud uživatel má dostatečná oprávnění
+     * @param string $requiredRole Požadovaná role (např. 'admin')
+     * @return bool True pokud uživatel má požadovanou roli
      */
-    public function requiresRole(int $requiredRole): bool
+    public function hasRole(string $requiredRole): bool
     {
         $user = $this->getUser();
-        return $user && ($user['role'] >= $requiredRole);
+        return $user && $user['role'] === $requiredRole;
+    }
+
+    /**
+     * Ověří, zda má přihlášený uživatel některou z požadovaných rolí
+     *
+     * @param array $allowedRoles Seznam povolených rolí
+     * @return bool True pokud uživatel má některou z povolených rolí
+     */
+    public function hasAnyRole(array $allowedRoles): bool
+    {
+        $user = $this->getUser();
+        return $user && in_array($user['role'], $allowedRoles, true);
     }
 }

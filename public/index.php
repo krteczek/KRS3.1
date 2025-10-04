@@ -30,15 +30,6 @@ use App\Core\Template;
 Config::load(__DIR__ . '/../config/config.php');
 Config::load(__DIR__ . '/../config/texts.php');
 
-/**
-// ✅ DEBUG CEST (lze odstranit v produkci)
-$configPath = __DIR__ . '/../config/config.php';
-$textsPath = __DIR__ . '/../config/texts.php';
-
-// Načti configy
-Config::load($configPath);
-Config::load($textsPath);
-*/
 
 // ✅ ZPRACOVÁNÍ URL
 $url = $_GET['url'] ?? '';
@@ -70,6 +61,5 @@ if (isset($_GET['lang']) && in_array($_GET['lang'], ['cs', 'en', 'de'])) {
     $_SESSION['language'] = $_GET['lang'];
 }
 
-//echo "Current language: " . ($_SESSION['language'] ?? 'NOT SET');
 // ✅ ZPRACOVÁNÍ POŽADAVKU A VÝPIS VÝSLEDKU
 echo $router->handleRequest($url, $urlParts);
