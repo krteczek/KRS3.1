@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace App\Core;
 
 /**
- * Tøída pro správu konfigurace aplikace
+ * TÅ™Ã­da pro sprÃ¡vu konfigurace aplikace
  *
- * Poskytuje statické metody pro naèítání a pøístup ke konfiguraèním hodnotám,
- * lokalizovanım textùm a nastavení webu. Pouívá merge pro kombinování více konfigù.
+ * Poskytuje statickÃ© metody pro naÄÃ­tÃ¡nÃ­ a pÅ™Ã­stup ke konfiguraÄnÃ­m hodnotÃ¡m,
+ * lokalizovanÃ½m textÅ¯m a nastavenÃ­ webu. PouÅ¾Ã­vÃ¡ merge pro kombinovÃ¡nÃ­ vÃ­ce konfigÅ¯.
  *
  * @package App\Core
  * @author KRS3
@@ -17,14 +17,14 @@ namespace App\Core;
 class Config
 {
     /**
-     * @var array Hlavní konfiguraèní pole
+     * @var array HlavnÃ­ konfiguraÄnÃ­ pole
      */
     private static array $config = [];
 
     /**
-     * Naète konfiguraèní soubor a slouèí ho s existující konfigurací
+     * NaÄte konfiguraÄnÃ­ soubor a slouÄÃ­ ho s existujÃ­cÃ­ konfiguracÃ­
      *
-     * @param string $configPath Cesta ke konfiguraènímu souboru
+     * @param string $configPath Cesta ke konfiguraÄnÃ­mu souboru
      * @return void
      *
      * @example
@@ -32,16 +32,20 @@ class Config
      */
     public static function load(string $configPath): void
     {
+        if (!file_exists($configPath)) {
+            throw new \RuntimeException("KonfiguraÄnÃ­ soubor neexistuje: {$configPath}");
+        }
+
         $loadedConfig = require $configPath;
-        self::$config = array_merge(self::$config, $loadedConfig); // ‹ MERGE místo pøepsání
+        self::$config = array_merge(self::$config, $loadedConfig);
     }
 
     /**
-     * Získá konfiguraèní hodnotu podle klíèe s teèkovou notací
+     * ZÃ­skÃ¡ konfiguraÄnÃ­ hodnotu podle klÃ­Äe s teÄkovou notacÃ­
      *
-     * @param string $key Klíè hodnoty (napø. 'database.host')
-     * @param mixed $default Vıchozí hodnota pokud klíè neexistuje
-     * @return mixed Nalezená hodnota nebo vıchozí hodnota
+     * @param string $key KlÃ­Ä hodnoty (napÅ™. 'database.host')
+     * @param mixed $default VÃ½chozÃ­ hodnota pokud klÃ­Ä neexistuje
+     * @return mixed NalezenÃ¡ hodnota nebo vÃ½chozÃ­ hodnota
      *
      * @example
      * $host = Config::get('database.host');
@@ -63,11 +67,11 @@ class Config
     }
 
     /**
-     * Získá nastavení webu podle klíèe
+     * ZÃ­skÃ¡ nastavenÃ­ webu podle klÃ­Äe
      *
-     * @param string $key Klíè nastavení webu (napø. 'name', 'url')
-     * @param mixed $default Vıchozí hodnota pokud klíè neexistuje
-     * @return mixed Nalezená hodnota nebo vıchozí hodnota
+     * @param string $key KlÃ­Ä nastavenÃ­ webu (napÅ™. 'name', 'url')
+     * @param mixed $default VÃ½chozÃ­ hodnota pokud klÃ­Ä neexistuje
+     * @return mixed NalezenÃ¡ hodnota nebo vÃ½chozÃ­ hodnota
      *
      * @example
      * $siteName = Config::site('name');
@@ -79,38 +83,41 @@ class Config
     }
 
     /**
-     * Získá lokalizovanı text podle klíèe
+     * ZÃ­skÃ¡ lokalizovanÃ½ text podle klÃ­Äe
      *
-     * Texty se naèítají podle aktuálního jazyka z session.
-     * Podporuje nahrazování parametrù v textu pomocí {param}.
+     * Texty se naÄÃ­tajÃ­ podle aktuÃ¡lnÃ­ho jazyka z session.
+     * Podporuje nahrazovÃ¡nÃ­ parametrÅ¯ v textu pomocÃ­ {param}.
      *
-     * @param string $key Klíè textu (napø. 'pages.home', 'messages.welcome')
-     * @param array $replace Parametry pro nahrazení v textu
-     * @param string $default Vıchozí hodnota pokud klíè neexistuje
-     * @return string Pøeloenı text s nahrazenımi parametry
+     * @param string $key KlÃ­Ä textu (napÅ™. 'pages.home', 'messages.welcome')
+     * @param array $replace Parametry pro nahrazenÃ­ v textu
+     * @param string $default VÃ½chozÃ­ hodnota pokud klÃ­Ä neexistuje
+     * @return string PÅ™eloÅ¾enÃ½ text s nahrazenÃ½mi parametry
      *
      * @example
-     * // Základní pouití
+     * // ZÃ¡kladnÃ­ pouÅ¾itÃ­
      * $text = Config::text('pages.home');
      *
      * // S parametry
      * $welcome = Config::text('navigation.welcome', ['username' => 'John']);
      *
-     * // S vıchozí hodnotou
+     * // S vÃ½chozÃ­ hodnotou
      * $text = Config::text('nonexistent.key', [], 'Default text');
      */
     public static function text(string $key, array $replace = [], string $default = ''): string
     {
-		if (strpos($key, 'pages.login') !== false || strpos($key, 'ui.login') !== false) {
-		        $language = $_SESSION['language'] ?? $_GET['lang'] ?? 'cs';
-		    } else {
-		        $language = $_SESSION['language'] ?? 'cs';
-		    }
+        // ZÃ­skÃ¡nÃ­ jazyka z session nebo z URL parametru pro pÅ™ihlÃ¡Å¡enÃ­
+        if (strpos($key, 'pages.login') !== false || strpos($key, 'ui.login') !== false) {
+            $language = $_SESSION['language'] ?? $_GET['lang'] ?? 'cs';
+        } else {
+            $language = $_SESSION['language'] ?? 'cs';
+        }
 
-		    $value = self::get("texts.{$language}.{$key}", $default);
-        $currentLang = $_SESSION['language'] ?? 'cs'; // nebo z URL/cookie
+        $value = self::get("texts.{$language}.{$key}", $default);
 
-        $value = self::get("texts.{$currentLang}.{$key}", $default);
+        // Pokud nenÃ­ nalezeno, zkusÃ­me vÃ½chozÃ­ jazyk 'cs'
+        if ($value === $default && $language !== 'cs') {
+            $value = self::get("texts.cs.{$key}", $default);
+        }
 
         foreach ($replace as $search => $replacement) {
             $value = str_replace('{' . $search . '}', (string)$replacement, $value);
@@ -120,15 +127,35 @@ class Config
     }
 
     /**
-     * Zkontroluje, zda existuje lokalizaèní text pro danı klíè
+     * Zkontroluje, zda existuje konfiguraÄnÃ­ hodnota pro danÃ½ klÃ­Ä
      *
-     * @param string $key Klíè textu
+     * @param string $key KlÃ­Ä
+     * @return bool True pokud hodnota existuje
+     */
+    public static function has(string $key): bool
+    {
+        $keys = explode('.', $key);
+        $value = self::$config;
+
+        foreach ($keys as $k) {
+            if (!isset($value[$k])) {
+                return false;
+            }
+            $value = $value[$k];
+        }
+
+        return true;
+    }
+
+    /**
+     * Zkontroluje, zda existuje lokalizaÄnÃ­ text pro danÃ½ klÃ­Ä
+     *
+     * @param string $key KlÃ­Ä textu
      * @return bool True pokud text existuje
      */
     public static function hasText(string $key): bool
     {
-        return self::has('texts.' . $key);
+        $language = $_SESSION['language'] ?? 'cs';
+        return self::has("texts.{$language}.{$key}");
     }
-
-    // ODSTRAN loadTexts() - je zbyteèná kdy máme load()
 }

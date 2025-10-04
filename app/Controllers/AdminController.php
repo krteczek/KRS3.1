@@ -9,11 +9,11 @@ use App\Auth\LoginService;
 use App\Core\Config;
 
 /**
- * Controller pro hlavní administraèní rozhraní
+ * Controller pro hlavnÃ­ administraÄnÃ­ rozhranÃ­
  *
- * Zpracovává zobrazení administraèního dashboardu s pøehledem
- * rychlıch akcí a základních informací o systému.
- * Slouí jako vstupní bod do administraèní èásti aplikace.
+ * ZpracovÃ¡vÃ¡ zobrazenÃ­ administraÄnÃ­ho dashboardu s pÅ™ehledem
+ * rychlÃ½ch akcÃ­ a zÃ¡kladnÃ­ch informacÃ­ o systÃ©mu.
+ * SlouÅ¾Ã­ jako vstupnÃ­ bod do administraÄnÃ­ ÄÃ¡sti aplikace.
  *
  * @package App\Controllers
  * @author KRS3
@@ -22,9 +22,9 @@ use App\Core\Config;
 class AdminController
 {
     /**
-     * @param LoginService $authService Sluba pro ovìøení pøihlášení
-     * @param string $baseUrl Základní URL aplikace
-     * @param AdminLayout $adminLayout Layout administraèního rozhraní
+     * @param LoginService $authService SluÅ¾ba pro ovÄ›Å™enÃ­ pÅ™ihlÃ¡Å¡enÃ­
+     * @param string $baseUrl ZÃ¡kladnÃ­ URL aplikace
+     * @param AdminLayout $adminLayout Layout administraÄnÃ­ho rozhranÃ­
      */
     public function __construct(
         private LoginService $authService,
@@ -33,16 +33,16 @@ class AdminController
     ) {}
 
     /**
-     * Zobrazí administraèní dashboard s pøehledem a rychlımi akcemi
+     * ZobrazÃ­ administraÄnÃ­ dashboard s pÅ™ehledem a rychlÃ½mi akcemi
      *
-     * Vytvoøí pøehledovou stránku administrace s uvítací zprávou
-     * a odkazy na hlavní správcovské sekce systému.
+     * VytvoÅ™Ã­ pÅ™ehledovou strÃ¡nku administrace s uvÃ­tacÃ­ zprÃ¡vou
+     * a odkazy na hlavnÃ­ sprÃ¡vcovskÃ© sekce systÃ©mu.
      *
-     * @return string HTML obsah administraèního dashboardu
+     * @return string HTML obsah administraÄnÃ­ho dashboardu
      *
      * @example
      * $dashboard = $adminController->dashboard();
-     * echo $dashboard; // zobrazí administraèní pøehled
+     * echo $dashboard; // zobrazÃ­ administraÄnÃ­ pÅ™ehled
      */
     public function dashboard(): string
     {
@@ -62,10 +62,10 @@ HTML;
     }
 
     /**
-     * Pøeloí textovı klíè pomocí konfiguraèního systému
+     * PÅ™eloÅ¾Ã­ textovÃ½ klÃ­Ä pomocÃ­ konfiguraÄnÃ­ho systÃ©mu
      *
-     * @param string $key Klíè pro pøeklad
-     * @return string Pøeloenı text
+     * @param string $key KlÃ­Ä pro pÅ™eklad
+     * @return string PÅ™eloÅ¾enÃ½ text
      */
     private function translate(string $key): string
     {

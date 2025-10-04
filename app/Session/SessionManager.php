@@ -1,5 +1,5 @@
 <?php
-
+// app/Session/SessionManager.php
 declare(strict_types=1);
 
 namespace App\Session;
@@ -22,9 +22,6 @@ class SessionManager
     /**
      * Inicializuje session s bezpečnostními nastaveními
      *
-     * Automaticky volá session_start() pokud session není aktivní
-     * a nastavuje bezpečnostní parametry cookie.
-     *
      * @throws \RuntimeException Pokud se nepodaří inicializovat session
      */
     public function __construct()
@@ -39,9 +36,6 @@ class SessionManager
 
     /**
      * Nastaví bezpečnostní parametry session
-     *
-     * Konfiguruje cookie parametry a nastavuje bezpečnostní režimy
-     * pro prevenci session fixation a dalších útoků.
      *
      * @return void
      */
@@ -112,9 +106,6 @@ class SessionManager
     /**
      * Regeneruje session ID (ochrana proti session fixation)
      *
-     * Generuje nové session ID a maže staré, čímž zabraňuje
-     * session fixation útokům.
-     *
      * @return bool True pokud se regenerace povedla, jinak false
      */
     public function regenerate(): bool
@@ -125,9 +116,6 @@ class SessionManager
     /**
      * Vyčistí všechna data session (bez zničení session)
      *
-     * Odstraní všechna data ze session, ale zachová session ID
-     * a nezničí session úplně.
-     *
      * @return void
      */
     public function clear(): void
@@ -137,9 +125,6 @@ class SessionManager
 
     /**
      * Kompletně zničí session a smaže cookie
-     *
-     * Vymaže všechna session data, zničí session na serveru
-     * a smaže session cookie z prohlížeče.
      *
      * @return void
      */
@@ -198,9 +183,6 @@ class SessionManager
     /**
      * Nastaví flash zprávu pro jednorázové zobrazení s podporou překladů
      *
-     * Flash zprávy jsou automaticky smazány po prvním načtení.
-     * Podporuje parametry pro nahrazování v překladových řetězcích.
-     *
      * @param string $type Typ zprávy (success, error, warning, info)
      * @param string $messageKey Klíč pro překlad z texts.php
      * @param array $params Parametry pro nahrazení v textu
@@ -214,8 +196,6 @@ class SessionManager
 
     /**
      * Získá a smaže flash zprávu
-     *
-     * Po načtení flash zprávy je automaticky odstraněna ze session.
      *
      * @param string $type Typ zprávy
      * @param string|null $default Výchozí hodnota
@@ -285,5 +265,17 @@ class SessionManager
     public function setWarning(string $messageKey, array $params = []): void
     {
         $this->setFlash('warning', $messageKey, $params);
+    }
+
+    /**
+     * Nastaví čas expirace session
+     *
+     * @param int $minutes Počet minut
+     * @return void
+     */
+    public function setExpiration(int $minutes): void
+    {
+        ini_set('session.gc_maxlifetime', $minutes * 60);
+        session_set_cookie_params($minutes * 60);
     }
 }

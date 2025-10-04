@@ -11,7 +11,7 @@ class DatabaseConnection {
 
 
     public function __construct() {
-        // Získej konfiguraci z Config tøídy
+        // ZÃ­skej konfiguraci z Config tÅ™Ã­dy
         $config = Config::get('database');
 
         $dsn = "mysql:host={$config['host']};dbname={$config['name']};charset={$config['charset']}";

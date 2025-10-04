@@ -8,11 +8,11 @@ use App\Auth\LoginService;
 use App\Core\Config;
 
 /**
- * Tøída pro generování navigaèního menu administraèního rozhraní
+ * TÅ™Ã­da pro generovÃ¡nÃ­ navigaÄnÃ­ho menu administraÄnÃ­ho rozhranÃ­
  *
- * Vytváøí HTML navigaèní menu pro administraèní èást aplikace
- * s odkazy na jednotlivé sekce. Menu se zobrazí pouze pøihlášenım uivatelùm.
- * Všechny texty jsou lokalizovány pomocí konfiguraèního systému.
+ * VytvÃ¡Å™Ã­ HTML navigaÄnÃ­ menu pro administraÄnÃ­ ÄÃ¡st aplikace
+ * s odkazy na jednotlivÃ© sekce. Menu se zobrazÃ­ pouze pÅ™ihlÃ¡Å¡enÃ½m uÅ¾ivatelÅ¯m.
+ * VÅ¡echny texty jsou lokalizovÃ¡ny pomocÃ­ konfiguraÄnÃ­ho systÃ©mu.
  *
  * @package App\Core
  * @author KRS3
@@ -21,17 +21,17 @@ use App\Core\Config;
 class AdminMenu
 {
     /**
-     * @var LoginService Sluba pro ovìøení pøihlášení uivatele
+     * @var LoginService SluÅ¾ba pro ovÄ›Å™enÃ­ pÅ™ihlÃ¡Å¡enÃ­ uÅ¾ivatele
      */
     private LoginService $authService;
 
     /**
-     * @var string Základní URL aplikace
+     * @var string ZÃ¡kladnÃ­ URL aplikace
      */
     private string $baseUrl;
 
     /**
-     * @param LoginService $authService Sluba pro autentizaci uivatelù
+     * @param LoginService $authService SluÅ¾ba pro autentizaci uÅ¾ivatelÅ¯
      */
     public function __construct(LoginService $authService)
     {
@@ -40,16 +40,16 @@ class AdminMenu
     }
 
     /**
-     * Vykreslí navigaèní menu administraèního rozhraní
+     * VykreslÃ­ navigaÄnÃ­ menu administraÄnÃ­ho rozhranÃ­
      *
-     * Generuje HTML menu s odkazy na hlavní sekce administrace.
-     * Pokud uivatel není pøihlášen, vrátí prázdnı øetìzec.
+     * Generuje HTML menu s odkazy na hlavnÃ­ sekce administrace.
+     * Pokud uÅ¾ivatel nenÃ­ pÅ™ihlÃ¡Å¡en, vrÃ¡tÃ­ prÃ¡zdnÃ½ Å™etÄ›zec.
      *
-     * @return string HTML kód menu nebo prázdnı øetìzec
+     * @return string HTML kÃ³d menu nebo prÃ¡zdnÃ½ Å™etÄ›zec
      *
      * @example
      * $menu = $adminMenu->render();
-     * echo $menu; // vypíše navigaèní menu
+     * echo $menu; // vypÃ­Å¡e navigaÄnÃ­ menu
      */
     public function render(): string
     {
@@ -78,10 +78,10 @@ HTML;
     }
 
     /**
-     * Pøeloí textovı klíè pomocí konfiguraèního systému
+     * PÅ™eloÅ¾Ã­ textovÃ½ klÃ­Ä pomocÃ­ konfiguraÄnÃ­ho systÃ©mu
      *
-     * @param string $key Klíè pro pøeklad
-     * @return string Pøeloenı text
+     * @param string $key KlÃ­Ä pro pÅ™eklad
+     * @return string PÅ™eloÅ¾enÃ½ text
      */
     private function translate(string $key): string
     {

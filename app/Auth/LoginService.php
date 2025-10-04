@@ -7,6 +7,8 @@ namespace App\Auth;
 use App\Database\DatabaseConnection;
 use App\Security\CsrfProtection;
 use App\Session\SessionManager;
+use App\Core\Config;
+
 
 /**
  * Služba pro správu přihlašování a autentizace uživatelů
@@ -50,7 +52,7 @@ class LoginService
     public function authenticate(string $username, string $password, string $csrfToken): bool
     {
         if (!$this->csrf->validateToken($csrfToken)) {
-            //throw new \RuntimeException('Neplatný CSRF token');
+
 			throw new \RuntimeException(Config::text('messages.invalid_csrf'));
         }
 

@@ -8,11 +8,11 @@ use App\Auth\LoginService;
 use App\Core\Config;
 
 /**
- * Tøída pro správu layoutu administraèního rozhraní
+ * TÅ™Ã­da pro sprÃ¡vu layoutu administraÄnÃ­ho rozhranÃ­
  *
- * Poskytuje metody pro obalení obsahu administraèních stránek
- * do kompletního HTML layoutu vèetnì menu, titulku a stylù.
- * Automaticky øeší lokalizaci defaultního titulku.
+ * Poskytuje metody pro obalenÃ­ obsahu administraÄnÃ­ch strÃ¡nek
+ * do kompletnÃ­ho HTML layoutu vÄetnÄ› menu, titulku a stylÅ¯.
+ * Automaticky Å™eÅ¡Ã­ lokalizaci defaultnÃ­ho titulku.
  *
  * @package App\Core
  * @author KRS3
@@ -21,8 +21,8 @@ use App\Core\Config;
 class AdminLayout
 {
     /**
-     * @param LoginService $authService Sluba pro autentizaci uivatelù
-     * @param string $baseUrl Základní URL aplikace
+     * @param LoginService $authService SluÅ¾ba pro autentizaci uÅ¾ivatelÅ¯
+     * @param string $baseUrl ZÃ¡kladnÃ­ URL aplikace
      */
     public function __construct(
         private LoginService $authService,
@@ -30,24 +30,24 @@ class AdminLayout
     ) {}
 
     /**
-     * Obalí obsah administraèní stránky do kompletního HTML layoutu
+     * ObalÃ­ obsah administraÄnÃ­ strÃ¡nky do kompletnÃ­ho HTML layoutu
      *
-     * Vytvoøí kompletní HTML stránku s admin menu, titulkem a styly.
-     * Pokud není zadán titulok, pouije se lokalizovanı default z konfigurace.
+     * VytvoÅ™Ã­ kompletnÃ­ HTML strÃ¡nku s admin menu, titulkem a styly.
+     * Pokud nenÃ­ zadÃ¡n titulok, pouÅ¾ije se lokalizovanÃ½ default z konfigurace.
      *
-     * @param string $content HTML obsah stránky
-     * @param string $title Titulok stránky (prázdnı = pouije se defaultní lokalizovanı)
-     * @return string Kompletní HTML stránka s admin layoutem
+     * @param string $content HTML obsah strÃ¡nky
+     * @param string $title Titulok strÃ¡nky (prÃ¡zdnÃ½ = pouÅ¾ije se defaultnÃ­ lokalizovanÃ½)
+     * @return string KompletnÃ­ HTML strÃ¡nka s admin layoutem
      *
      * @example
-     * $html = $adminLayout->wrap($content, 'Správa èlánkù');
-     * $html = $adminLayout->wrap($content); // pouije defaultní titulok
+     * $html = $adminLayout->wrap($content, 'SprÃ¡va ÄlÃ¡nkÅ¯');
+     * $html = $adminLayout->wrap($content); // pouÅ¾ije defaultnÃ­ titulok
      */
     public function wrap(string $content, string $title = ''): string
     {
         $menu = (new AdminMenu($this->authService))->render();
 
-        // Pokud není pøedán title, pouij lokalizovanı default
+        // Pokud nenÃ­ pÅ™edÃ¡n title, pouÅ¾ij lokalizovanÃ½ default
         if (empty($title)) {
             $title = Config::text('admin.navigation.administration');
         }
