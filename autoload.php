@@ -22,8 +22,10 @@ require_once __DIR__ . '/app/Controllers/AdminController.php';
 require_once __DIR__ . '/app/Controllers/ArticleController.php';
 require_once __DIR__ . '/app/Controllers/BaseController.php';
 require_once __DIR__ . '/app/Controllers/HomeController.php';
+require_once __DIR__ . '/app/Controllers/CategoryController.php';
 
 require_once __DIR__ . '/app/Services/ArticleService.php';
+require_once __DIR__ . '/app/Services/CategoryService.php';
 require_once __DIR__ . '/app/Core/AdminMenu.php';
 require_once __DIR__ . '/app/Core/AdminLayout.php';
 require_once __DIR__ . '/app/Core/Router.php';

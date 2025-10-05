@@ -7,20 +7,23 @@ return [
                 'home' => 'Úvodní stránka',
                 'login' => 'Přihlášení',
                 'article_detail' => 'Článek: {title}',
-                'article_not_found' => 'Článek nenalezen'
+                'article_not_found' => 'Článek nenalezen',
+                'categories' => 'Kategorie'
             ],
             'messages' => [
                 'welcome' => 'Vítejte v našem systému',
                 'no_articles' => 'Žádné články k zobrazení',
                 'article_not_found' => 'Článek nebyl nalezen',
-				'invalid_csrf' => 'Neplatný CSRF token',
-				'login_failed' => 'Neplatné přihlašovací údaje',
-				'login_success' => 'Přihlášení proběhlo úspěšně',
-				'logout_success' => 'Odhlášení proběhlo úspěšně'
+                'invalid_csrf' => 'Neplatný CSRF token',
+                'login_failed' => 'Neplatné přihlašovací údaje',
+                'login_success' => 'Přihlášení proběhlo úspěšně',
+                'logout_success' => 'Odhlášení proběhlo úspěšně',
+                'category_not_found' => 'Kategorie nebyla nalezena'
             ],
             'navigation' => [
                 'home' => 'Úvod',
                 'articles' => 'Články',
+                'categories' => 'Kategorie',
                 'admin' => 'Administrace',
                 'login' => 'Přihlásit',
                 'logout' => 'Odhlásit',
@@ -31,6 +34,7 @@ return [
                     'administration' => 'Administrace',
                     'dashboard' => 'Dashboard',
                     'articles' => 'Články',
+                    'categories' => 'Kategorie',
                     'gallery' => 'Galerie',
                     'users' => 'Uživatelé',
                     'settings' => 'Nastavení'
@@ -39,6 +43,7 @@ return [
                     'administration' => 'Administrace',
                     'quick_actions' => 'Rychlé akce',
                     'manage_articles' => 'Správa článků',
+                    'manage_categories' => 'Správa kategorií',
                     'manage_gallery' => 'Správa galerie',
                     'manage_users' => 'Správa uživatelů'
                 ],
@@ -46,7 +51,9 @@ return [
                     'create' => 'Vytvořit',
                     'edit' => 'Upravit',
                     'delete' => 'Smazat',
-                    'save' => 'Uložit'
+                    'save' => 'Uložit',
+                    'cancel' => 'Zrušit',
+                    'back' => 'Zpět'
                 ],
                 'messages' => [
                     'created' => ' byl úspěšně vytvořen',
@@ -67,6 +74,7 @@ return [
                         'excerpt' => 'Úvodní text',
                         'content' => 'Obsah článku',
                         'status' => 'Stav',
+                        'categories' => 'Kategorie',
                         'create_button' => 'Vytvořit článek',
                         'save_button' => 'Uložit změny',
                         'cancel' => 'Zrušit',
@@ -117,6 +125,61 @@ return [
                         'create_first' => 'Vytvořit první článek'
                     ]
                 ],
+                'categories' => [
+                    'manage' => 'Správa kategorií',
+                    'create' => 'Vytvořit kategorii',
+                    'edit' => 'Upravit kategorii',
+
+                    // Formulářové prvky
+                    'form' => [
+                        'name' => 'Název kategorie',
+                        'description' => 'Popis',
+                        'parent' => 'Nadřazená kategorie',
+                        'no_parent' => 'Žádná (hlavní kategorie)',
+                        'create_button' => 'Vytvořit kategorii',
+                        'save_button' => 'Uložit změny',
+                        'cancel' => 'Zrušit'
+                    ],
+
+                    // Tabulka
+                    'table' => [
+                        'name' => 'Název',
+                        'slug' => 'Slug',
+                        'description' => 'Popis',
+                        'actions' => 'Akce'
+                    ],
+
+                    // Akce
+                    'actions' => [
+                        'edit' => 'Upravit',
+                        'delete' => 'Smazat'
+                    ],
+
+                    // Potvrzovací dialogy
+                    'confirm' => [
+                        'delete' => 'Opravdu chcete smazat kategorii'
+                    ],
+
+                    // Zprávy specifické pro kategorie
+                    'messages' => [
+                        'created' => 'Kategorie byla úspěšně vytvořena',
+                        'updated' => 'Kategorie byla úspěšně aktualizována',
+                        'deleted' => 'Kategorie byla úspěšně smazána',
+                        'error' => 'Došlo k chybě',
+                        'empty' => 'Žádné kategorie',
+                        'empty_text' => 'Zatím nemáte žádné kategorie.',
+                        'create_first' => 'Vytvořit první kategorii'
+                    ]
+                ],
+                'layout' => [
+                    'administration' => 'Administrace',
+                    'articles' => 'Články',
+                    'categories' => 'Kategorie',
+                    'gallery' => 'Galerie',
+                    'users' => 'Uživatelé',
+                    'logout' => 'Odhlásit se',
+                    'all_rights_reserved' => 'Všechna práva vyhrazena.'
+                ]
             ],
             'article' => [
                 'author' => 'Autor',
@@ -124,42 +187,53 @@ return [
                 'read_more' => 'Číst více',
                 'back_to_articles' => 'Zpět na seznam článků',
                 'no_articles' => 'Žádné články k zobrazení',
-                'error_loading' => 'Chyba při načítání článku'
+                'error_loading' => 'Chyba při načítání článku',
+                'categories' => 'Kategorie',
+                'no_categories' => 'Bez kategorie'
             ],
             'ui' => [
                 'read_more' => 'Číst více',
                 'discover_articles' => 'Objevte naše nejnovější články',
                 'author' => 'Autor',
                 'back_to_home' => 'Zpět na úvodní stránku',
-				'login' => 'Přihlášení',
-				'username' => 'Uživatelské jméno',
-				'password' => 'Heslo',
+                'login' => 'Přihlášení',
+                'username' => 'Uživatelské jméno',
+                'password' => 'Heslo',
+                'search' => 'Hledat',
+                'filter' => 'Filtrovat',
+                'all' => 'Vše'
             ],
-			'errors' => [
-				'login_failed' => 'Neplatné přihlašovací údaje',
-			    'csrf' => 'Neplatný CSRF token',
-			    'invalid_request' => 'Neplatný požadavek',
-			]
+            'errors' => [
+                'login_failed' => 'Neplatné přihlašovací údaje',
+                'csrf' => 'Neplatný CSRF token',
+                'invalid_request' => 'Neplatný požadavek',
+                'not_found' => 'Stránka nenalezena',
+                'server_error' => 'Chyba serveru',
+                'forbidden' => 'Přístup odepřen'
+            ]
         ],
         'en' => [
             'pages' => [
                 'home' => 'Homepage',
                 'login' => 'Login',
                 'article_detail' => 'Article: {title}',
-                'article_not_found' => 'Article not found'
+                'article_not_found' => 'Article not found',
+                'categories' => 'Categories'
             ],
             'messages' => [
                 'welcome' => 'Welcome to our system',
                 'no_articles' => 'No articles to display',
                 'article_not_found' => 'Article not found',
-				'invalid_csrf' => 'Invalid CSRF token',
-				'login_failed' => 'Invalid login credentials',
-				'login_success' => 'Login successful',
-				'logout_success' => 'Logout successful',
-			],
+                'invalid_csrf' => 'Invalid CSRF token',
+                'login_failed' => 'Invalid login credentials',
+                'login_success' => 'Login successful',
+                'logout_success' => 'Logout successful',
+                'category_not_found' => 'Category not found'
+            ],
             'navigation' => [
                 'home' => 'Home',
                 'articles' => 'Articles',
+                'categories' => 'Categories',
                 'admin' => 'Administration',
                 'login' => 'Login',
                 'logout' => 'Logout',
@@ -170,6 +244,7 @@ return [
                     'administration' => 'Administration',
                     'dashboard' => 'Dashboard',
                     'articles' => 'Articles',
+                    'categories' => 'Categories',
                     'gallery' => 'Gallery',
                     'users' => 'Users',
                     'settings' => 'Settings'
@@ -178,6 +253,7 @@ return [
                     'administration' => 'Administration',
                     'quick_actions' => 'Quick Actions',
                     'manage_articles' => 'Manage Articles',
+                    'manage_categories' => 'Manage Categories',
                     'manage_gallery' => 'Manage Gallery',
                     'manage_users' => 'Manage Users'
                 ],
@@ -185,7 +261,9 @@ return [
                     'create' => 'Create',
                     'edit' => 'Edit',
                     'delete' => 'Delete',
-                    'save' => 'Save'
+                    'save' => 'Save',
+                    'cancel' => 'Cancel',
+                    'back' => 'Back'
                 ],
                 'messages' => [
                     'created' => ' was successfully created',
@@ -206,6 +284,7 @@ return [
                         'excerpt' => 'Excerpt',
                         'content' => 'Content',
                         'status' => 'Status',
+                        'categories' => 'Categories',
                         'create_button' => 'Create Article',
                         'save_button' => 'Save Changes',
                         'cancel' => 'Cancel',
@@ -256,6 +335,61 @@ return [
                         'create_first' => 'Create first article'
                     ]
                 ],
+                'categories' => [
+                    'manage' => 'Manage Categories',
+                    'create' => 'Create Category',
+                    'edit' => 'Edit Category',
+
+                    // Form elements
+                    'form' => [
+                        'name' => 'Category Name',
+                        'description' => 'Description',
+                        'parent' => 'Parent Category',
+                        'no_parent' => 'None (main category)',
+                        'create_button' => 'Create Category',
+                        'save_button' => 'Save Changes',
+                        'cancel' => 'Cancel'
+                    ],
+
+                    // Table
+                    'table' => [
+                        'name' => 'Name',
+                        'slug' => 'Slug',
+                        'description' => 'Description',
+                        'actions' => 'Actions'
+                    ],
+
+                    // Actions
+                    'actions' => [
+                        'edit' => 'Edit',
+                        'delete' => 'Delete'
+                    ],
+
+                    // Confirmation dialogs
+                    'confirm' => [
+                        'delete' => 'Are you sure you want to delete the category'
+                    ],
+
+                    // Messages specific for categories
+                    'messages' => [
+                        'created' => 'Category was successfully created',
+                        'updated' => 'Category was successfully updated',
+                        'deleted' => 'Category was successfully deleted',
+                        'error' => 'An error occurred',
+                        'empty' => 'No categories',
+                        'empty_text' => 'You don\'t have any categories yet.',
+                        'create_first' => 'Create first category'
+                    ]
+                ],
+                'layout' => [
+                    'administration' => 'Administration',
+                    'articles' => 'Articles',
+                    'categories' => 'Categories',
+                    'gallery' => 'Gallery',
+                    'users' => 'Users',
+                    'logout' => 'Logout',
+                    'all_rights_reserved' => 'All rights reserved.'
+                ]
             ],
             'article' => [
                 'author' => 'Author',
@@ -263,42 +397,53 @@ return [
                 'read_more' => 'Read more',
                 'back_to_articles' => 'Back to articles',
                 'no_articles' => 'No articles to display',
-                'error_loading' => 'Error loading article'
+                'error_loading' => 'Error loading article',
+                'categories' => 'Categories',
+                'no_categories' => 'No categories'
             ],
             'ui' => [
-				'read_more' => 'Read more',
-				'discover_articles' => 'Discover our latest articles',
-				'author' => 'Author',
-				'back_to_home' => 'Back to homepage',
-				'login' => 'Login',
-				'username' => 'Username',
-				'password' => 'Password',
+                'read_more' => 'Read more',
+                'discover_articles' => 'Discover our latest articles',
+                'author' => 'Author',
+                'back_to_home' => 'Back to homepage',
+                'login' => 'Login',
+                'username' => 'Username',
+                'password' => 'Password',
+                'search' => 'Search',
+                'filter' => 'Filter',
+                'all' => 'All'
             ],
-			'errors' => [
-			    'login_failed' => 'Invalid login credentials',
-			    'csrf' => 'Invalid CSRF token',
-			    'invalid_request' => 'Invalid request'
-			],
+            'errors' => [
+                'login_failed' => 'Invalid login credentials',
+                'csrf' => 'Invalid CSRF token',
+                'invalid_request' => 'Invalid request',
+                'not_found' => 'Page not found',
+                'server_error' => 'Server error',
+                'forbidden' => 'Access denied'
+            ]
         ],
         'de' => [
             'pages' => [
                 'home' => 'Startseite',
                 'login' => 'Anmeldung',
                 'article_detail' => 'Artikel: {title}',
-                'article_not_found' => 'Artikel nicht gefunden'
+                'article_not_found' => 'Artikel nicht gefunden',
+                'categories' => 'Kategorien'
             ],
             'messages' => [
                 'welcome' => 'Willkommen in unserem System',
                 'no_articles' => 'Keine Artikel zum Anzeigen',
                 'article_not_found' => 'Artikel nicht gefunden',
-				'invalid_csrf' => 'Ungültiges CSRF-Token',
-				'login_failed' => 'Ungültige Anmeldedaten',
-				'login_success' => 'Anmeldung erfolgreich',
-				'logout_success' => 'Abmeldung erfolgreich',
+                'invalid_csrf' => 'Ungültiges CSRF-Token',
+                'login_failed' => 'Ungültige Anmeldedaten',
+                'login_success' => 'Anmeldung erfolgreich',
+                'logout_success' => 'Abmeldung erfolgreich',
+                'category_not_found' => 'Kategorie nicht gefunden'
             ],
             'navigation' => [
                 'home' => 'Startseite',
                 'articles' => 'Artikel',
+                'categories' => 'Kategorien',
                 'admin' => 'Administration',
                 'login' => 'Anmelden',
                 'logout' => 'Abmelden',
@@ -309,6 +454,7 @@ return [
                     'administration' => 'Administration',
                     'dashboard' => 'Dashboard',
                     'articles' => 'Artikel',
+                    'categories' => 'Kategorien',
                     'gallery' => 'Galerie',
                     'users' => 'Benutzer',
                     'settings' => 'Einstellungen'
@@ -317,6 +463,7 @@ return [
                     'administration' => 'Administration',
                     'quick_actions' => 'Schnellaktionen',
                     'manage_articles' => 'Artikel verwalten',
+                    'manage_categories' => 'Kategorien verwalten',
                     'manage_gallery' => 'Galerie verwalten',
                     'manage_users' => 'Benutzer verwalten'
                 ],
@@ -324,7 +471,9 @@ return [
                     'create' => 'Erstellen',
                     'edit' => 'Bearbeiten',
                     'delete' => 'Löschen',
-                    'save' => 'Speichern'
+                    'save' => 'Speichern',
+                    'cancel' => 'Abbrechen',
+                    'back' => 'Zurück'
                 ],
                 'messages' => [
                     'created' => ' wurde erfolgreich erstellt',
@@ -345,6 +494,7 @@ return [
                         'excerpt' => 'Auszug',
                         'content' => 'Inhalt',
                         'status' => 'Status',
+                        'categories' => 'Kategorien',
                         'create_button' => 'Artikel erstellen',
                         'save_button' => 'Änderungen speichern',
                         'cancel' => 'Abbrechen',
@@ -395,6 +545,61 @@ return [
                         'create_first' => 'Ersten Artikel erstellen'
                     ]
                 ],
+                'categories' => [
+                    'manage' => 'Kategorien verwalten',
+                    'create' => 'Kategorie erstellen',
+                    'edit' => 'Kategorie bearbeiten',
+
+                    // Formularelemente
+                    'form' => [
+                        'name' => 'Kategoriename',
+                        'description' => 'Beschreibung',
+                        'parent' => 'Übergeordnete Kategorie',
+                        'no_parent' => 'Keine (Hauptkategorie)',
+                        'create_button' => 'Kategorie erstellen',
+                        'save_button' => 'Änderungen speichern',
+                        'cancel' => 'Abbrechen'
+                    ],
+
+                    // Tabelle
+                    'table' => [
+                        'name' => 'Name',
+                        'slug' => 'Slug',
+                        'description' => 'Beschreibung',
+                        'actions' => 'Aktionen'
+                    ],
+
+                    // Aktionen
+                    'actions' => [
+                        'edit' => 'Bearbeiten',
+                        'delete' => 'Löschen'
+                    ],
+
+                    // Bestätigungsdialoge
+                    'confirm' => [
+                        'delete' => 'Möchten Sie die Kategorie wirklich löschen'
+                    ],
+
+                    // Nachrichten spezifisch für Kategorien
+                    'messages' => [
+                        'created' => 'Kategorie wurde erfolgreich erstellt',
+                        'updated' => 'Kategorie wurde erfolgreich aktualisiert',
+                        'deleted' => 'Kategorie wurde erfolgreich gelöscht',
+                        'error' => 'Ein Fehler ist aufgetreten',
+                        'empty' => 'Keine Kategorien',
+                        'empty_text' => 'Sie haben noch keine Kategorien.',
+                        'create_first' => 'Erste Kategorie erstellen'
+                    ]
+                ],
+                'layout' => [
+                    'administration' => 'Administration',
+                    'articles' => 'Artikel',
+                    'categories' => 'Kategorien',
+                    'gallery' => 'Galerie',
+                    'users' => 'Benutzer',
+                    'logout' => 'Abmelden',
+                    'all_rights_reserved' => 'Alle Rechte vorbehalten.'
+                ]
             ],
             'article' => [
                 'author' => 'Autor',
@@ -402,22 +607,30 @@ return [
                 'read_more' => 'Weiterlesen',
                 'back_to_articles' => 'Zurück zur Artikelübersicht',
                 'no_articles' => 'Keine Artikel zum Anzeigen',
-                'error_loading' => 'Fehler beim Laden des Artikels'
+                'error_loading' => 'Fehler beim Laden des Artikels',
+                'categories' => 'Kategorien',
+                'no_categories' => 'Keine Kategorien'
             ],
             'ui' => [
-				'read_more' => 'Weiterlesen',
-				'discover_articles' => 'Entdecken Sie unsere neuesten Artikel',
-				'author' => 'Autor',
-				'back_to_home' => 'Zurück zur Startseite',
-				'login' => 'Anmeldung',
-				'username' => 'Benutzername',
-				'password' => 'Passwort',            ],
-	        ],
-			'errors' => [
-			    'login_failed' => 'Ungültige Anmeldedaten',
-			    'csrf' => 'Ungültiges CSRF-Token',
-			    'invalid_request' => 'Ungültige Anfrage'
-			],
-
+                'read_more' => 'Weiterlesen',
+                'discover_articles' => 'Entdecken Sie unsere neuesten Artikel',
+                'author' => 'Autor',
+                'back_to_home' => 'Zurück zur Startseite',
+                'login' => 'Anmeldung',
+                'username' => 'Benutzername',
+                'password' => 'Passwort',
+                'search' => 'Suchen',
+                'filter' => 'Filtern',
+                'all' => 'Alle'
+            ],
+            'errors' => [
+                'login_failed' => 'Ungültige Anmeldedaten',
+                'csrf' => 'Ungültiges CSRF-Token',
+                'invalid_request' => 'Ungültige Anfrage',
+                'not_found' => 'Seite nicht gefunden',
+                'server_error' => 'Serverfehler',
+                'forbidden' => 'Zugriff verweigert'
+            ]
+        ]
     ],
 ];

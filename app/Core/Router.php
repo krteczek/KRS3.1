@@ -4,21 +4,30 @@ declare(strict_types=1);
 
 namespace App\Core;
 
+use App\Controllers\ArticleController;
+use App\Controllers\CategoryController;
+use App\Controllers\HomeController;
+use App\Controllers\AuthController;
+use App\Controllers\AdminController;
+use App\Services\ArticleService;
+use App\Services\CategoryService;
 use App\Auth\LoginService;
 use App\Database\DatabaseConnection;
 use App\Security\CsrfProtection;
-use App\Controllers\AuthController;
-use App\Controllers\AdminController;
-use App\Controllers\ArticleController;
-use App\Controllers\HomeController;
-use App\Services\ArticleService;
 
-
-
+/**
+ * Router pro zpracování HTTP požadavků
+ *
+ * @package App\Core
+ * @author KRS3
+ * @version 1.1
+ */
 class Router
 {
     private string $baseUrl;
     private Template $template;
+    private ArticleService $articleService;
+    private CategoryService $categoryService;
 
     public function __construct(
         private LoginService $authService,
@@ -28,6 +37,10 @@ class Router
     ) {
         $this->baseUrl = Config::site('base_path', '');
         $this->template = new Template();
+
+        // Inicializace služeb
+        $this->articleService = new ArticleService($db);
+        $this->categoryService = new CategoryService($db);
     }
 
     public function handleRequest(string $path, array $urlParts): string
@@ -60,22 +73,22 @@ class Router
     {
         $articleService = new ArticleService($this->db);
         $homeController = new HomeController(
-			$articleService,
-			$this->template,
-			$this->baseUrl,
-			$this->authService
-			);
+            $articleService,
+            $this->template,
+            $this->baseUrl,
+            $this->authService
+        );
         return $homeController->showHomepage();
     }
 
     private function handleLogin(): string
     {
         $authController = new AuthController(
-			$this->authService,
-			$this->csrf,
-			$this->baseUrl,
-			$this->template,
-		);
+            $this->authService,
+            $this->csrf,
+            $this->baseUrl,
+            $this->template,
+        );
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $authController->processLogin();
@@ -88,11 +101,11 @@ class Router
     private function handleLogout(): string
     {
         $authController = new AuthController(
-			$this->authService,
-			$this->csrf,
-			$this->baseUrl,
-			$this->template
-		);
+            $this->authService,
+            $this->csrf,
+            $this->baseUrl,
+            $this->template
+        );
         $authController->logout();
         return '';
     }
@@ -107,8 +120,11 @@ class Router
 
         switch ($subPage) {
             case 'articles':
-                return $this->handleAdminArticles($action, $id);
-
+                $this->handleAdminArticles($action, $id);
+                return '';
+            case 'categories':
+                $this->handleAdminCategories($action, $id);
+                return '';
             case 'dashboard':
             default:
                 $adminController = new AdminController($this->authService, $this->baseUrl, $this->adminLayout);
@@ -116,11 +132,73 @@ class Router
         }
     }
 
-    private function handleAdminArticles(string $action, ?string $id): string
+    /**
+     * Zpracuje administrační požadavky pro články
+     *
+     * @param string $action Akce
+     * @param mixed $id ID článku
+     * @return void
+     */
+    private function handleAdminArticles(string $action, $id = null): void
     {
-        $articleService = new ArticleService($this->db);
-        $articleController = new ArticleController(
-            $articleService,
+        $controller = new ArticleController(
+            $this->articleService,
+            $this->authService,
+            $this->csrf,
+            $this->baseUrl,
+            $this->adminLayout,
+            $this->categoryService
+        );
+
+        switch ($action) {
+            case 'new':
+                echo $controller->showCreateForm();
+                break;
+            case 'create':
+                $controller->createArticle();
+                break;
+            case 'edit':
+                if ($id) {
+                    echo $controller->showEditForm((int)$id);
+                }
+                break;
+            case 'update':
+                if ($id) {
+                    $controller->updateArticle((int)$id);
+                }
+                break;
+            case 'delete':
+                if ($id) {
+                    $controller->deleteArticle((int)$id);
+                }
+                break;
+            case 'restore':
+                if ($id) {
+                    $controller->restoreArticle((int)$id);
+                }
+                break;
+            case 'permanent-delete':
+                if ($id) {
+                    $controller->permanentDeleteArticle((int)$id);
+                }
+                break;
+            default:
+                echo $controller->showArticles();
+                break;
+        }
+    }
+
+    /**
+     * Zpracuje administrační požadavky pro kategorie
+     *
+     * @param string $action Akce
+     * @param mixed $id ID kategorie
+     * @return void
+     */
+    private function handleAdminCategories(string $action, $id = null): void
+    {
+        $controller = new CategoryController(
+            $this->categoryService,
             $this->authService,
             $this->csrf,
             $this->baseUrl,
@@ -128,50 +206,31 @@ class Router
         );
 
         switch ($action) {
-            case 'new':
-                return $articleController->showCreateForm();
-
             case 'create':
-                $articleController->createArticle();
-                return '';
-
+                echo $controller->create();
+                break;
+            case 'store':
+                $controller->store();
+                break;
             case 'edit':
                 if ($id) {
-                    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-                        $articleController->updateArticle((int)$id);
-                        return '';
-                    }
-                    return $articleController->showEditForm((int)$id);
+                    echo $controller->edit((int)$id);
                 }
                 break;
-
+            case 'update':
+                if ($id) {
+                    $controller->update((int)$id);
+                }
+                break;
             case 'delete':
                 if ($id) {
-                    $articleController->deleteArticle((int)$id);
-                    return '';
+                    $controller->delete((int)$id);
                 }
                 break;
-
-            case 'restore':
-                if ($id) {
-                    $articleController->restoreArticle((int)$id);
-                    return '';
-                }
-                break;
-
-            case 'permanent-delete':
-                if ($id) {
-                    $articleController->permanentDeleteArticle((int)$id);
-                    return '';
-                }
-                break;
-
             default:
-                return $articleController->showArticles();
+                echo $controller->index();
+                break;
         }
-
-        header("Location: {$this->baseUrl}/admin/articles");
-        return '';
     }
 
     private function handleArticleDetail(array $urlParts): string
@@ -180,11 +239,11 @@ class Router
         if ($slug) {
             $articleService = new ArticleService($this->db);
             $homeController = new HomeController(
-				$articleService,
-				$this->template,
-				$this->baseUrl,
-				$this->authService
-			);
+                $articleService,
+                $this->template,
+                $this->baseUrl,
+                $this->authService
+            );
             return $homeController->showArticleDetail($slug);
         }
 
@@ -192,25 +251,26 @@ class Router
         return '';
     }
 
-private function handleNotFound(): string
-{
-    http_response_code(404);
-	$siteName = \App\Core\Config::site('name');
+    private function handleNotFound(): string
+    {
+        http_response_code(404);
+        $siteName = \App\Core\Config::site('name');
 
-    return $this->template->render('layouts/frontend.php', [
-        'title' => \App\Core\Config::text('pages.404', ['site_name' => \App\Core\Config::site('name')]),
-        'content' => $this->template->render('pages/404.php', [
+        return $this->template->render('layouts/frontend.php', [
+            'title' => \App\Core\Config::text('pages.404', ['site_name' => \App\Core\Config::site('name')]),
+            'content' => $this->template->render('pages/404.php', [
+                'baseUrl' => $this->baseUrl,
+                'message' => \App\Core\Config::text('messages.404'),
+                'backLinkText' => \App\Core\Config::text('ui.back_to_home'),
+                'siteName' => $siteName,
+                'user' => ['isLoggedIn' => false]
+            ]),
             'baseUrl' => $this->baseUrl,
-            'message' => \App\Core\Config::text('messages.404'),
-            'backLinkText' => \App\Core\Config::text('ui.back_to_home'),
-			'siteName' => $siteName,
-	        'user' => ['isLoggedIn' => false]
-        ]),
-        'baseUrl' => $this->baseUrl,
-        'siteName' => $siteName,
-        'user' => ['isLoggedIn' => false]
-    ]);
-}
+            'siteName' => $siteName,
+            'user' => ['isLoggedIn' => false]
+        ]);
+    }
+
     private function requireLoggedIn(): void
     {
         if (!$this->authService->isLoggedIn()) {

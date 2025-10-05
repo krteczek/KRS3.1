@@ -27,9 +27,8 @@ use App\Core\Config;
 use App\Core\Template;
 
 // ✅ NAČTENÍ KONFIGURAČNÍCH SOUBORŮ
-Config::load(__DIR__ . '/../config/config.php');
-Config::load(__DIR__ . '/../config/texts.php');
-
+App\Core\Config::load(__DIR__ . '/../config/config.php');
+App\Core\Config::load(__DIR__ . '/../config/texts.php');
 
 // ✅ ZPRACOVÁNÍ URL
 $url = $_GET['url'] ?? '';
@@ -43,17 +42,26 @@ if (empty($url)) {
 // Base URL pro odkazy v aplikaci
 $baseUrl = Config::site('base_path') ?? '';
 
-// ✅ INICIALIZACE SLUŽEB A ZÁVISLOSTÍ
-$session = new SessionManager();
-$db = new DatabaseConnection(Config::get('database'));
-$csrf = new CsrfProtection($session);
-$authService = new LoginService($db, $session, $csrf);
-$template = new Template(Config::get('templates')['dir']);
-$adminMenu = new AdminMenu($authService); // ← Předáme pouze authService
-$adminLayout = new AdminLayout($authService, $baseUrl); // ← Správné parametry
 
-// ✅ VYTVOŘENÍ A SPUŠTĚNÍ ROUTERU
-$router = new Router($authService, $db, $csrf, $adminLayout);
+// Create services
+$database = new App\Database\DatabaseConnection();
+$session = new App\Session\SessionManager();
+$csrf = new App\Security\CsrfProtection($session);
+$authService = new App\Auth\LoginService($database, $session,$csrf);
+$adminLayout = new App\Core\AdminLayout($authService, $baseUrl);
+
+// Create router (už nemusíme vytvářet ArticleService a CategoryService explicitně)
+$router = new App\Core\Router(
+    $authService,
+    $database,
+    $csrf,
+    $adminLayout
+);
+
+
+
+
+
 $urlParts = explode('/', $url);
 
 // ✅ SPRÁVA JAZYKŮ

@@ -1,10 +1,11 @@
 <?php
-//app/Controllers/ArticleController.php
+// app/Controllers/ArticleController.php
 declare(strict_types=1);
 
 namespace App\Controllers;
 
 use App\Services\ArticleService;
+use App\Services\CategoryService;
 use App\Auth\LoginService;
 use App\Security\CsrfProtection;
 use App\Core\AdminLayout;
@@ -18,7 +19,7 @@ use App\Core\Config;
  *
  * @package App\Controllers
  * @author KRS3
- * @version 3.0
+ * @version 4.0
  */
 class ArticleController
 {
@@ -28,61 +29,73 @@ class ArticleController
      * @param CsrfProtection $csrf Ochrana proti CSRF útokům
      * @param string $baseUrl Základní URL aplikace
      * @param AdminLayout $adminLayout Layout administračního rozhraní
+     * @param CategoryService $categoryService Služba pro práci s kategoriemi
      */
     public function __construct(
         private ArticleService $articleService,
         private LoginService $authService,
         private CsrfProtection $csrf,
         private string $baseUrl,
-        private AdminLayout $adminLayout
+        private AdminLayout $adminLayout,
+        private CategoryService $categoryService
     ) {}
 
-    /**
+		 /**
      * Zobrazí formulář pro vytvoření nového článku
      *
      * @return string HTML obsah formuláře
      */
-    public function showCreateForm(): string
-    {
-        $this->requireAdmin();
-        $csrfField = $this->csrf->getTokenField();
+	public function showCreateForm(): string
+	    {
+	        $this->requireAdmin();
+	        $csrfField = $this->csrf->getTokenField();
+	        $categories = $this->categoryService->getAllCategories();
+	        $categoryOptions = $this->renderCategoryOptions($categories, []);
 
-        $content = <<<HTML
-<h1>{$this->t('admin.articles.create')}</h1>
-<form method="POST" action="{$this->baseUrl}admin/articles/create" class="article-form">
-    <div class="form-group">
-        <label for="title">{$this->t('admin.articles.form.title')}:</label>
-        <input type="text" id="title" name="title" required class="form-control">
-    </div>
+	        $content = <<<HTML
+	<h1>{$this->t('admin.articles.create')}</h1>
+	<form method="POST" action="{$this->baseUrl}admin/articles/create" class="article-form">
+	    <div class="form-group">
+	        <label for="title">{$this->t('admin.articles.form.title')}:</label>
+	        <input type="text" id="title" name="title" required class="form-control">
+	    </div>
 
-    <div class="form-group">
-        <label for="excerpt">{$this->t('admin.articles.form.excerpt')}:</label>
-        <textarea id="excerpt" name="excerpt" class="form-control"></textarea>
-    </div>
+	    <div class="form-group">
+	        <label for="excerpt">{$this->t('admin.articles.form.excerpt')}:</label>
+	        <textarea id="excerpt" name="excerpt" class="form-control"></textarea>
+	    </div>
 
-    <div class="form-group">
-        <label for="content">{$this->t('admin.articles.form.content')}:</label>
-        <textarea id="content" name="content" required class="form-control"></textarea>
-    </div>
+	    <div class="form-group">
+	        <label for="content">{$this->t('admin.articles.form.content')}:</label>
+	        <textarea id="content" name="content" required class="form-control"></textarea>
+	    </div>
 
-    <div class="form-group">
-        <label for="status">{$this->t('admin.articles.form.status')}:</label>
-        <select id="status" name="status" class="form-control">
-            <option value="draft">{$this->t('admin.articles.status.draft')}</option>
-            <option value="published">{$this->t('admin.articles.status.published')}</option>
-        </select>
-    </div>
+	    <div class="form-group">
+	        <label for="categories">{$this->t('admin.articles.form.categories')}:</label>
+	        <div class="categories-checkbox-group">
+	            {$categoryOptions}
+	        </div>
+	    </div>
 
-    <div class="form-actions">
-        {$csrfField}
-        <button type="submit" class="btn btn-primary">{$this->t('admin.articles.form.create_button')}</button>
-        <a href="{$this->baseUrl}admin/articles" class="btn btn-secondary">{$this->t('admin.articles.form.cancel')}</a>
-    </div>
-</form>
+	    <div class="form-group">
+	        <label for="status">{$this->t('admin.articles.form.status')}:</label>
+	        <select id="status" name="status" class="form-control">
+	            <option value="draft">{$this->t('admin.articles.status.draft')}</option>
+	            <option value="published">{$this->t('admin.articles.status.published')}</option>
+	        </select>
+	    </div>
+
+	    <div class="form-actions">
+	        {$csrfField}
+	        <button type="submit" class="btn btn-primary">{$this->t('admin.articles.form.create_button')}</button>
+	        <a href="{$this->baseUrl}admin/articles" class="btn btn-secondary">{$this->t('admin.articles.form.cancel')}</a>
+	    </div>
+	</form>
 HTML;
 
         return $this->adminLayout->wrap($content, $this->t('admin.articles.create'));
     }
+
 
     /**
      * Zpracuje vytvoření nového článku
@@ -109,6 +122,11 @@ HTML;
                 'author_id' => $user['id'],
                 'status' => $_POST['status'] ?? 'draft'
             ]);
+
+            // Přiřazení kategorií k článku
+            $categoryIds = $_POST['categories'] ?? [];
+            $this->categoryService->assignCategoriesToArticle($articleId, $categoryIds);
+
 
             header("Location: {$this->baseUrl}admin/articles?created=1");
             exit;
@@ -296,6 +314,13 @@ HTML;
 
         $csrfField = $this->csrf->getTokenField();
 
+		// Načtení kategorií článku
+        $articleCategories = $this->categoryService->getCategoriesForArticle($id);
+        $selectedCategoryIds = array_column($articleCategories, 'id');
+
+        $categories = $this->categoryService->getAllCategories();
+        $categoryOptions = $this->renderCategoryOptions($categories, $selectedCategoryIds);
+
         // Zajistíme, že hodnoty nejsou null
         $title = $article['title'] ?? '';
         $excerpt = $article['excerpt'] ?? '';
@@ -324,6 +349,13 @@ HTML;
         <label for="title">{$this->t('admin.articles.form.title')}:</label>
         <input type="text" id="title" name="title" value="{$this->escape($title)}" required>
     </div>
+
+	<div class="form-group">
+	    <label for="categories">{$this->t('admin.articles.form.categories')}:</label>
+	    <div class="categories-checkbox-group">
+	        {$categoryOptions}
+	    </div>
+	</div>
 
     <div class="form-group">
         <label for="excerpt">{$this->t('admin.articles.form.excerpt')}:</label>
@@ -378,6 +410,11 @@ HTML;
             ]);
 
             if ($success) {
+				// Aktualizace kategorií článku
+                $categoryIds = $_POST['categories'] ?? [];
+                $this->categoryService->assignCategoriesToArticle($id, $categoryIds);
+
+
                 header("Location: {$this->baseUrl}admin/articles/edit/{$id}?saved=1");
             } else {
                 header("Location: {$this->baseUrl}admin/articles/edit/{$id}?error=1");
@@ -389,6 +426,31 @@ HTML;
             exit;
         }
     }
+
+
+    /**
+     * Vykreslí checkboxy pro výběr kategorií
+     *
+     * @param array $categories Seznam všech kategorií
+     * @param array $selectedIds Pole ID vybraných kategorií
+     * @return string HTML obsah checkboxů
+     */
+    private function renderCategoryOptions(array $categories, array $selectedIds): string
+    {
+        $html = '';
+        foreach ($categories as $category) {
+            $checked = in_array($category['id'], $selectedIds) ? 'checked' : '';
+            $html .= <<<HTML
+<div class="checkbox-group">
+    <input type="checkbox" id="category_{$category['id']}" name="categories[]" value="{$category['id']}" {$checked}>
+    <label for="category_{$category['id']}">{$this->escape($category['name'])}</label>
+</div>
+HTML;
+        }
+        return $html;
+    }
+
+
 
     /**
      * Přesune článek do koše (soft delete)
