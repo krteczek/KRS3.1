@@ -1,0 +1,512 @@
+[2025-10-09 23:20:25] EXCEPTION: Uncaught exception - Exception: Call to a member function error() on null
+#0 C:\xampp\htdocs\KRS3\app\Core\Router.php(186): App\Controllers\ArticleController->showArticles()
+#1 C:\xampp\htdocs\KRS3\app\Core\Router.php(123): App\Core\Router->handleAdminArticles('', NULL)
+#2 C:\xampp\htdocs\KRS3\app\Core\Router.php(62): App\Core\Router->handleAdmin(Array)
+#3 C:\xampp\htdocs\KRS3\public\index.php(93): App\Core\Router->handleRequest('admin/articles', Array)
+#4 {main}
+[2025-10-09 23:28:39] ERROR: Total articles: 0
+[2025-10-09 23:35:24] INFO: Total articles: 0
+[2025-10-09 23:38:08] INFO: Total articles: 0
+[2025-10-09 23:44:43] INFO: Total articles: 17
+[2025-10-09 23:44:43] INFO: Article 0: Sentinel-6B je vybalen  hh
+[2025-10-09 23:44:43] INFO: Categories: Nezařazeno
+[2025-10-09 23:44:43] INFO: Category IDs: 1
+[2025-10-09 23:44:43] INFO: Article 1: khuzjgfr
+[2025-10-09 23:44:43] INFO: Categories: galerie života
+[2025-10-09 23:44:43] INFO: Category IDs: 5
+[2025-10-09 23:44:43] INFO: Article 2: vcxbcvbv ,. ,nb nvbnnn
+[2025-10-09 23:44:43] INFO: Categories: Novinky
+[2025-10-09 23:44:43] INFO: Category IDs: 8
+[2025-10-09 23:44:43] INFO: Article 3: vcxbcvbv ,. ,nb nvb
+[2025-10-09 23:44:43] INFO: Categories: Nezařazeno
+[2025-10-09 23:44:43] INFO: Category IDs: 1
+[2025-10-09 23:44:43] INFO: Article 4: Cassini potvrdila komplexní chemické reakce v oceánu na Enceladu
+[2025-10-09 23:44:43] INFO: Categories: none
+[2025-10-09 23:44:43] INFO: Category IDs: none
+[2025-10-09 23:44:43] INFO: Article 5: Kosmické Brno | 12 – Frentech Aerospace / Podvozky SpaceRideru 
+[2025-10-09 23:44:43] INFO: Categories: none
+[2025-10-09 23:44:43] INFO: Category IDs: none
+[2025-10-09 23:44:43] INFO: Article 6: Zářijová Kosmoschůzka 2025
+[2025-10-09 23:44:43] INFO: Categories: none
+[2025-10-09 23:44:43] INFO: Category IDs: none
+[2025-10-09 23:44:43] INFO: Article 7: V ČR vznikl materiál pro 3D tisk vhodný pro kosmický prostor 
+[2025-10-09 23:44:43] INFO: Categories: none
+[2025-10-09 23:44:43] INFO: Category IDs: none
+[2025-10-09 23:44:43] INFO: Article 8: Cassini potvrdila komplexní chemické reakce v oceánu na Enceladu
+[2025-10-09 23:44:43] INFO: Categories: none
+[2025-10-09 23:44:43] INFO: Category IDs: none
+[2025-10-09 23:44:43] INFO: Article 9: Firma Avio získala kontrakt od ESA na demonstrátor znovupoužitelného horního stupně
+[2025-10-09 23:44:43] INFO: Categories: Nezařazeno
+[2025-10-09 23:44:43] INFO: Category IDs: 1
+[2025-10-09 23:44:43] INFO: Article 10: Kosmotýdeník 681 (29. 9. – 5. 10.)
+[2025-10-09 23:44:43] INFO: Categories: none
+[2025-10-09 23:44:43] INFO: Category IDs: none
+[2025-10-09 23:44:43] INFO: Article 11: LVM-3 – CMS-02 (GSAT-7R)
+[2025-10-09 23:44:43] INFO: Categories: none
+[2025-10-09 23:44:43] INFO: Category IDs: none
+[2025-10-09 23:44:43] INFO: Article 12: Sentinel-6B je vybalen 
+[2025-10-09 23:44:43] INFO: Categories: none
+[2025-10-09 23:44:43] INFO: Category IDs: none
+[2025-10-09 23:44:43] INFO: Article 13: Seznam nově zvolených poslanců
+[2025-10-09 23:44:43] INFO: Categories: Technologie
+[2025-10-09 23:44:43] INFO: Category IDs: 2
+[2025-10-09 23:44:43] INFO: Article 14: Prohlížeč Firefox
+[2025-10-09 23:44:43] INFO: Categories: none
+[2025-10-09 23:44:43] INFO: Category IDs: none
+[2025-10-09 23:44:43] INFO: Article 15: Soběstačný domov
+[2025-10-09 23:44:43] INFO: Categories: none
+[2025-10-09 23:44:43] INFO: Category IDs: none
+[2025-10-09 23:44:43] INFO: Article 16: Lorem ipsum dolor sit amet consectetuer 
+[2025-10-09 23:44:43] INFO: Categories: none
+[2025-10-09 23:44:43] INFO: Category IDs: none
+[2025-10-09 23:44:53] ERROR: Error 2: Undefined variable $result in C:\xampp\htdocs\KRS3\app\Services\ArticleService.php on line 332
+[2025-10-09 23:44:53] INFO: Total articles: 0
+[2025-10-09 23:44:55] INFO: Total articles: 17
+[2025-10-09 23:44:55] INFO: Article 0: Sentinel-6B je vybalen  hh
+[2025-10-09 23:44:55] INFO: Categories: Nezařazeno
+[2025-10-09 23:44:55] INFO: Category IDs: 1
+[2025-10-09 23:44:55] INFO: Article 1: khuzjgfr
+[2025-10-09 23:44:55] INFO: Categories: galerie života
+[2025-10-09 23:44:55] INFO: Category IDs: 5
+[2025-10-09 23:44:55] INFO: Article 2: vcxbcvbv ,. ,nb nvbnnn
+[2025-10-09 23:44:55] INFO: Categories: Novinky
+[2025-10-09 23:44:55] INFO: Category IDs: 8
+[2025-10-09 23:44:55] INFO: Article 3: vcxbcvbv ,. ,nb nvb
+[2025-10-09 23:44:55] INFO: Categories: Nezařazeno
+[2025-10-09 23:44:55] INFO: Category IDs: 1
+[2025-10-09 23:44:55] INFO: Article 4: Cassini potvrdila komplexní chemické reakce v oceánu na Enceladu
+[2025-10-09 23:44:55] INFO: Categories: none
+[2025-10-09 23:44:55] INFO: Category IDs: none
+[2025-10-09 23:44:55] INFO: Article 5: Kosmické Brno | 12 – Frentech Aerospace / Podvozky SpaceRideru 
+[2025-10-09 23:44:55] INFO: Categories: none
+[2025-10-09 23:44:55] INFO: Category IDs: none
+[2025-10-09 23:44:55] INFO: Article 6: Zářijová Kosmoschůzka 2025
+[2025-10-09 23:44:55] INFO: Categories: none
+[2025-10-09 23:44:55] INFO: Category IDs: none
+[2025-10-09 23:44:55] INFO: Article 7: V ČR vznikl materiál pro 3D tisk vhodný pro kosmický prostor 
+[2025-10-09 23:44:55] INFO: Categories: none
+[2025-10-09 23:44:55] INFO: Category IDs: none
+[2025-10-09 23:44:55] INFO: Article 8: Cassini potvrdila komplexní chemické reakce v oceánu na Enceladu
+[2025-10-09 23:44:55] INFO: Categories: none
+[2025-10-09 23:44:55] INFO: Category IDs: none
+[2025-10-09 23:44:55] INFO: Article 9: Firma Avio získala kontrakt od ESA na demonstrátor znovupoužitelného horního stupně
+[2025-10-09 23:44:55] INFO: Categories: Nezařazeno
+[2025-10-09 23:44:55] INFO: Category IDs: 1
+[2025-10-09 23:44:55] INFO: Article 10: Kosmotýdeník 681 (29. 9. – 5. 10.)
+[2025-10-09 23:44:55] INFO: Categories: none
+[2025-10-09 23:44:55] INFO: Category IDs: none
+[2025-10-09 23:44:55] INFO: Article 11: LVM-3 – CMS-02 (GSAT-7R)
+[2025-10-09 23:44:55] INFO: Categories: none
+[2025-10-09 23:44:55] INFO: Category IDs: none
+[2025-10-09 23:44:55] INFO: Article 12: Sentinel-6B je vybalen 
+[2025-10-09 23:44:55] INFO: Categories: none
+[2025-10-09 23:44:55] INFO: Category IDs: none
+[2025-10-09 23:44:55] INFO: Article 13: Seznam nově zvolených poslanců
+[2025-10-09 23:44:55] INFO: Categories: Technologie
+[2025-10-09 23:44:55] INFO: Category IDs: 2
+[2025-10-09 23:44:55] INFO: Article 14: Prohlížeč Firefox
+[2025-10-09 23:44:55] INFO: Categories: none
+[2025-10-09 23:44:55] INFO: Category IDs: none
+[2025-10-09 23:44:55] INFO: Article 15: Soběstačný domov
+[2025-10-09 23:44:55] INFO: Categories: none
+[2025-10-09 23:44:55] INFO: Category IDs: none
+[2025-10-09 23:44:55] INFO: Article 16: Lorem ipsum dolor sit amet consectetuer 
+[2025-10-09 23:44:55] INFO: Categories: none
+[2025-10-09 23:44:55] INFO: Category IDs: none
+[2025-10-09 23:45:01] INFO: Total articles: 16
+[2025-10-09 23:45:01] INFO: Article 0: khuzjgfr
+[2025-10-09 23:45:01] INFO: Categories: galerie života
+[2025-10-09 23:45:01] INFO: Category IDs: 5
+[2025-10-09 23:45:01] INFO: Article 1: vcxbcvbv ,. ,nb nvbnnn
+[2025-10-09 23:45:01] INFO: Categories: Novinky
+[2025-10-09 23:45:01] INFO: Category IDs: 8
+[2025-10-09 23:45:01] INFO: Article 2: vcxbcvbv ,. ,nb nvb
+[2025-10-09 23:45:01] INFO: Categories: Nezařazeno
+[2025-10-09 23:45:01] INFO: Category IDs: 1
+[2025-10-09 23:45:01] INFO: Article 3: Cassini potvrdila komplexní chemické reakce v oceánu na Enceladu
+[2025-10-09 23:45:01] INFO: Categories: none
+[2025-10-09 23:45:01] INFO: Category IDs: none
+[2025-10-09 23:45:01] INFO: Article 4: Kosmické Brno | 12 – Frentech Aerospace / Podvozky SpaceRideru 
+[2025-10-09 23:45:01] INFO: Categories: none
+[2025-10-09 23:45:01] INFO: Category IDs: none
+[2025-10-09 23:45:01] INFO: Article 5: Zářijová Kosmoschůzka 2025
+[2025-10-09 23:45:01] INFO: Categories: none
+[2025-10-09 23:45:01] INFO: Category IDs: none
+[2025-10-09 23:45:01] INFO: Article 6: V ČR vznikl materiál pro 3D tisk vhodný pro kosmický prostor 
+[2025-10-09 23:45:01] INFO: Categories: none
+[2025-10-09 23:45:01] INFO: Category IDs: none
+[2025-10-09 23:45:01] INFO: Article 7: Cassini potvrdila komplexní chemické reakce v oceánu na Enceladu
+[2025-10-09 23:45:01] INFO: Categories: none
+[2025-10-09 23:45:01] INFO: Category IDs: none
+[2025-10-09 23:45:01] INFO: Article 8: Firma Avio získala kontrakt od ESA na demonstrátor znovupoužitelného horního stupně
+[2025-10-09 23:45:01] INFO: Categories: Nezařazeno
+[2025-10-09 23:45:01] INFO: Category IDs: 1
+[2025-10-09 23:45:01] INFO: Article 9: Kosmotýdeník 681 (29. 9. – 5. 10.)
+[2025-10-09 23:45:01] INFO: Categories: none
+[2025-10-09 23:45:01] INFO: Category IDs: none
+[2025-10-09 23:45:01] INFO: Article 10: LVM-3 – CMS-02 (GSAT-7R)
+[2025-10-09 23:45:01] INFO: Categories: none
+[2025-10-09 23:45:01] INFO: Category IDs: none
+[2025-10-09 23:45:01] INFO: Article 11: Sentinel-6B je vybalen 
+[2025-10-09 23:45:01] INFO: Categories: none
+[2025-10-09 23:45:01] INFO: Category IDs: none
+[2025-10-09 23:45:01] INFO: Article 12: Seznam nově zvolených poslanců
+[2025-10-09 23:45:01] INFO: Categories: Technologie
+[2025-10-09 23:45:01] INFO: Category IDs: 2
+[2025-10-09 23:45:01] INFO: Article 13: Prohlížeč Firefox
+[2025-10-09 23:45:01] INFO: Categories: none
+[2025-10-09 23:45:01] INFO: Category IDs: none
+[2025-10-09 23:45:01] INFO: Article 14: Soběstačný domov
+[2025-10-09 23:45:01] INFO: Categories: none
+[2025-10-09 23:45:01] INFO: Category IDs: none
+[2025-10-09 23:45:01] INFO: Article 15: Lorem ipsum dolor sit amet consectetuer 
+[2025-10-09 23:45:01] INFO: Categories: none
+[2025-10-09 23:45:01] INFO: Category IDs: none
+[2025-10-09 23:45:04] ERROR: Error 2: Undefined variable $result in C:\xampp\htdocs\KRS3\app\Services\ArticleService.php on line 332
+[2025-10-09 23:45:04] INFO: Total articles: 1
+[2025-10-09 23:45:04] INFO: Article 0: Sentinel-6B je vybalen  hh
+[2025-10-09 23:45:04] INFO: Categories: Nezařazeno
+[2025-10-09 23:45:04] INFO: Category IDs: 1
+[2025-10-09 23:46:08] INFO: Total articles: 16
+[2025-10-09 23:46:08] INFO: Article 0: khuzjgfr
+[2025-10-09 23:46:08] INFO: Categories: galerie života
+[2025-10-09 23:46:08] INFO: Category IDs: 5
+[2025-10-09 23:46:08] INFO: Article 1: vcxbcvbv ,. ,nb nvbnnn
+[2025-10-09 23:46:08] INFO: Categories: Novinky
+[2025-10-09 23:46:08] INFO: Category IDs: 8
+[2025-10-09 23:46:08] INFO: Article 2: vcxbcvbv ,. ,nb nvb
+[2025-10-09 23:46:08] INFO: Categories: Nezařazeno
+[2025-10-09 23:46:08] INFO: Category IDs: 1
+[2025-10-09 23:46:08] INFO: Article 3: Cassini potvrdila komplexní chemické reakce v oceánu na Enceladu
+[2025-10-09 23:46:08] INFO: Categories: none
+[2025-10-09 23:46:08] INFO: Category IDs: none
+[2025-10-09 23:46:08] INFO: Article 4: Kosmické Brno | 12 – Frentech Aerospace / Podvozky SpaceRideru 
+[2025-10-09 23:46:08] INFO: Categories: none
+[2025-10-09 23:46:08] INFO: Category IDs: none
+[2025-10-09 23:46:08] INFO: Article 5: Zářijová Kosmoschůzka 2025
+[2025-10-09 23:46:08] INFO: Categories: none
+[2025-10-09 23:46:08] INFO: Category IDs: none
+[2025-10-09 23:46:08] INFO: Article 6: V ČR vznikl materiál pro 3D tisk vhodný pro kosmický prostor 
+[2025-10-09 23:46:08] INFO: Categories: none
+[2025-10-09 23:46:08] INFO: Category IDs: none
+[2025-10-09 23:46:08] INFO: Article 7: Cassini potvrdila komplexní chemické reakce v oceánu na Enceladu
+[2025-10-09 23:46:08] INFO: Categories: none
+[2025-10-09 23:46:08] INFO: Category IDs: none
+[2025-10-09 23:46:08] INFO: Article 8: Firma Avio získala kontrakt od ESA na demonstrátor znovupoužitelného horního stupně
+[2025-10-09 23:46:08] INFO: Categories: Nezařazeno
+[2025-10-09 23:46:08] INFO: Category IDs: 1
+[2025-10-09 23:46:08] INFO: Article 9: Kosmotýdeník 681 (29. 9. – 5. 10.)
+[2025-10-09 23:46:08] INFO: Categories: none
+[2025-10-09 23:46:08] INFO: Category IDs: none
+[2025-10-09 23:46:08] INFO: Article 10: LVM-3 – CMS-02 (GSAT-7R)
+[2025-10-09 23:46:08] INFO: Categories: none
+[2025-10-09 23:46:08] INFO: Category IDs: none
+[2025-10-09 23:46:08] INFO: Article 11: Sentinel-6B je vybalen 
+[2025-10-09 23:46:08] INFO: Categories: none
+[2025-10-09 23:46:08] INFO: Category IDs: none
+[2025-10-09 23:46:08] INFO: Article 12: Seznam nově zvolených poslanců
+[2025-10-09 23:46:08] INFO: Categories: Technologie
+[2025-10-09 23:46:08] INFO: Category IDs: 2
+[2025-10-09 23:46:08] INFO: Article 13: Prohlížeč Firefox
+[2025-10-09 23:46:08] INFO: Categories: none
+[2025-10-09 23:46:08] INFO: Category IDs: none
+[2025-10-09 23:46:08] INFO: Article 14: Soběstačný domov
+[2025-10-09 23:46:08] INFO: Categories: none
+[2025-10-09 23:46:08] INFO: Category IDs: none
+[2025-10-09 23:46:08] INFO: Article 15: Lorem ipsum dolor sit amet consectetuer 
+[2025-10-09 23:46:08] INFO: Categories: none
+[2025-10-09 23:46:08] INFO: Category IDs: none
+[2025-10-09 23:46:46] INFO: Total articles: 16
+[2025-10-09 23:46:46] INFO: Article 0: khuzjgfr
+[2025-10-09 23:46:46] INFO: Categories: galerie života
+[2025-10-09 23:46:46] INFO: Category IDs: 5
+[2025-10-09 23:46:46] INFO: Article 1: vcxbcvbv ,. ,nb nvbnnn
+[2025-10-09 23:46:46] INFO: Categories: Novinky
+[2025-10-09 23:46:46] INFO: Category IDs: 8
+[2025-10-09 23:46:46] INFO: Article 2: vcxbcvbv ,. ,nb nvb
+[2025-10-09 23:46:46] INFO: Categories: Nezařazeno
+[2025-10-09 23:46:46] INFO: Category IDs: 1
+[2025-10-09 23:46:46] INFO: Article 3: Cassini potvrdila komplexní chemické reakce v oceánu na Enceladu
+[2025-10-09 23:46:46] INFO: Categories: none
+[2025-10-09 23:46:46] INFO: Category IDs: none
+[2025-10-09 23:46:46] INFO: Article 4: Kosmické Brno | 12 – Frentech Aerospace / Podvozky SpaceRideru 
+[2025-10-09 23:46:46] INFO: Categories: none
+[2025-10-09 23:46:46] INFO: Category IDs: none
+[2025-10-09 23:46:46] INFO: Article 5: Zářijová Kosmoschůzka 2025
+[2025-10-09 23:46:46] INFO: Categories: none
+[2025-10-09 23:46:46] INFO: Category IDs: none
+[2025-10-09 23:46:46] INFO: Article 6: V ČR vznikl materiál pro 3D tisk vhodný pro kosmický prostor 
+[2025-10-09 23:46:46] INFO: Categories: none
+[2025-10-09 23:46:46] INFO: Category IDs: none
+[2025-10-09 23:46:46] INFO: Article 7: Cassini potvrdila komplexní chemické reakce v oceánu na Enceladu
+[2025-10-09 23:46:46] INFO: Categories: none
+[2025-10-09 23:46:46] INFO: Category IDs: none
+[2025-10-09 23:46:46] INFO: Article 8: Firma Avio získala kontrakt od ESA na demonstrátor znovupoužitelného horního stupně
+[2025-10-09 23:46:46] INFO: Categories: Nezařazeno
+[2025-10-09 23:46:46] INFO: Category IDs: 1
+[2025-10-09 23:46:46] INFO: Article 9: Kosmotýdeník 681 (29. 9. – 5. 10.)
+[2025-10-09 23:46:46] INFO: Categories: none
+[2025-10-09 23:46:46] INFO: Category IDs: none
+[2025-10-09 23:46:46] INFO: Article 10: LVM-3 – CMS-02 (GSAT-7R)
+[2025-10-09 23:46:46] INFO: Categories: none
+[2025-10-09 23:46:46] INFO: Category IDs: none
+[2025-10-09 23:46:46] INFO: Article 11: Sentinel-6B je vybalen 
+[2025-10-09 23:46:46] INFO: Categories: none
+[2025-10-09 23:46:46] INFO: Category IDs: none
+[2025-10-09 23:46:46] INFO: Article 12: Seznam nově zvolených poslanců
+[2025-10-09 23:46:46] INFO: Categories: Technologie
+[2025-10-09 23:46:46] INFO: Category IDs: 2
+[2025-10-09 23:46:46] INFO: Article 13: Prohlížeč Firefox
+[2025-10-09 23:46:46] INFO: Categories: none
+[2025-10-09 23:46:46] INFO: Category IDs: none
+[2025-10-09 23:46:46] INFO: Article 14: Soběstačný domov
+[2025-10-09 23:46:46] INFO: Categories: none
+[2025-10-09 23:46:46] INFO: Category IDs: none
+[2025-10-09 23:46:46] INFO: Article 15: Lorem ipsum dolor sit amet consectetuer 
+[2025-10-09 23:46:46] INFO: Categories: none
+[2025-10-09 23:46:46] INFO: Category IDs: none
+[2025-10-09 23:50:14] INFO: Total articles: 16
+[2025-10-09 23:50:14] INFO: Article 0: vcxbcvbv ,. ,nb nvb
+[2025-10-09 23:50:14] INFO: Categories: Nezařazeno
+[2025-10-09 23:50:14] INFO: Category IDs: 1
+[2025-10-09 23:50:14] INFO: Article 1: Kosmické Brno | 12 – Frentech Aerospace / Podvozky SpaceRideru 
+[2025-10-09 23:50:14] INFO: Categories: none
+[2025-10-09 23:50:14] INFO: Category IDs: none
+[2025-10-09 23:50:14] INFO: Article 2: Zářijová Kosmoschůzka 2025
+[2025-10-09 23:50:14] INFO: Categories: none
+[2025-10-09 23:50:14] INFO: Category IDs: none
+[2025-10-09 23:50:14] INFO: Article 3: V ČR vznikl materiál pro 3D tisk vhodný pro kosmický prostor 
+[2025-10-09 23:50:14] INFO: Categories: none
+[2025-10-09 23:50:14] INFO: Category IDs: none
+[2025-10-09 23:50:14] INFO: Article 4: Cassini potvrdila komplexní chemické reakce v oceánu na Enceladu
+[2025-10-09 23:50:14] INFO: Categories: none
+[2025-10-09 23:50:14] INFO: Category IDs: none
+[2025-10-09 23:50:14] INFO: Article 5: Firma Avio získala kontrakt od ESA na demonstrátor znovupoužitelného horního stupně
+[2025-10-09 23:50:14] INFO: Categories: Nezařazeno
+[2025-10-09 23:50:14] INFO: Category IDs: 1
+[2025-10-09 23:50:14] INFO: Article 6: Kosmotýdeník 681 (29. 9. – 5. 10.)
+[2025-10-09 23:50:14] INFO: Categories: none
+[2025-10-09 23:50:14] INFO: Category IDs: none
+[2025-10-09 23:50:14] INFO: Article 7: LVM-3 – CMS-02 (GSAT-7R)
+[2025-10-09 23:50:14] INFO: Categories: none
+[2025-10-09 23:50:14] INFO: Category IDs: none
+[2025-10-09 23:50:14] INFO: Article 8: Sentinel-6B je vybalen 
+[2025-10-09 23:50:14] INFO: Categories: none
+[2025-10-09 23:50:14] INFO: Category IDs: none
+[2025-10-09 23:50:14] INFO: Article 9: Prohlížeč Firefox
+[2025-10-09 23:50:14] INFO: Categories: none
+[2025-10-09 23:50:14] INFO: Category IDs: none
+[2025-10-09 23:50:14] INFO: Article 10: Soběstačný domov
+[2025-10-09 23:50:14] INFO: Categories: none
+[2025-10-09 23:50:14] INFO: Category IDs: none
+[2025-10-09 23:50:14] INFO: Article 11: Lorem ipsum dolor sit amet consectetuer 
+[2025-10-09 23:50:14] INFO: Categories: none
+[2025-10-09 23:50:14] INFO: Category IDs: none
+[2025-10-09 23:50:14] INFO: Article 12: khuzjgfr
+[2025-10-09 23:50:14] INFO: Categories: galerie života
+[2025-10-09 23:50:14] INFO: Category IDs: 5
+[2025-10-09 23:50:14] INFO: Article 13: vcxbcvbv ,. ,nb nvbnnn
+[2025-10-09 23:50:14] INFO: Categories: Novinky
+[2025-10-09 23:50:14] INFO: Category IDs: 8
+[2025-10-09 23:50:14] INFO: Article 14: Cassini potvrdila komplexní chemické reakce v oceánu na Enceladu
+[2025-10-09 23:50:14] INFO: Categories: none
+[2025-10-09 23:50:14] INFO: Category IDs: none
+[2025-10-09 23:50:14] INFO: Article 15: Seznam nově zvolených poslanců
+[2025-10-09 23:50:14] INFO: Categories: Technologie
+[2025-10-09 23:50:14] INFO: Category IDs: 2
+[2025-10-09 23:50:24] INFO: Total articles: 16
+[2025-10-09 23:50:24] INFO: Article 0: vcxbcvbv ,. ,nb nvb
+[2025-10-09 23:50:24] INFO: Categories: Nezařazeno
+[2025-10-09 23:50:24] INFO: Category IDs: 1
+[2025-10-09 23:50:24] INFO: Article 1: Kosmické Brno | 12 – Frentech Aerospace / Podvozky SpaceRideru 
+[2025-10-09 23:50:24] INFO: Categories: none
+[2025-10-09 23:50:24] INFO: Category IDs: none
+[2025-10-09 23:50:24] INFO: Article 2: Zářijová Kosmoschůzka 2025
+[2025-10-09 23:50:24] INFO: Categories: none
+[2025-10-09 23:50:24] INFO: Category IDs: none
+[2025-10-09 23:50:24] INFO: Article 3: V ČR vznikl materiál pro 3D tisk vhodný pro kosmický prostor 
+[2025-10-09 23:50:24] INFO: Categories: none
+[2025-10-09 23:50:24] INFO: Category IDs: none
+[2025-10-09 23:50:24] INFO: Article 4: Cassini potvrdila komplexní chemické reakce v oceánu na Enceladu
+[2025-10-09 23:50:24] INFO: Categories: none
+[2025-10-09 23:50:24] INFO: Category IDs: none
+[2025-10-09 23:50:24] INFO: Article 5: Firma Avio získala kontrakt od ESA na demonstrátor znovupoužitelného horního stupně
+[2025-10-09 23:50:24] INFO: Categories: Nezařazeno
+[2025-10-09 23:50:24] INFO: Category IDs: 1
+[2025-10-09 23:50:24] INFO: Article 6: Kosmotýdeník 681 (29. 9. – 5. 10.)
+[2025-10-09 23:50:24] INFO: Categories: none
+[2025-10-09 23:50:24] INFO: Category IDs: none
+[2025-10-09 23:50:24] INFO: Article 7: LVM-3 – CMS-02 (GSAT-7R)
+[2025-10-09 23:50:24] INFO: Categories: none
+[2025-10-09 23:50:24] INFO: Category IDs: none
+[2025-10-09 23:50:24] INFO: Article 8: Sentinel-6B je vybalen 
+[2025-10-09 23:50:24] INFO: Categories: none
+[2025-10-09 23:50:24] INFO: Category IDs: none
+[2025-10-09 23:50:24] INFO: Article 9: Prohlížeč Firefox
+[2025-10-09 23:50:24] INFO: Categories: none
+[2025-10-09 23:50:24] INFO: Category IDs: none
+[2025-10-09 23:50:24] INFO: Article 10: Soběstačný domov
+[2025-10-09 23:50:24] INFO: Categories: none
+[2025-10-09 23:50:24] INFO: Category IDs: none
+[2025-10-09 23:50:24] INFO: Article 11: Lorem ipsum dolor sit amet consectetuer 
+[2025-10-09 23:50:24] INFO: Categories: none
+[2025-10-09 23:50:24] INFO: Category IDs: none
+[2025-10-09 23:50:24] INFO: Article 12: khuzjgfr
+[2025-10-09 23:50:24] INFO: Categories: galerie života
+[2025-10-09 23:50:24] INFO: Category IDs: 5
+[2025-10-09 23:50:24] INFO: Article 13: vcxbcvbv ,. ,nb nvbnnn
+[2025-10-09 23:50:24] INFO: Categories: Novinky
+[2025-10-09 23:50:24] INFO: Category IDs: 8
+[2025-10-09 23:50:24] INFO: Article 14: Cassini potvrdila komplexní chemické reakce v oceánu na Enceladu
+[2025-10-09 23:50:24] INFO: Categories: none
+[2025-10-09 23:50:24] INFO: Category IDs: none
+[2025-10-09 23:50:24] INFO: Article 15: Seznam nově zvolených poslanců
+[2025-10-09 23:50:24] INFO: Categories: Technologie
+[2025-10-09 23:50:24] INFO: Category IDs: 2
+[2025-10-09 23:50:27] INFO: Total articles: 16
+[2025-10-09 23:50:27] INFO: Article 0: vcxbcvbv ,. ,nb nvb
+[2025-10-09 23:50:27] INFO: Categories: Nezařazeno
+[2025-10-09 23:50:27] INFO: Category IDs: 1
+[2025-10-09 23:50:27] INFO: Article 1: Kosmické Brno | 12 – Frentech Aerospace / Podvozky SpaceRideru 
+[2025-10-09 23:50:27] INFO: Categories: none
+[2025-10-09 23:50:27] INFO: Category IDs: none
+[2025-10-09 23:50:27] INFO: Article 2: Zářijová Kosmoschůzka 2025
+[2025-10-09 23:50:27] INFO: Categories: none
+[2025-10-09 23:50:27] INFO: Category IDs: none
+[2025-10-09 23:50:27] INFO: Article 3: V ČR vznikl materiál pro 3D tisk vhodný pro kosmický prostor 
+[2025-10-09 23:50:27] INFO: Categories: none
+[2025-10-09 23:50:27] INFO: Category IDs: none
+[2025-10-09 23:50:27] INFO: Article 4: Cassini potvrdila komplexní chemické reakce v oceánu na Enceladu
+[2025-10-09 23:50:27] INFO: Categories: none
+[2025-10-09 23:50:27] INFO: Category IDs: none
+[2025-10-09 23:50:27] INFO: Article 5: Firma Avio získala kontrakt od ESA na demonstrátor znovupoužitelného horního stupně
+[2025-10-09 23:50:27] INFO: Categories: Nezařazeno
+[2025-10-09 23:50:27] INFO: Category IDs: 1
+[2025-10-09 23:50:27] INFO: Article 6: Kosmotýdeník 681 (29. 9. – 5. 10.)
+[2025-10-09 23:50:27] INFO: Categories: none
+[2025-10-09 23:50:27] INFO: Category IDs: none
+[2025-10-09 23:50:27] INFO: Article 7: LVM-3 – CMS-02 (GSAT-7R)
+[2025-10-09 23:50:27] INFO: Categories: none
+[2025-10-09 23:50:27] INFO: Category IDs: none
+[2025-10-09 23:50:27] INFO: Article 8: Sentinel-6B je vybalen 
+[2025-10-09 23:50:27] INFO: Categories: none
+[2025-10-09 23:50:27] INFO: Category IDs: none
+[2025-10-09 23:50:27] INFO: Article 9: Prohlížeč Firefox
+[2025-10-09 23:50:27] INFO: Categories: none
+[2025-10-09 23:50:27] INFO: Category IDs: none
+[2025-10-09 23:50:27] INFO: Article 10: Soběstačný domov
+[2025-10-09 23:50:27] INFO: Categories: none
+[2025-10-09 23:50:27] INFO: Category IDs: none
+[2025-10-09 23:50:27] INFO: Article 11: Lorem ipsum dolor sit amet consectetuer 
+[2025-10-09 23:50:27] INFO: Categories: none
+[2025-10-09 23:50:27] INFO: Category IDs: none
+[2025-10-09 23:50:27] INFO: Article 12: khuzjgfr
+[2025-10-09 23:50:27] INFO: Categories: galerie života
+[2025-10-09 23:50:27] INFO: Category IDs: 5
+[2025-10-09 23:50:27] INFO: Article 13: vcxbcvbv ,. ,nb nvbnnn
+[2025-10-09 23:50:27] INFO: Categories: Novinky
+[2025-10-09 23:50:27] INFO: Category IDs: 8
+[2025-10-09 23:50:27] INFO: Article 14: Cassini potvrdila komplexní chemické reakce v oceánu na Enceladu
+[2025-10-09 23:50:27] INFO: Categories: none
+[2025-10-09 23:50:27] INFO: Category IDs: none
+[2025-10-09 23:50:27] INFO: Article 15: Seznam nově zvolených poslanců
+[2025-10-09 23:50:27] INFO: Categories: Technologie
+[2025-10-09 23:50:27] INFO: Category IDs: 2
+[2025-10-09 23:50:31] INFO: Total articles: 16
+[2025-10-09 23:50:31] INFO: Article 0: vcxbcvbv ,. ,nb nvb
+[2025-10-09 23:50:31] INFO: Categories: Nezařazeno
+[2025-10-09 23:50:31] INFO: Category IDs: 1
+[2025-10-09 23:50:31] INFO: Article 1: Kosmické Brno | 12 – Frentech Aerospace / Podvozky SpaceRideru 
+[2025-10-09 23:50:31] INFO: Categories: none
+[2025-10-09 23:50:31] INFO: Category IDs: none
+[2025-10-09 23:50:31] INFO: Article 2: Zářijová Kosmoschůzka 2025
+[2025-10-09 23:50:31] INFO: Categories: none
+[2025-10-09 23:50:31] INFO: Category IDs: none
+[2025-10-09 23:50:31] INFO: Article 3: V ČR vznikl materiál pro 3D tisk vhodný pro kosmický prostor 
+[2025-10-09 23:50:31] INFO: Categories: none
+[2025-10-09 23:50:31] INFO: Category IDs: none
+[2025-10-09 23:50:31] INFO: Article 4: Cassini potvrdila komplexní chemické reakce v oceánu na Enceladu
+[2025-10-09 23:50:31] INFO: Categories: none
+[2025-10-09 23:50:31] INFO: Category IDs: none
+[2025-10-09 23:50:31] INFO: Article 5: Firma Avio získala kontrakt od ESA na demonstrátor znovupoužitelného horního stupně
+[2025-10-09 23:50:31] INFO: Categories: Nezařazeno
+[2025-10-09 23:50:31] INFO: Category IDs: 1
+[2025-10-09 23:50:31] INFO: Article 6: Kosmotýdeník 681 (29. 9. – 5. 10.)
+[2025-10-09 23:50:31] INFO: Categories: none
+[2025-10-09 23:50:31] INFO: Category IDs: none
+[2025-10-09 23:50:31] INFO: Article 7: LVM-3 – CMS-02 (GSAT-7R)
+[2025-10-09 23:50:31] INFO: Categories: none
+[2025-10-09 23:50:31] INFO: Category IDs: none
+[2025-10-09 23:50:31] INFO: Article 8: Sentinel-6B je vybalen 
+[2025-10-09 23:50:31] INFO: Categories: none
+[2025-10-09 23:50:31] INFO: Category IDs: none
+[2025-10-09 23:50:31] INFO: Article 9: Prohlížeč Firefox
+[2025-10-09 23:50:31] INFO: Categories: none
+[2025-10-09 23:50:31] INFO: Category IDs: none
+[2025-10-09 23:50:31] INFO: Article 10: Soběstačný domov
+[2025-10-09 23:50:31] INFO: Categories: none
+[2025-10-09 23:50:31] INFO: Category IDs: none
+[2025-10-09 23:50:31] INFO: Article 11: Lorem ipsum dolor sit amet consectetuer 
+[2025-10-09 23:50:31] INFO: Categories: none
+[2025-10-09 23:50:31] INFO: Category IDs: none
+[2025-10-09 23:50:31] INFO: Article 12: khuzjgfr
+[2025-10-09 23:50:31] INFO: Categories: galerie života
+[2025-10-09 23:50:31] INFO: Category IDs: 5
+[2025-10-09 23:50:31] INFO: Article 13: vcxbcvbv ,. ,nb nvbnnn
+[2025-10-09 23:50:31] INFO: Categories: Novinky
+[2025-10-09 23:50:31] INFO: Category IDs: 8
+[2025-10-09 23:50:31] INFO: Article 14: Cassini potvrdila komplexní chemické reakce v oceánu na Enceladu
+[2025-10-09 23:50:31] INFO: Categories: none
+[2025-10-09 23:50:31] INFO: Category IDs: none
+[2025-10-09 23:50:31] INFO: Article 15: Seznam nově zvolených poslanců
+[2025-10-09 23:50:31] INFO: Categories: Technologie
+[2025-10-09 23:50:31] INFO: Category IDs: 2
+[2025-10-09 23:50:41] INFO: Total articles: 16
+[2025-10-09 23:50:41] INFO: Article 0: vcxbcvbv ,. ,nb nvb
+[2025-10-09 23:50:41] INFO: Categories: Nezařazeno
+[2025-10-09 23:50:41] INFO: Category IDs: 1
+[2025-10-09 23:50:41] INFO: Article 1: Kosmické Brno | 12 – Frentech Aerospace / Podvozky SpaceRideru 
+[2025-10-09 23:50:41] INFO: Categories: none
+[2025-10-09 23:50:41] INFO: Category IDs: none
+[2025-10-09 23:50:41] INFO: Article 2: Zářijová Kosmoschůzka 2025
+[2025-10-09 23:50:41] INFO: Categories: none
+[2025-10-09 23:50:41] INFO: Category IDs: none
+[2025-10-09 23:50:41] INFO: Article 3: V ČR vznikl materiál pro 3D tisk vhodný pro kosmický prostor 
+[2025-10-09 23:50:41] INFO: Categories: none
+[2025-10-09 23:50:41] INFO: Category IDs: none
+[2025-10-09 23:50:41] INFO: Article 4: Cassini potvrdila komplexní chemické reakce v oceánu na Enceladu
+[2025-10-09 23:50:41] INFO: Categories: none
+[2025-10-09 23:50:41] INFO: Category IDs: none
+[2025-10-09 23:50:41] INFO: Article 5: Firma Avio získala kontrakt od ESA na demonstrátor znovupoužitelného horního stupně
+[2025-10-09 23:50:41] INFO: Categories: Nezařazeno
+[2025-10-09 23:50:41] INFO: Category IDs: 1
+[2025-10-09 23:50:41] INFO: Article 6: Kosmotýdeník 681 (29. 9. – 5. 10.)
+[2025-10-09 23:50:41] INFO: Categories: none
+[2025-10-09 23:50:41] INFO: Category IDs: none
+[2025-10-09 23:50:41] INFO: Article 7: LVM-3 – CMS-02 (GSAT-7R)
+[2025-10-09 23:50:41] INFO: Categories: none
+[2025-10-09 23:50:41] INFO: Category IDs: none
+[2025-10-09 23:50:41] INFO: Article 8: Sentinel-6B je vybalen 
+[2025-10-09 23:50:41] INFO: Categories: none
+[2025-10-09 23:50:41] INFO: Category IDs: none
+[2025-10-09 23:50:41] INFO: Article 9: Prohlížeč Firefox
+[2025-10-09 23:50:41] INFO: Categories: none
+[2025-10-09 23:50:41] INFO: Category IDs: none
+[2025-10-09 23:50:41] INFO: Article 10: Soběstačný domov
+[2025-10-09 23:50:41] INFO: Categories: none
+[2025-10-09 23:50:41] INFO: Category IDs: none
+[2025-10-09 23:50:41] INFO: Article 11: Lorem ipsum dolor sit amet consectetuer 
+[2025-10-09 23:50:41] INFO: Categories: none
+[2025-10-09 23:50:41] INFO: Category IDs: none
+[2025-10-09 23:50:41] INFO: Article 12: khuzjgfr
+[2025-10-09 23:50:41] INFO: Categories: galerie života
+[2025-10-09 23:50:41] INFO: Category IDs: 5
+[2025-10-09 23:50:41] INFO: Article 13: vcxbcvbv ,. ,nb nvbnnn
+[2025-10-09 23:50:41] INFO: Categories: Novinky
+[2025-10-09 23:50:41] INFO: Category IDs: 8
+[2025-10-09 23:50:41] INFO: Article 14: Cassini potvrdila komplexní chemické reakce v oceánu na Enceladu
+[2025-10-09 23:50:41] INFO: Categories: none
+[2025-10-09 23:50:41] INFO: Category IDs: none
+[2025-10-09 23:50:41] INFO: Article 15: Seznam nově zvolených poslanců
+[2025-10-09 23:50:41] INFO: Categories: Technologie
+[2025-10-09 23:50:41] INFO: Category IDs: 2

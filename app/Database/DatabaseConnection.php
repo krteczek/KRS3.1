@@ -8,6 +8,7 @@ use App\Core\Config;
 use PDO;
 use PDOException;
 use PDOStatement;
+use App\Logger\Logger;
 
 /**
  * Třída pro správu připojení k databázi
@@ -47,11 +48,15 @@ class DatabaseConnection
                 $config['options'] ?? []
             );
         } catch (PDOException $e) {
-            throw new \RuntimeException(
+			$this->logger->exception($e, "Chyba připojení k databázi: " . $e->getMessage() . (int)$e->getCode());
+			/*
+			throw new \RuntimeException(
                 "Chyba připojení k databázi: " . $e->getMessage(),
                 (int)$e->getCode()
             );
+			*/
         }
+
     }
 
     /**
@@ -80,10 +85,13 @@ class DatabaseConnection
             $stmt->execute($params);
             return $stmt;
         } catch (PDOException $e) {
+			$this->logger->exception($e, "Chyba při provádění dotazu: " . $e->getMessage() . (int)$e->getCode());
+			/**
             throw new \RuntimeException(
                 "Chyba při provádění dotazu: " . $e->getMessage(),
                 (int)$e->getCode()
             );
+			*/
         }
     }
 
@@ -138,6 +146,8 @@ class DatabaseConnection
             $this->pdo->query('SELECT 1');
             return true;
         } catch (PDOException $e) {
+			$this->logger->exception($e, "Připojení k databázi není aktivní: " . $e->getMessage() . (int)$e->getCode());
+
             return false;
         }
     }

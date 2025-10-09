@@ -227,7 +227,17 @@ class Router
                     $controller->delete((int)$id);
                 }
                 break;
-            default:
+	        case 'restore': // ← přidáno
+	            if ($id) {
+	                $controller->restore((int)$id);
+	            }
+	            break;
+			case 'permanent-delete': // ← přidáno
+	            if ($id) {
+	                $controller->permanentDelete((int)$id);
+	            }
+	            break;
+			default:
                 echo $controller->index();
                 break;
         }

@@ -16,7 +16,7 @@ use App\Core\Config;
  *
  * @package App\Core
  * @author KRS3
- * @version 3.0
+ * @version 3.1
  */
 class AdminMenu
 {
@@ -69,6 +69,7 @@ class AdminMenu
         <li><a href="{$this->baseUrl}">{$this->translate('navigation.home')}</a></li>
         <li><a href="{$this->baseUrl}admin">{$this->translate('admin.navigation.dashboard')}</a></li>
         <li><a href="{$this->baseUrl}admin/articles">{$this->translate('admin.navigation.articles')}</a></li>
+        <li><a href="{$this->baseUrl}admin/categories">{$this->translate('admin.navigation.categories')}</a></li>
         <li><a href="{$this->baseUrl}admin/gallery">{$this->translate('admin.navigation.gallery')}</a></li>
         <li><a href="{$this->baseUrl}admin/users">{$this->translate('admin.navigation.users')}</a></li>
         <li><a href="{$this->baseUrl}logout">{$this->translate('navigation.logout')}</a></li>

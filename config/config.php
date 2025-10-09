@@ -31,5 +31,16 @@ return [
 	'templates' => [
 		'dir' => __DIR__ . '/../templates',
 		'cache' => __DIR__ . '/../cache/templates' // pro budoucí caching
+	],
+
+	'logs' => [
+		'level' => 'INFO',           // DEBUG, INFO, WARNING, ERROR, EXCEPTION, NONE
+	    'echo' => true,              // logovat na obrazovku
+	    'file' => true,              // logovat do souboru
+	    'rotation' => 'daily',       // none, daily, hourly, size
+	    'max_size' => 10485760,      // 10MB (pouze pro rotation = 'size')
+	    'max_files' => 30,           // maximální počet souborů
+	    'dir' => __DIR__ . '/../logs/',
+	    'file' => 'app.log'
 	]
 ];

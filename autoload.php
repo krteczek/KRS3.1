@@ -11,6 +11,12 @@ require_once __DIR__ . '/config/texts.php'; // ← PŘIDEJ TUTO ŘÁDKU!
 // Inicializuj konfiguraci
 App\Core\Config::load(__DIR__ . '/config/config.php');
 
+
+//logování chyb
+require_once __DIR__ . '/app/Logger/Logger.php';
+//require_once __DIR__ . '/app/Core/AdvancedLogger.php';
+require_once __DIR__ . '/helpers.php';
+
 // Načti základní třídy ručně
 require_once __DIR__ . '/app/Session/SessionManager.php';
 require_once __DIR__ . '/app/Database/DatabaseConnection.php';

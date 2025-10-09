@@ -284,25 +284,52 @@ class ArticleService
         return $stmt->fetchAll();
     }
 
-    /**
-     * Získá články s jejich kategoriemi
-     *
-     * @return array Seznam článků s informacemi o kategoriích
-     */
-    public function getArticlesWithCategories(): array
-    {
-        $stmt = $this->db->query(
-            "SELECT a.*,
-                GROUP_CONCAT(c.name) as category_names,
-                GROUP_CONCAT(c.id) as category_ids
-             FROM articles a
-             LEFT JOIN article_categories ac ON a.id = ac.article_id
-             LEFT JOIN categories c ON ac.category_id = c.id
-             WHERE a.deleted_at IS NULL
-             GROUP BY a.id
-             ORDER BY a.created_at DESC"
-        );
+	/**
+	 * Získá články s jejich kategoriemi
+	 *
+	 * @return array Seznam článků s informacemi o kategoriích
+	 */
+public function getArticlesWithCategories(): array
+{
+    $stmt = $this->db->query(
+        "SELECT a.*,
+            u.username as author_name,
+            GROUP_CONCAT(DISTINCT c.name SEPARATOR ',') as category_names,
+            GROUP_CONCAT(DISTINCT c.id SEPARATOR ',') as category_ids
+         FROM articles a
+         LEFT JOIN users u ON a.author_id = u.id
+         LEFT JOIN article_categories ac ON a.id = ac.article_id
+         LEFT JOIN categories c ON ac.category_id = c.id AND c.deleted_at IS NULL
+         WHERE a.deleted_at IS NULL
+         GROUP BY a.id
+         ORDER BY
+             CASE WHEN a.published_at IS NOT NULL THEN 0 ELSE 1 END,
+             COALESCE(a.published_at, a.created_at) DESC"
+    );
 
-        return $stmt->fetchAll();
-    }
+    return $stmt->fetchAll();
+}
+		/**
+		 * Získá smazané články s jejich kategoriemi
+		 *
+		 * @return array Seznam smazaných článků s informacemi o kategoriích
+		 */
+		public function getDeletedArticlesWithCategories(): array
+		    {
+		        $stmt = $this->db->query(
+		            "SELECT a.*,
+		                u.username as author_name,
+		                GROUP_CONCAT(DISTINCT c.name SEPARATOR ',') as category_names,
+		                GROUP_CONCAT(DISTINCT c.id SEPARATOR ',') as category_ids
+		             FROM articles a
+		             LEFT JOIN users u ON a.author_id = u.id
+		             LEFT JOIN article_categories ac ON a.id = ac.article_id
+		             LEFT JOIN categories c ON ac.category_id = c.id AND c.deleted_at IS NULL
+		             WHERE a.deleted_at IS NOT NULL
+		             GROUP BY a.id
+		             ORDER BY a.deleted_at DESC"
+		        );
+
+		        return $stmt->fetchAll();
+		    }
 }

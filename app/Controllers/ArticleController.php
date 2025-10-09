@@ -10,6 +10,8 @@ use App\Auth\LoginService;
 use App\Security\CsrfProtection;
 use App\Core\AdminLayout;
 use App\Core\Config;
+use App\Logger\Logger;
+
 
 /**
  * Správa článků v administraci
@@ -23,6 +25,7 @@ use App\Core\Config;
  */
 class ArticleController
 {
+	private $logger = null;
     /**
      * @param ArticleService $articleService Služba pro práci s články
      * @param LoginService $authService Služba pro autentizaci
@@ -38,7 +41,9 @@ class ArticleController
         private string $baseUrl,
         private AdminLayout $adminLayout,
         private CategoryService $categoryService
-    ) {}
+    ) {
+		$this->logger = Logger::getInstance();
+	}
 
 		 /**
      * Zobrazí formulář pro vytvoření nového článku
@@ -103,198 +108,244 @@ HTML;
      * @return void
      * @throws \Exception Pokud dojde k chybě při vytváření článku
      */
-    public function createArticle(): void
-    {
-        $this->requireAdmin();
+public function createArticle(): void
+{
+    $this->requireAdmin();
 
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            header("Location: {$this->baseUrl}admin/articles/new");
-            exit;
-        }
-
-        $user = $this->authService->getUser();
-
-        try {
-            $articleId = $this->articleService->createArticle([
-                'title' => $_POST['title'],
-                'content' => $_POST['content'],
-                'excerpt' => $_POST['excerpt'] ?? '',
-                'author_id' => $user['id'],
-                'status' => $_POST['status'] ?? 'draft'
-            ]);
-
-            // Přiřazení kategorií k článku
-            $categoryIds = $_POST['categories'] ?? [];
-            $this->categoryService->assignCategoriesToArticle($articleId, $categoryIds);
-
-
-            header("Location: {$this->baseUrl}admin/articles?created=1");
-            exit;
-
-        } catch (\Exception $e) {
-            header("Location: {$this->baseUrl}admin/articles/new?error=1");
-            exit;
-        }
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        header("Location: {$this->baseUrl}admin/articles/new");
+        exit;
     }
 
-    /**
-     * Zobrazí seznam článků s možností zobrazení koše
-     *
-     * @return string HTML obsah seznamu článků
-     */
-    public function showArticles(): string
-    {
-        $this->requireAdmin();
+    $user = $this->authService->getUser();
 
-        // Zjisti, zda se má zobrazit koš
-        $isTrashView = isset($_GET['show']) && $_GET['show'] === 'trash';
+    try {
+        $articleId = $this->articleService->createArticle([
+            'title' => $_POST['title'],
+            'content' => $_POST['content'],
+            'excerpt' => $_POST['excerpt'] ?? '',
+            'author_id' => $user['id'],
+            'status' => $_POST['status'] ?? 'draft'
+        ]);
 
-        if ($isTrashView) {
-            $articles = $this->articleService->getDeletedArticles();
+        // Přiřazení kategorií k článku
+        $categoryIds = $_POST['categories'] ?? [];
+        $this->categoryService->assignCategoriesToArticle($articleId, $categoryIds);
+
+        header("Location: {$this->baseUrl}admin/articles?created=1");
+        exit;
+
+    } catch (\Exception $e) {
+        // BEZPEČNÉ použití loggeru s kontrolou
+        if (isset($this->logger)) {
+            $this->logger->exception($e, 'článek se nepodařilo uložit.');
         } else {
-            $articles = $this->articleService->getAllArticles();
+            // Fallback: zápis do error_log pokud logger není dostupný
+            error_log('Chyba při vytváření článku: ' . $e->getMessage());
         }
 
-        // Připrav zprávy
-        $message = '';
-        if (isset($_GET['restored'])) {
-            $message = '<div class="alert alert-success">' . $this->t('admin.articles.messages.restored') . '</div>';
-        } elseif (isset($_GET['deleted'])) {
-            $message = '<div class="alert alert-success">' . $this->t('admin.articles.messages.deleted') . '</div>';
-        } elseif (isset($_GET['error'])) {
-            $message = '<div class="alert alert-error">' . $this->t('admin.articles.messages.error') . '</div>';
-        }
-
-        // Připrav proměnné pro tabs
-        $activeClass = 'active';
-        $mainTabClass = !$isTrashView ? $activeClass : '';
-        $trashTabClass = $isTrashView ? $activeClass : '';
-
-        // Připrav proměnné pro obsah
-        $emptyStateTitle = $isTrashView ?
-            $this->t('admin.articles.messages.empty_trash') :
-            $this->t('admin.articles.messages.empty_active');
-        $emptyStateText = $isTrashView ?
-            $this->t('admin.articles.messages.empty_text_trash') :
-            $this->t('admin.articles.messages.empty_text_active');
-        $emptyStateButton = $isTrashView ? '' :
-            "<a href='{$this->baseUrl}admin/articles/new' class='btn btn-primary'>" .
-            $this->t('admin.articles.messages.create_first') . "</a>";
-        $tableHeader = $isTrashView ?
-            $this->t('admin.articles.table.deleted') :
-            $this->t('admin.articles.table.created');
-
-        $html = <<<HTML
-<div class="page-header">
-    <h1>{$this->t('admin.articles.manage')}</h1>
-    <a href="{$this->baseUrl}admin/articles/new" class="btn btn-primary">
-        ＋ {$this->t('admin.articles.create')}
-    </a>
-</div>
-
-{$message}
-
-<!-- TABS -->
-<div class="tabs">
-    <a href="{$this->baseUrl}admin/articles" class="tab {$mainTabClass}">
-        {$this->t('admin.articles.active')}
-    </a>
-    <a href="{$this->baseUrl}admin/articles?show=trash" class="tab {$trashTabClass}">
-        {$this->t('admin.articles.trash')}
-    </a>
-</div>
-
-<div class="articles-container">
-HTML;
-
-        if (empty($articles)) {
-            $html .= <<<HTML
-<div class="empty-state">
-    <h3>{$emptyStateTitle}</h3>
-    <p>{$emptyStateText}</p>
-    {$emptyStateButton}
-</div>
-HTML;
-        } else {
-            $html .= <<<HTML
-<div class="articles-table-container">
-    <table class="articles-table">
-        <thead>
-            <tr>
-                <th>{$this->t('admin.articles.table.title')}</th>
-                <th>{$this->t('admin.articles.table.status')}</th>
-                <th>{$this->t('admin.articles.table.author')}</th>
-                <th>{$tableHeader}</th>
-                <th>{$this->t('admin.articles.table.actions')}</th>
-            </tr>
-        </thead>
-        <tbody>
-HTML;
-
-            foreach ($articles as $article) {
-                $dateColumn = $isTrashView
-                    ? date('j. n. Y H:i', strtotime($article['deleted_at']))
-                    : date('j. n. Y H:i', strtotime($article['created_at']));
-
-                $statusBadge = $this->getStatusBadge($article['status']);
-
-                if ($isTrashView) {
-                    $actions = <<<HTML
-<div class="action-buttons">
-    <a href="{$this->baseUrl}admin/articles/restore/{$article['id']}"
-       class="btn btn-sm btn-success" title="{$this->t('admin.articles.actions.restore')}">
-        ↶
-    </a>
-    <a href="{$this->baseUrl}admin/articles/permanent-delete/{$article['id']}"
-       class="btn btn-sm btn-danger"
-       onclick="return confirm('{$this->t('admin.articles.confirm.permanent_delete')} „{$this->escapeJs($article['title'])}‟? Tato akce je nevratná!')"
-       title="{$this->t('admin.articles.actions.permanent_delete')}">
-        🗑️
-    </a>
-</div>
-HTML;
-                } else {
-                    $actions = <<<HTML
-<div class="action-buttons">
-    <a href="{$this->baseUrl}admin/articles/edit/{$article['id']}"
-       class="btn btn-sm btn-primary" title="{$this->t('admin.articles.actions.edit')}">
-        ✏️
-    </a>
-    <a href="{$this->baseUrl}admin/articles/delete/{$article['id']}"
-       class="btn btn-sm btn-danger"
-       onclick="return confirm('{$this->t('admin.articles.confirm.delete')} „{$this->escapeJs($article['title'])}‟?')"
-       title="{$this->t('admin.articles.actions.delete')}">
-        🗑️
-    </a>
-</div>
-HTML;
-                }
-
-                $html .= <<<HTML
-<tr>
-    <td>
-        <div class="article-title">{$this->escape($article['title'])}</div>
-        <div class="article-excerpt">{$this->escape(mb_substr($article['excerpt'] ?? '', 0, 100))}...</div>
-    </td>
-    <td>{$statusBadge}</td>
-    <td>{$this->escape($article['author_name'])}</td>
-    <td>{$dateColumn}</td>
-    <td>{$actions}</td>
-</tr>
-HTML;
-            }
-
-            $html .= <<<HTML
-        </tbody>
-    </table>
-</div>
-HTML;
-        }
-
-        $html .= '</div>';
-
-        return $this->adminLayout->wrap($html, $this->t('admin.articles.manage'));
+        header("Location: {$this->baseUrl}admin/articles/new?error=1");
+        exit;
     }
+}
+
+
+	/**
+	 * Zobrazí seznam článků s možností zobrazení koše
+	 *
+	 * @return string HTML obsah seznamu článků
+	 */
+	public function showArticles(): string
+	{
+	    $this->requireAdmin();
+
+	    // Zjisti, zda se má zobrazit koš
+	    $isTrashView = isset($_GET['show']) && $_GET['show'] === 'trash';
+
+	    if ($isTrashView) {
+	        $articles = $this->articleService->getDeletedArticlesWithCategories();
+	    } else {
+	        $articles = $this->articleService->getArticlesWithCategories();
+	    }
+
+	    // BEZPEČNÉ logování s kontrolou existence loggeru
+		
+	    if (isset($this->logger)) {
+	        $this->logger->info("Total articles: " . count($articles));
+	        foreach ($articles as $index => $article) {
+	            $this->logger->info("Article {$index}: " . $article['title']);
+	            $this->logger->info("Categories: " . ($article['category_names'] ?? 'none'));
+	            $this->logger->info("Category IDs: " . ($article['category_ids'] ?? 'none'));
+	        }
+	    }
+		// Debug: zkontrolujte první článek (pokud existuje)
+		    if (!empty($articles)) {
+		        $this->logger->info("First article title: " . $articles[0]['title']);
+		        $this->logger->info("First article deleted_at: " . ($articles[0]['deleted_at'] ?? 'NULL'));
+		    }
+
+	    // Připrav zprávy
+	    $message = '';
+	    if (isset($_GET['created'])) {
+	        $message = '<div class="alert alert-success">' . $this->t('admin.articles.messages.created') . '</div>';
+	    } elseif (isset($_GET['restored'])) {
+	        $message = '<div class="alert alert-success">' . $this->t('admin.articles.messages.restored') . '</div>';
+	    } elseif (isset($_GET['deleted'])) {
+	        $message = '<div class="alert alert-success">' . $this->t('admin.articles.messages.deleted') . '</div>';
+	    } elseif (isset($_GET['error'])) {
+	        $message = '<div class="alert alert-error">' . $this->t('admin.articles.messages.error') . '</div>';
+	    }
+
+	    // Připrav proměnné pro tabs
+	    $activeClass = 'active';
+	    $mainTabClass = !$isTrashView ? $activeClass : '';
+	    $trashTabClass = $isTrashView ? $activeClass : '';
+
+	    // Připrav proměnné pro obsah
+	    $emptyStateTitle = $isTrashView ?
+	        $this->t('admin.articles.messages.empty_trash') :
+	        $this->t('admin.articles.messages.empty_active');
+	    $emptyStateText = $isTrashView ?
+	        $this->t('admin.articles.messages.empty_text_trash') :
+	        $this->t('admin.articles.messages.empty_text_active');
+	    $emptyStateButton = $isTrashView ? '' :
+	        "<a href='{$this->baseUrl}admin/articles/new' class='btn btn-primary'>" .
+	        $this->t('admin.articles.messages.create_first') . "</a>";
+	    $tableHeader = $isTrashView ?
+	        $this->t('admin.articles.table.deleted') :
+	        $this->t('admin.articles.table.created');
+
+	    $html = <<<HTML
+	<div class="page-header">
+	    <h1>{$this->t('admin.articles.manage')}</h1>
+	    <a href="{$this->baseUrl}admin/articles/new" class="btn btn-primary">
+	        ＋ {$this->t('admin.articles.create')}
+	    </a>
+	</div>
+
+	{$message}
+
+	<!-- TABS -->
+	<div class="tabs">
+	    <a href="{$this->baseUrl}admin/articles" class="tab {$mainTabClass}">
+	        {$this->t('admin.articles.active')}
+	    </a>
+	    <a href="{$this->baseUrl}admin/articles?show=trash" class="tab {$trashTabClass}">
+	        {$this->t('admin.articles.trash')}
+	    </a>
+	</div>
+
+	<div class="articles-container">
+	HTML;
+
+	    if (empty($articles)) {
+	        $html .= <<<HTML
+	<div class="empty-state">
+	    <h3>{$emptyStateTitle}</h3>
+	    <p>{$emptyStateText}</p>
+	    {$emptyStateButton}
+	</div>
+	HTML;
+	    } else {
+	        $html .= <<<HTML
+	<div class="articles-table-container">
+	    <table class="articles-table">
+	        <thead>
+	            <tr>
+	                <th>{$this->t('admin.articles.table.title')}</th>
+	                <th>{$this->t('admin.articles.table.categories')}</th>
+	                <th>{$this->t('admin.articles.table.status')}</th>
+	                <th>{$this->t('admin.articles.table.author')}</th>
+	                <th>{$tableHeader}</th>
+	                <th>{$this->t('admin.articles.table.actions')}</th>
+	            </tr>
+	        </thead>
+	        <tbody>
+	HTML;
+
+	        foreach ($articles as $article) {
+	            $dateColumn = $isTrashView
+	                ? date('j. n. Y H:i', strtotime($article['deleted_at']))
+	                : date('j. n. Y H:i', strtotime($article['created_at']));
+
+	            $statusBadge = $this->getStatusBadge($article['status']);
+
+	            // Zpracování kategorií
+	            $categoriesHtml = '';
+	            if (!empty($article['category_names'])) {
+	                $categoryNames = explode(',', $article['category_names']);
+	                $categoryIds = explode(',', $article['category_ids']);
+
+	                foreach ($categoryNames as $index => $categoryName) {
+	                    $categoryId = $categoryIds[$index] ?? '';
+	                    $categoriesHtml .= '<span class="category-badge">' . $this->escape(trim($categoryName)) . '</span>';
+	                }
+	            } else {
+	                $categoriesHtml = '<span class="no-categories">' . $this->t('admin.articles.table.no_categories') . '</span>';
+	            }
+
+	            if ($isTrashView) {
+	                $actions = <<<HTML
+	<div class="action-buttons">
+	    <a href="{$this->baseUrl}admin/articles/restore/{$article['id']}"
+	       class="btn btn-sm btn-success" title="{$this->t('admin.articles.actions.restore')}">
+	        ↶
+	    </a>
+	    <a href="{$this->baseUrl}admin/articles/permanent-delete/{$article['id']}"
+	       class="btn btn-sm btn-danger"
+	       onclick="return confirm('{$this->t('admin.articles.confirm.permanent_delete')} „{$this->escapeJs($article['title'])}‟? Tato akce je nevratná!')"
+	       title="{$this->t('admin.articles.actions.permanent_delete')}">
+	        🗑️
+	    </a>
+	</div>
+	HTML;
+	            } else {
+	                $actions = <<<HTML
+	<div class="action-buttons">
+	    <a href="{$this->baseUrl}admin/articles/edit/{$article['id']}"
+	       class="btn btn-sm btn-primary" title="{$this->t('admin.articles.actions.edit')}">
+	        ✏️
+	    </a>
+	    <a href="{$this->baseUrl}admin/articles/delete/{$article['id']}"
+	       class="btn btn-sm btn-danger"
+	       onclick="return confirm('{$this->t('admin.articles.confirm.delete')} „{$this->escapeJs($article['title'])}‟?')"
+	       title="{$this->t('admin.articles.actions.delete')}">
+	        🗑️
+	    </a>
+	</div>
+	HTML;
+	            }
+
+	            $html .= <<<HTML
+	<tr>
+	    <td>
+	        <div class="article-title">{$this->escape($article['title'])}</div>
+	        <div class="article-excerpt">{$this->escape(mb_substr($article['excerpt'] ?? '', 0, 100))}...</div>
+	    </td>
+	    <td>
+	        <div class="article-categories">
+	            {$categoriesHtml}
+	        </div>
+	    </td>
+	    <td>{$statusBadge}</td>
+	    <td>{$this->escape($article['author_name'])}</td>
+	    <td>{$dateColumn}</td>
+	    <td>{$actions}</td>
+	</tr>
+	HTML;
+	        }
+
+	        $html .= <<<HTML
+	        </tbody>
+	    </table>
+	</div>
+	HTML;
+	    }
+
+	    $html .= '</div>';
+
+	    return $this->adminLayout->wrap($html, $this->t('admin.articles.manage'));
+	}
 
     /**
      * Zobrazí formulář pro editaci existujícího článku

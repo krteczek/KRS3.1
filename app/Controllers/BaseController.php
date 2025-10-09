@@ -29,7 +29,7 @@ abstract class BaseController
     public function __construct(
         protected Template $template,
         protected string $baseUrl,
-        protected LoginService $authService // ← PŘIDEJ
+        protected LoginService $authService
     ) {}
 
     /**

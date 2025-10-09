@@ -67,7 +67,8 @@ return [
                     'manage' => 'Správa článků',
                     'active' => 'Aktivní články',
                     'trash' => 'Koš',
-
+					'categories' => 'Kategorie',
+					'no_categories' => 'Žádné kategorie',
                     // Formulářové prvky
                     'form' => [
                         'title' => 'Název článku',
@@ -95,7 +96,9 @@ return [
                         'author' => 'Autor',
                         'created' => 'Vytvořeno',
                         'deleted' => 'Smazáno',
-                        'actions' => 'Akce'
+                        'actions' => 'Akce',
+						'unknown_author' => 'Neznámý autor',
+
                     ],
 
                     // Akce
@@ -129,6 +132,10 @@ return [
                     'manage' => 'Správa kategorií',
                     'create' => 'Vytvořit kategorii',
                     'edit' => 'Upravit kategorii',
+					'unknown_parent' => 'Neznámý rodič',
+					'default_category_id' => 1,
+					'active' => 'Aktivní kategorie',
+        			'trash' => 'Koš',
 
                     // Formulářové prvky
                     'form' => [
@@ -138,7 +145,8 @@ return [
                         'no_parent' => 'Žádná (hlavní kategorie)',
                         'create_button' => 'Vytvořit kategorii',
                         'save_button' => 'Uložit změny',
-                        'cancel' => 'Zrušit'
+                        'cancel' => 'Zrušit',
+						'parent_help' => 'Vyberte nadřazenou kategorii pro vytvoření hierarchie'
                     ],
 
                     // Tabulka
@@ -146,18 +154,24 @@ return [
                         'name' => 'Název',
                         'slug' => 'Slug',
                         'description' => 'Popis',
-                        'actions' => 'Akce'
+						'parent' => 'Rodič',
+                        'actions' => 'Akce',
+						'deleted' => 'Smazáno'
                     ],
 
                     // Akce
                     'actions' => [
                         'edit' => 'Upravit',
-                        'delete' => 'Smazat'
+                        'delete' => 'Smazat',
+						'restore' => 'Obnovit',
+						'permanent_delete' => 'Trvale smazat',
+
                     ],
 
                     // Potvrzovací dialogy
                     'confirm' => [
-                        'delete' => 'Opravdu chcete smazat kategorii'
+                        'delete' => 'Opravdu chcete smazat kategorii',
+						'permanent_delete' => 'Opravdu chcete trvale smazat kategorii',
                     ],
 
                     // Zprávy specifické pro kategorie
@@ -168,8 +182,17 @@ return [
                         'error' => 'Došlo k chybě',
                         'empty' => 'Žádné kategorie',
                         'empty_text' => 'Zatím nemáte žádné kategorie.',
-                        'create_first' => 'Vytvořit první kategorii'
-                    ]
+                        'create_first' => 'Vytvořit první kategorii',
+						'restored' => 'Kategorie byla úspěšně obnovena',
+						'deleted' => 'Kategorie byla úspěšně přesunuta do koše',
+						'permanent_deleted' => 'Kategorie byla trvale smazána',
+						'empty_trash' => 'Koš je prázdný',
+						'empty_active' => 'Žádné kategorie',
+						'empty_text_trash' => 'V koši nejsou žádné smazané kategorie.',
+						'empty_text_active' => 'Zatím nemáte žádné kategorie. Vytvořte první kategorii!',
+						'cannot_delete_default' => 'Nelze smazat výchozí kategorii'
+                    ],
+
                 ],
                 'layout' => [
                     'administration' => 'Administrace',
@@ -277,6 +300,8 @@ return [
                     'manage' => 'Manage Articles',
                     'active' => 'Active Articles',
                     'trash' => 'Trash',
+					'categories' => 'Kategorie',
+					'no_categories' => 'Žádné kategorie',
 
                     // Form elements
                     'form' => [
@@ -305,7 +330,9 @@ return [
                         'author' => 'Author',
                         'created' => 'Created',
                         'deleted' => 'Deleted',
-                        'actions' => 'Actions'
+                        'actions' => 'Actions',
+						'unknown_author' => 'Neznámý autor',
+
                     ],
 
                     // Actions
@@ -339,6 +366,10 @@ return [
                     'manage' => 'Manage Categories',
                     'create' => 'Create Category',
                     'edit' => 'Edit Category',
+					'unknown_parent' => 'Neznámý rodič',
+					'default_category_id' => 1,
+					'active' => 'Aktivní kategorie',
+        			'trash' => 'Koš',
 
                     // Form elements
                     'form' => [
@@ -348,7 +379,8 @@ return [
                         'no_parent' => 'None (main category)',
                         'create_button' => 'Create Category',
                         'save_button' => 'Save Changes',
-                        'cancel' => 'Cancel'
+                        'cancel' => 'Cancel',
+						'parent_help' => 'Vyberte nadřazenou kategorii pro vytvoření hierarchie'
                     ],
 
                     // Table
@@ -356,18 +388,24 @@ return [
                         'name' => 'Name',
                         'slug' => 'Slug',
                         'description' => 'Description',
-                        'actions' => 'Actions'
+						'parent' => 'Rodič',
+                        'actions' => 'Actions',
+						'deleted' => 'Smazáno'
                     ],
 
                     // Actions
                     'actions' => [
                         'edit' => 'Edit',
-                        'delete' => 'Delete'
+                        'delete' => 'Delete',
+						'restore' => 'Obnovit',
+						'permanent_delete' => 'Trvale smazat',
+
                     ],
 
                     // Confirmation dialogs
                     'confirm' => [
-                        'delete' => 'Are you sure you want to delete the category'
+                        'delete' => 'Are you sure you want to delete the category',
+						'permanent_delete' => 'Opravdu chcete trvale smazat kategorii',
                     ],
 
                     // Messages specific for categories
@@ -378,7 +416,16 @@ return [
                         'error' => 'An error occurred',
                         'empty' => 'No categories',
                         'empty_text' => 'You don\'t have any categories yet.',
-                        'create_first' => 'Create first category'
+                        'create_first' => 'Create first category',
+						'restored' => 'Kategorie byla úspěšně obnovena',
+						'deleted' => 'Kategorie byla úspěšně přesunuta do koše',
+						'permanent_deleted' => 'Kategorie byla trvale smazána',
+						'empty_trash' => 'Koš je prázdný',
+						'empty_active' => 'Žádné kategorie',
+						'empty_text_trash' => 'V koši nejsou žádné smazané kategorie.',
+						'empty_text_active' => 'Zatím nemáte žádné kategorie. Vytvořte první kategorii!',
+						'cannot_delete_default' => 'Nelze smazat výchozí kategorii'
+
                     ]
                 ],
                 'layout' => [
@@ -487,7 +534,9 @@ return [
                     'manage' => 'Artikel verwalten',
                     'active' => 'Aktive Artikel',
                     'trash' => 'Papierkorb',
-
+					'categories' => 'Kategorie',
+					'no_categories' => 'Žádné kategorie',
+					'unknown_author' => 'Neznámý autor',
                     // Formularelemente
                     'form' => [
                         'title' => 'Artikel-Titel',
@@ -515,7 +564,9 @@ return [
                         'author' => 'Autor',
                         'created' => 'Erstellt',
                         'deleted' => 'Gelöscht',
-                        'actions' => 'Aktionen'
+                        'actions' => 'Aktionen',
+						'unknown_author' => 'Neznámý autor',
+
                     ],
 
                     // Aktionen
@@ -549,6 +600,10 @@ return [
                     'manage' => 'Kategorien verwalten',
                     'create' => 'Kategorie erstellen',
                     'edit' => 'Kategorie bearbeiten',
+					'unknown_parent' => 'Neznámý rodič',
+					'default_category_id' => 1,
+					'active' => 'Aktivní kategorie',
+					'trash' => 'Koš',
 
                     // Formularelemente
                     'form' => [
@@ -558,7 +613,8 @@ return [
                         'no_parent' => 'Keine (Hauptkategorie)',
                         'create_button' => 'Kategorie erstellen',
                         'save_button' => 'Änderungen speichern',
-                        'cancel' => 'Abbrechen'
+                        'cancel' => 'Abbrechen',
+						'parent_help' => 'Vyberte nadřazenou kategorii pro vytvoření hierarchie'
                     ],
 
                     // Tabelle
@@ -566,18 +622,24 @@ return [
                         'name' => 'Name',
                         'slug' => 'Slug',
                         'description' => 'Beschreibung',
-                        'actions' => 'Aktionen'
+						'parent' => 'Rodič',
+                        'actions' => 'Aktionen',
+						'deleted' => 'Smazáno',
                     ],
 
                     // Aktionen
                     'actions' => [
                         'edit' => 'Bearbeiten',
-                        'delete' => 'Löschen'
+                        'delete' => 'Löschen',
+						'restore' => 'Obnovit',
+						'permanent_delete' => 'Trvale smazat'
+
                     ],
 
                     // Bestätigungsdialoge
                     'confirm' => [
-                        'delete' => 'Möchten Sie die Kategorie wirklich löschen'
+                        'delete' => 'Möchten Sie die Kategorie wirklich löschen',
+						'permanent_delete' => 'Opravdu chcete trvale smazat kategorii',
                     ],
 
                     // Nachrichten spezifisch für Kategorien
@@ -588,8 +650,16 @@ return [
                         'error' => 'Ein Fehler ist aufgetreten',
                         'empty' => 'Keine Kategorien',
                         'empty_text' => 'Sie haben noch keine Kategorien.',
-                        'create_first' => 'Erste Kategorie erstellen'
-                    ]
+                        'create_first' => 'Erste Kategorie erstellen',
+						'restored' => 'Kategorie byla úspěšně obnovena',
+						'deleted' => 'Kategorie byla úspěšně přesunuta do koše',
+						'permanent_deleted' => 'Kategorie byla trvale smazána',
+						'empty_trash' => 'Koš je prázdný',
+						'empty_active' => 'Žádné kategorie',
+						'empty_text_trash' => 'V koši nejsou žádné smazané kategorie.',
+						'empty_text_active' => 'Zatím nemáte žádné kategorie. Vytvořte první kategorii!',
+						'cannot_delete_default' => 'Nelze smazat výchozí kategorii'
+                   ]
                 ],
                 'layout' => [
                     'administration' => 'Administration',
@@ -609,7 +679,8 @@ return [
                 'no_articles' => 'Keine Artikel zum Anzeigen',
                 'error_loading' => 'Fehler beim Laden des Artikels',
                 'categories' => 'Kategorien',
-                'no_categories' => 'Keine Kategorien'
+                'no_categories' => 'Keine Kategorien',
+
             ],
             'ui' => [
                 'read_more' => 'Weiterlesen',

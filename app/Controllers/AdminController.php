@@ -53,6 +53,7 @@ class AdminController
 <h2>{$this->translate('admin.titles.quick_actions')}:</h2>
 <ul>
     <li><a href='{$this->baseUrl}admin/articles'>{$this->translate('admin.titles.manage_articles')}</a></li>
+    <li><a href='{$this->baseUrl}admin/categories'>{$this->translate('admin.titles.manage_categories')}</a></li>
     <li><a href='{$this->baseUrl}admin/gallery'>{$this->translate('admin.titles.manage_gallery')}</a></li>
     <li><a href='{$this->baseUrl}admin/users'>{$this->translate('admin.titles.manage_users')}</a></li>
 </ul>

@@ -82,6 +82,24 @@ class Config
         return self::get("site.{$key}", $default);
     }
 
+
+    /**
+     * Získá nastavení webu podle klíče
+     *
+     * @param string $key Klíč nastavení webu (např. 'name', 'url')
+     * @param mixed $default Výchozí hodnota pokud klíč neexistuje
+     * @return mixed Nalezená hodnota nebo výchozí hodnota
+     *
+     * @example
+     * $logsDir = Config::logs('dir');
+     * $logsFile = Config::logs('file');
+     */
+
+    public static function logs(string $key, $default = null)
+    {
+        return self::get("logs.{$key}", $default);
+    }
+
     /**
      * Získá lokalizovaný text podle klíče
      *

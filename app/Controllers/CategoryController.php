@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
+use App\Logger\Logger;
 use App\Services\CategoryService;
 use App\Auth\LoginService;
 use App\Security\CsrfProtection;
@@ -15,10 +16,13 @@ use App\Core\Config;
  *
  * @package App\Controllers
  * @author KRS3
- * @version 1.0
+ * @version 3.0
  */
 class CategoryController
 {
+
+	 private Logger $logger;
+
     /**
      * Konstruktor
      *
@@ -34,36 +38,371 @@ class CategoryController
         private CsrfProtection $csrf,
         private string $baseUrl,
         private AdminLayout $adminLayout
-    ) {}
+    ) {
+		$this->logger = Logger::getInstance();
+	}
 
-	/**
-     * Zobrazí seznam kategorií
+    /**
+     * Zobrazí seznam kategorií (aktivní a koš)
      *
      * @return string HTML obsah seznamu kategorií
      */
     public function index(): string
     {
         $this->requireAdmin();
-        $categories = $this->categoryService->getAllCategories();
 
-        $content = $this->renderCategoryList($categories);
+        // Zjisti, zda se má zobrazit koš
+        $isTrashView = isset($_GET['show']) && $_GET['show'] === 'trash';
+
+        if ($isTrashView) {
+            $categories = $this->categoryService->getDeletedCategories();
+        } else {
+            $categories = $this->categoryService->getCategoryTree();
+        }
+
+        $content = $this->renderCategoryList($categories, $isTrashView);
         return $this->adminLayout->wrap($content, $this->t('admin.categories.manage'));
     }
 
     /**
+     * Přesune kategorii do koše
+     *
+     * @param int $id ID kategorie
+     * @return void
+     */
+    public function delete(int $id): void
+    {
+        $this->requireAdmin();
+
+        try {
+            $success = $this->categoryService->deleteCategory($id);
+
+            if ($success) {
+                header("Location: {$this->baseUrl}admin/categories?deleted=1");
+            } else {
+                header("Location: {$this->baseUrl}admin/categories?error=1");
+            }
+        } catch (\InvalidArgumentException $e) {
+			$this->logger->exception($e, "Nelze smazat výchozí kategorii.");
+            header("Location: {$this->baseUrl}admin/categories?error=default_category");
+
+        }
+        exit;
+    }
+
+    /**
+     * Obnoví kategorii z koše
+     *
+     * @param int $id ID kategorie
+     * @return void
+     */
+    public function restore(int $id): void
+    {
+        $this->requireAdmin();
+        try {
+            $success = $this->categoryService->restoreCategory($id);
+
+            if ($success) {
+            	header("Location: {$this->baseUrl}admin/categories?show=trash&restored=1");
+            } else {
+            	header("Location: {$this->baseUrl}admin/categories?show=trash&error=1");
+            }
+        } catch (\InvalidArgumentException $e) {
+			$this->logger->exception($e, "Nepodařilo se obnovit kategorii.");
+
+        }
+        exit;
+    }
+
+    /**
+     * Trvale smaže kategorii z databáze
+     *
+     * @param int $id ID kategorie
+     * @return void
+     */
+    public function permanentDelete(int $id): void
+    {
+        $this->requireAdmin();
+
+        try {
+            $success = $this->categoryService->permanentDeleteCategory($id);
+
+            if ($success) {
+                header("Location: {$this->baseUrl}admin/categories?show=trash&permanent_deleted=1");
+            } else {
+                header("Location: {$this->baseUrl}admin/categories?show=trash&error=1");
+            }
+        } catch (\InvalidArgumentException $e) {
+			$this->logger->exception($e, "Nepodařilo se Smazat kategorii.");
+            header("Location: {$this->baseUrl}admin/categories?show=trash&error=default_category");
+        }
+        exit;
+    }
+
+    /**
+     * Vykreslí seznam kategorií s hierarchií nebo koš
+     *
+     * @param array $categories Strom kategorií nebo seznam smazaných
+     * @param bool $isTrashView Zda se zobrazuje koš
+     * @return string HTML obsah
+     */
+    private function renderCategoryList(array $categories, bool $isTrashView): string
+    {
+        $message = '';
+        if (isset($_GET['restored'])) {
+            $message = '<div class="alert alert-success">' . $this->t('admin.categories.messages.restored') . '</div>';
+        } elseif (isset($_GET['deleted'])) {
+            $message = '<div class="alert alert-success">' . $this->t('admin.categories.messages.deleted') . '</div>';
+        } elseif (isset($_GET['permanent_deleted'])) {
+            $message = '<div class="alert alert-success">' . $this->t('admin.categories.messages.permanent_deleted') . '</div>';
+        } elseif (isset($_GET['error'])) {
+            if ($_GET['error'] === 'default_category') {
+                $message = '<div class="alert alert-error">' . $this->t('admin.categories.messages.cannot_delete_default') . '</div>';
+            } else {
+                $message = '<div class="alert alert-error">' . $this->t('admin.categories.messages.error') . '</div>';
+            }
+        }
+
+        // Připrav proměnné pro tabs
+        $activeClass = 'active';
+        $mainTabClass = !$isTrashView ? $activeClass : '';
+        $trashTabClass = $isTrashView ? $activeClass : '';
+
+        $html = <<<HTML
+<div class="page-header">
+    <h1>{$this->t('admin.categories.manage')}</h1>
+    <a href="{$this->baseUrl}admin/categories/create" class="btn btn-primary">
+        ＋ {$this->t('admin.categories.create')}
+    </a>
+</div>
+
+{$message}
+
+<!-- TABS -->
+<div class="tabs">
+    <a href="{$this->baseUrl}admin/categories" class="tab {$mainTabClass}">
+        {$this->t('admin.categories.active')}
+    </a>
+    <a href="{$this->baseUrl}admin/categories?show=trash" class="tab {$trashTabClass}">
+        {$this->t('admin.categories.trash')}
+    </a>
+</div>
+
+<div class="categories-container">
+HTML;
+
+        if (empty($categories)) {
+            $html .= $this->renderEmptyState($isTrashView);
+        } else {
+            if ($isTrashView) {
+                $html .= $this->renderTrashTable($categories);
+            } else {
+                $html .= $this->renderCategoryTree($categories);
+            }
+        }
+
+        $html .= '</div>';
+
+        return $html;
+    }
+
+    /**
+     * Vykreslí strom kategorií s odsazením
+     *
+     * @param array $categories Strom kategorií
+     * @return string HTML obsah
+     */
+    private function renderCategoryTree(array $categories): string
+    {
+        $html = <<<HTML
+<div class="categories-table-container">
+    <table class="categories-table">
+        <thead>
+            <tr>
+                <th>{$this->t('admin.categories.table.name')}</th>
+                <th>{$this->t('admin.categories.table.slug')}</th>
+                <th>{$this->t('admin.categories.table.description')}</th>
+                <th>{$this->t('admin.categories.table.parent')}</th>
+                <th>{$this->t('admin.categories.table.actions')}</th>
+            </tr>
+        </thead>
+        <tbody>
+HTML;
+
+        $html .= $this->renderCategoryTreeRecursive($categories);
+
+        $html .= <<<HTML
+        </tbody>
+    </table>
+</div>
+HTML;
+
+        return $html;
+    }
+
+    /**
+     * Rekurzivně vykreslí strom kategorií
+     *
+     * @param array $categories Strom kategorií
+     * @return string HTML obsah
+     */
+    private function renderCategoryTreeRecursive(array $categories): string
+    {
+        $html = '';
+
+        foreach ($categories as $category) {
+            $description = mb_substr($category['description'] ?? '', 0, 100);
+            $indentation = str_repeat('&nbsp;&nbsp;&nbsp;&nbsp;', $category['depth'] ?? 0);
+
+            // Získáme název rodičovské kategorie
+            $parentName = '';
+            if ($category['parent_id']) {
+                $parent = $this->categoryService->getCategory($category['parent_id']);
+                $parentName = $parent ? $parent['name'] : $this->t('admin.categories.unknown_parent');
+            }
+
+            $html .= <<<HTML
+<tr>
+    <td>
+        <div style="padding-left: {$category['depth']}em;">
+            {$indentation}{$this->escape($category['name'])}
+        </div>
+    </td>
+    <td>{$this->escape($category['slug'])}</td>
+    <td>{$this->escape($description)}...</td>
+    <td>{$this->escape($parentName)}</td>
+    <td>
+        <div class="action-buttons">
+            <a href="{$this->baseUrl}admin/categories/edit/{$category['id']}"
+               class="btn btn-sm btn-primary"
+               title="{$this->t('admin.categories.actions.edit')}">
+                ✏️
+            </a>
+            <a href="{$this->baseUrl}admin/categories/delete/{$category['id']}"
+               class="btn btn-sm btn-danger"
+               onclick="return confirm('{$this->t('admin.categories.confirm.delete')} „{$this->escapeJs($category['name'])}‟?')"
+               title="{$this->t('admin.categories.actions.delete')}">
+                🗑️
+            </a>
+        </div>
+    </td>
+</tr>
+HTML;
+
+            // Rekurzivně vykreslíme děti
+            if (!empty($category['children'])) {
+                $html .= $this->renderCategoryTreeRecursive($category['children']);
+            }
+        }
+
+        return $html;
+    }
+
+    /**
+     * Vykreslí tabulku pro koš (smazané kategorie)
+     *
+     * @param array $categories Seznam smazaných kategorií
+     * @return string HTML obsah
+     */
+    private function renderTrashTable(array $categories): string
+    {
+        $html = <<<HTML
+<div class="categories-table-container">
+    <table class="categories-table">
+        <thead>
+            <tr>
+                <th>{$this->t('admin.categories.table.name')}</th>
+                <th>{$this->t('admin.categories.table.slug')}</th>
+                <th>{$this->t('admin.categories.table.deleted')}</th>
+                <th>{$this->t('admin.categories.table.actions')}</th>
+            </tr>
+        </thead>
+        <tbody>
+HTML;
+
+        foreach ($categories as $category) {
+            $deletedAt = date('j. n. Y H:i', strtotime($category['deleted_at']));
+
+            $html .= <<<HTML
+<tr>
+    <td>{$this->escape($category['name'])}</td>
+    <td>{$this->escape($category['slug'])}</td>
+    <td>{$deletedAt}</td>
+    <td>
+        <div class="action-buttons">
+            <a href="{$this->baseUrl}admin/categories/restore/{$category['id']}"
+               class="btn btn-sm btn-success"
+               title="{$this->t('admin.categories.actions.restore')}">
+                ↶
+            </a>
+            <a href="{$this->baseUrl}admin/categories/permanent-delete/{$category['id']}"
+               class="btn btn-sm btn-danger"
+               onclick="return confirm('{$this->t('admin.categories.confirm.permanent_delete')} „{$this->escapeJs($category['name'])}‟? Tato akce je nevratná!')"
+               title="{$this->t('admin.categories.actions.permanent_delete')}">
+                🗑️
+            </a>
+        </div>
+    </td>
+</tr>
+HTML;
+        }
+
+        $html .= <<<HTML
+        </tbody>
+    </table>
+</div>
+HTML;
+
+        return $html;
+    }
+
+    /**
+     * Vykreslí prázdný stav
+     *
+     * @param bool $isTrashView Zda se zobrazuje koš
+     * @return string HTML obsah
+     */
+    private function renderEmptyState(bool $isTrashView): string
+    {
+        $emptyStateTitle = $isTrashView ?
+            $this->t('admin.categories.messages.empty_trash') :
+            $this->t('admin.categories.messages.empty_active');
+
+        $emptyStateText = $isTrashView ?
+            $this->t('admin.categories.messages.empty_text_trash') :
+            $this->t('admin.categories.messages.empty_text_active');
+
+        $emptyStateButton = $isTrashView ? '' :
+            "<a href='{$this->baseUrl}admin/categories/create' class='btn btn-primary'>" .
+            $this->t('admin.categories.messages.create_first') . "</a>";
+
+        return <<<HTML
+<div class="empty-state">
+    <h3>{$emptyStateTitle}</h3>
+    <p>{$emptyStateText}</p>
+    {$emptyStateButton}
+</div>
+HTML;
+    }
+
+    // ... ostatní metody (create, store, edit, update, renderCategoryForm) zůstávají stejné ...
+    // ... a také pomocné metody (requireAdmin, t, escape, escapeJs) ...
+
+	/**
      * Zobrazí formulář pro vytvoření kategorie
      *
      * @return string HTML obsah formuláře
      */
-    public function create(): string
-    {
-        $this->requireAdmin();
-        $csrfField = $this->csrf->getTokenField();
-        $categories = $this->categoryService->getAllCategories();
+	public function create(): string
+	    {
+	        $this->requireAdmin();
+	        $csrfField = $this->csrf->getTokenField();
+	        // Získáme kategorie ve formátu pro select s odsazením
+	        $categories = $this->categoryService->getCategoriesForSelect();
 
-        $content = $this->renderCategoryForm([], $categories, $csrfField);
-        return $this->adminLayout->wrap($content, $this->t('admin.categories.create'));
-    }
+	        $content = $this->renderCategoryForm([], $categories, $csrfField);
+	        return $this->adminLayout->wrap($content, $this->t('admin.categories.create'));
+	    }
 
     /**
      * Zpracuje vytvoření nové kategorie
@@ -79,20 +418,34 @@ class CategoryController
             exit;
         }
 
+        // Kontrola CSRF tokenu
+        if (!$this->csrf->validateToken($_POST['csrf_token'] ?? '')) {
+            header("Location: {$this->baseUrl}admin/categories/create?error=csrf");
+            exit;
+        }
+
+        // Validace povinných polí
+        if (empty($_POST['name'])) {
+            header("Location: {$this->baseUrl}admin/categories/create?error=validation");
+            exit;
+        }
+
         try {
             $categoryId = $this->categoryService->createCategory([
-                'name' => $_POST['name'],
-                'description' => $_POST['description'] ?? '',
+                'name' => trim($_POST['name']),
+                'description' => trim($_POST['description'] ?? ''),
                 'parent_id' => !empty($_POST['parent_id']) ? (int)$_POST['parent_id'] : null
             ]);
 
             header("Location: {$this->baseUrl}admin/categories?created=1");
             exit;
+
         } catch (\Exception $e) {
             header("Location: {$this->baseUrl}admin/categories/create?error=1");
             exit;
         }
     }
+
 
     /**
      * Zobrazí formulář pro editaci kategorie
@@ -100,22 +453,25 @@ class CategoryController
      * @param int $id ID kategorie
      * @return string HTML obsah editačního formuláře
      */
-    public function edit(int $id): string
-    {
-        $this->requireAdmin();
-        $category = $this->categoryService->getCategory($id);
+	public function edit(int $id): string
+	    {
+	        $this->requireAdmin();
+	        $category = $this->categoryService->getCategory($id);
 
-        if (!$category) {
-            header("Location: {$this->baseUrl}admin/categories?error=not_found");
-            exit;
-        }
+	        if (!$category) {
+	            header("Location: {$this->baseUrl}admin/categories?error=not_found");
+	            exit;
+	        }
 
-        $csrfField = $this->csrf->getTokenField();
-        $categories = $this->categoryService->getAllCategories();
+	        $csrfField = $this->csrf->getTokenField();
+	        // Získáme kategorie pro select, ale vynecháme aktuálně editovanou kategorii
+	        // (aby nemohla být rodičem sama sobě)
+	        $categories = $this->categoryService->getCategoriesForSelect($id);
 
-        $content = $this->renderCategoryForm($category, $categories, $csrfField);
-        return $this->adminLayout->wrap($content, $this->t('admin.categories.edit'));
-    }
+	        $content = $this->renderCategoryForm($category, $categories, $csrfField);
+	        return $this->adminLayout->wrap($content, $this->t('admin.categories.edit'));
+	    }
+
 
     /**
      * Zpracuje aktualizaci kategorie
@@ -151,25 +507,7 @@ class CategoryController
         }
     }
 
-    /**
-     * Smaže kategorii
-     *
-     * @param int $id ID kategorie
-     * @return void
-     */
-    public function delete(int $id): void
-    {
-        $this->requireAdmin();
 
-        $success = $this->categoryService->deleteCategory($id);
-
-        if ($success) {
-            header("Location: {$this->baseUrl}admin/categories?deleted=1");
-        } else {
-            header("Location: {$this->baseUrl}admin/categories?error=1");
-        }
-        exit;
-    }
 
     /**
      * Ověří, že uživatel je přihlášen jako admin
@@ -195,98 +533,7 @@ class CategoryController
         return Config::text($key);
     }
 
-    /**
-     * Vykreslí seznam kategorií
-     *
-     * @param array $categories Seznam kategorií
-     * @return string HTML obsah
-     */
-    private function renderCategoryList(array $categories): string
-    {
-        $message = '';
-        if (isset($_GET['created'])) {
-            $message = '<div class="alert alert-success">' . $this->t('admin.categories.messages.created') . '</div>';
-        } elseif (isset($_GET['updated'])) {
-            $message = '<div class="alert alert-success">' . $this->t('admin.categories.messages.updated') . '</div>';
-        } elseif (isset($_GET['deleted'])) {
-            $message = '<div class="alert alert-success">' . $this->t('admin.categories.messages.deleted') . '</div>';
-        } elseif (isset($_GET['error'])) {
-            $message = '<div class="alert alert-error">' . $this->t('admin.categories.messages.error') . '</div>';
-        }
 
-        $html = <<<HTML
-<div class="page-header">
-    <h1>{$this->t('admin.categories.manage')}</h1>
-    <a href="{$this->baseUrl}admin/categories/create" class="btn btn-primary">
-        ＋ {$this->t('admin.categories.create')}
-    </a>
-</div>
-
-{$message}
-
-<div class="categories-table-container">
-    <table class="categories-table">
-        <thead>
-            <tr>
-                <th>{$this->t('admin.categories.table.name')}</th>
-                <th>{$this->t('admin.categories.table.slug')}</th>
-                <th>{$this->t('admin.categories.table.description')}</th>
-                <th>{$this->t('admin.categories.table.actions')}</th>
-            </tr>
-        </thead>
-        <tbody>
-HTML;
-
-        if (empty($categories)) {
-            $html .= <<<HTML
-<tr>
-    <td colspan="4" class="text-center">
-        <div class="empty-state">
-            <h3>{$this->t('admin.categories.messages.empty')}</h3>
-            <p>{$this->t('admin.categories.messages.empty_text')}</p>
-            <a href="{$this->baseUrl}admin/categories/create" class="btn btn-primary">
-                {$this->t('admin.categories.messages.create_first')}
-            </a>
-        </div>
-    </td>
-</tr>
-HTML;
-        } else {
-            foreach ($categories as $category) {
-                $description = mb_substr($category['description'] ?? '', 0, 100);
-                $html .= <<<HTML
-<tr>
-    <td>{$this->escape($category['name'])}</td>
-    <td>{$this->escape($category['slug'])}</td>
-    <td>{$this->escape($description)}...</td>
-    <td>
-        <div class="action-buttons">
-            <a href="{$this->baseUrl}admin/categories/edit/{$category['id']}"
-               class="btn btn-sm btn-primary"
-               title="{$this->t('admin.categories.actions.edit')}">
-                ✏️
-            </a>
-            <a href="{$this->baseUrl}admin/categories/delete/{$category['id']}"
-               class="btn btn-sm btn-danger"
-               onclick="return confirm('{$this->t('admin.categories.confirm.delete')} „{$this->escapeJs($category['name'])}‟?')"
-               title="{$this->t('admin.categories.actions.delete')}">
-                🗑️
-            </a>
-        </div>
-    </td>
-</tr>
-HTML;
-            }
-        }
-
-        $html .= <<<HTML
-        </tbody>
-    </table>
-</div>
-HTML;
-
-        return $html;
-    }
 
     /**
      * Vykreslí formulář pro kategorii
@@ -301,19 +548,16 @@ HTML;
         $isEdit = !empty($category);
         $action = $isEdit
             ? "{$this->baseUrl}admin/categories/update/{$category['id']}"
-            : "{$this->baseUrl}admin/categories/create";
+            : "{$this->baseUrl}admin/categories/store";
 
         $name = $this->escape($category['name'] ?? '');
         $description = $this->escape($category['description'] ?? '');
         $parentId = $category['parent_id'] ?? '';
 
         $parentOptions = '<option value="">' . $this->t('admin.categories.form.no_parent') . '</option>';
-        foreach ($categories as $cat) {
-            if ($isEdit && $cat['id'] === $category['id']) {
-                continue; // Nemůže být rodičem sama sobě
-            }
-            $selected = $parentId == $cat['id'] ? 'selected' : '';
-            $parentOptions .= "<option value=\"{$cat['id']}\" {$selected}>{$this->escape($cat['name'])}</option>";
+        foreach ($categories as $id => $nameWithIndent) {
+            $selected = $parentId == $id ? 'selected' : '';
+            $parentOptions .= "<option value=\"{$id}\" {$selected}>{$this->escape($nameWithIndent)}</option>";
         }
 
         $message = '';
@@ -344,6 +588,7 @@ HTML;
         <select id="parent_id" name="parent_id" class="form-control">
             {$parentOptions}
         </select>
+        <small class="form-text">{$this->t('admin.categories.form.parent_help')}</small>
     </div>
 
     <div class="form-actions">
@@ -358,6 +603,10 @@ HTML;
 </form>
 HTML;
     }
+
+
+
+
 
     /**
      * Escape HTML speciálních znaků
