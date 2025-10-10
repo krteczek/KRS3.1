@@ -32,6 +32,7 @@ require_once __DIR__ . '/app/Controllers/CategoryController.php';
 
 require_once __DIR__ . '/app/Services/ArticleService.php';
 require_once __DIR__ . '/app/Services/CategoryService.php';
+require_once __DIR__ . '/app/Services/MenuService.php';
 require_once __DIR__ . '/app/Core/AdminMenu.php';
 require_once __DIR__ . '/app/Core/AdminLayout.php';
 require_once __DIR__ . '/app/Core/Router.php';

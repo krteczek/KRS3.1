@@ -66,7 +66,6 @@ if (empty($url)) {
 // Base URL pro odkazy v aplikaci
 $baseUrl = Config::site('base_path') ?? '';
 
-
 // Create services
 $database = new App\Database\DatabaseConnection();
 $session = new App\Session\SessionManager();
@@ -74,13 +73,43 @@ $csrf = new App\Security\CsrfProtection($session);
 $authService = new App\Auth\LoginService($database, $session,$csrf);
 $adminLayout = new App\Core\AdminLayout($authService, $baseUrl);
 
-// Create router (už nemusíme vytvářet ArticleService a CategoryService explicitně)
+
+
+// ✅ VYTVOŘENÍ TEMPLATE SYSTÉMU A GLOBÁLNÍCH PROMĚNNÝCH
+$template = new Template();
+
+// Vytvoříme služby pro kategorie a menu
+$categoryService = new CategoryService($database);
+$menuService = new MenuService($categoryService, $baseUrl);
+$articleService = new ArticleService($database);
+
+// ✅ NASTAVENÍ GLOBÁLNÍCH PROMĚNNÝCH PRO ŠABLONY pomocí assignMultiple
+$template->assignMultiple([
+    'baseUrl' => $baseUrl,
+    'siteName' => Config::site('name'),
+    'menuService' => $menuService,
+    'authService' => $authService
+]);
+
+
+// ✅ PŘIDÁME CATEGORY A MENU SERVICE
+$categoryService = new App\Services\CategoryService($database);
+$menuService = new App\Services\MenuService($categoryService, $baseUrl);
+
+$adminLayout = new App\Core\AdminLayout($authService, $baseUrl);
+
+// ✅ REGISTRUJEME MENU SERVICE JAKO GLOBÁLNÍ PROMĚNNOU
+$template = new App\Core\Template();
+$template->addGlobal('menuService', $menuService);
+
 $router = new App\Core\Router(
     $authService,
     $database,
     $csrf,
-    $adminLayout
+    $adminLayout,
+    $template // Předáme template systém s již nastavenými globálními proměnnými
 );
+
 
 $urlParts = explode('/', $url);
 

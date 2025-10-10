@@ -1,0 +1,60 @@
+/** adresářová struktura aplikace krs3.x **/
+app\
+	Auth\
+		LoginService.php
+	Controllers\
+		BaseController.php
+		ArticleController.php
+		CategoryController.php
+		AdminController.php
+		AuthController.php
+		HomeController.php
+	Core\
+		Config.php
+		Router.php
+		AdminMenu.php
+		AdminLayout.php
+		Template.php
+	Database\
+		DatabaseConnection.php
+	Logger\
+		Logger.php
+	Security\
+		CsrfProtection.php
+	Services\
+		ArticleService.php
+		CategoryService.php
+	Session\
+		SessionManager.php
+config\
+	config.php
+	texts.php
+	database.php
+install\
+	database-schema.sql
+	database-setup.php
+logs\
+public\
+	css\
+		admin.css
+		style-new.css
+		style.css
+	index.php
+	.htaccess
+templates\
+	layouts\
+		admin.php
+		frontend.php
+	pages\
+		admin\
+		article-detail.php
+		login.php
+		home.php
+		404.php
+	partials\
+		messages.php
+		header.php
+		footer.php
+		home.php
+autoload.php
+helpers.php

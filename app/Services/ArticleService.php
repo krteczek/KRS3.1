@@ -285,30 +285,39 @@ class ArticleService
     }
 
 	/**
-	 * Získá články s jejich kategoriemi
+	 * Získá články s podrobnými informacemi o kategoriích
 	 *
-	 * @return array Seznam článků s informacemi o kategoriích
+	 * @param array $articleIds Pole ID článků
+	 * @return array Články s kategoriemi
 	 */
-public function getArticlesWithCategories(): array
-{
-    $stmt = $this->db->query(
-        "SELECT a.*,
-            u.username as author_name,
-            GROUP_CONCAT(DISTINCT c.name SEPARATOR ',') as category_names,
-            GROUP_CONCAT(DISTINCT c.id SEPARATOR ',') as category_ids
-         FROM articles a
-         LEFT JOIN users u ON a.author_id = u.id
-         LEFT JOIN article_categories ac ON a.id = ac.article_id
-         LEFT JOIN categories c ON ac.category_id = c.id AND c.deleted_at IS NULL
-         WHERE a.deleted_at IS NULL
-         GROUP BY a.id
-         ORDER BY
-             CASE WHEN a.published_at IS NOT NULL THEN 0 ELSE 1 END,
-             COALESCE(a.published_at, a.created_at) DESC"
-    );
+	public function getArticlesWithCategories(array $articleIds = []): array
+	{
+	    if (empty($articleIds)) {
+	        return $this->getLatestArticlesWithCategories(10);
+	    }
 
-    return $stmt->fetchAll();
-}
+	    $placeholders = str_repeat('?,', count($articleIds) - 1) . '?';
+
+	    $stmt = $this->db->query(
+	        "SELECT a.*,
+	                u.username as author_name,
+	                GROUP_CONCAT(DISTINCT c.name SEPARATOR ', ') as category_names,
+	                GROUP_CONCAT(DISTINCT c.id SEPARATOR ',') as category_ids
+	         FROM articles a
+	         LEFT JOIN users u ON a.author_id = u.id
+	         LEFT JOIN article_categories ac ON a.id = ac.article_id
+	         LEFT JOIN categories c ON ac.category_id = c.id AND c.deleted_at IS NULL
+	         WHERE a.id IN ($placeholders)
+	         AND a.deleted_at IS NULL
+	         GROUP BY a.id
+	         ORDER BY a.published_at DESC",
+	        $articleIds
+	    );
+
+	    return $stmt->fetchAll();
+	}
+
+
 		/**
 		 * Získá smazané články s jejich kategoriemi
 		 *
@@ -332,4 +341,55 @@ public function getArticlesWithCategories(): array
 
 		        return $stmt->fetchAll();
 		    }
+
+	/**
+	 * Získá nejnovější články s jejich kategoriemi
+	 *
+	 * @param int $limit Počet článků
+	 * @return array Seznam článků s kategoriemi
+	 */
+	public function getLatestArticlesWithCategories(int $limit = 10): array
+	{
+	    $stmt = $this->db->query(
+	        "SELECT a.*,
+	                u.username as author_name,
+	                GROUP_CONCAT(DISTINCT c.name SEPARATOR ', ') as category_names,
+	                GROUP_CONCAT(DISTINCT c.id SEPARATOR ',') as category_ids
+	         FROM articles a
+	         LEFT JOIN users u ON a.author_id = u.id
+	         LEFT JOIN article_categories ac ON a.id = ac.article_id
+	         LEFT JOIN categories c ON ac.category_id = c.id AND c.deleted_at IS NULL
+	         WHERE a.status = 'published'
+	         AND a.published_at IS NOT NULL
+	         AND a.published_at <= NOW()
+	         AND a.deleted_at IS NULL
+	         GROUP BY a.id
+	         ORDER BY a.published_at DESC
+	         LIMIT ?",
+	        [$limit]
+	    );
+
+	    $articles = $stmt->fetchAll();
+
+	    // Zpracujeme kategorie do pole
+	    foreach ($articles as &$article) {
+	        $article['categories'] = [];
+	        if (!empty($article['category_names'])) {
+	            $categoryNames = explode(', ', $article['category_names']);
+	            $categoryIds = explode(',', $article['category_ids']);
+
+	            for ($i = 0; $i < count($categoryNames); $i++) {
+	                if (!empty($categoryNames[$i])) {
+	                    $article['categories'][] = [
+	                        'id' => $categoryIds[$i] ?? null,
+	                        'name' => $categoryNames[$i]
+	                    ];
+	                }
+	            }
+	        }
+	    }
+
+	    return $articles;
+	}
+
 }

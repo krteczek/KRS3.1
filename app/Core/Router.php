@@ -33,7 +33,8 @@ class Router
         private LoginService $authService,
         private DatabaseConnection $db,
         private CsrfProtection $csrf,
-        private AdminLayout $adminLayout
+        private AdminLayout $adminLayout,
+		private Template $template // Přidáme template jako závislost
     ) {
         $this->baseUrl = Config::site('base_path', '');
         $this->template = new Template();
@@ -45,27 +46,76 @@ class Router
 
     public function handleRequest(string $path, array $urlParts): string
     {
-        $page = $urlParts[0] ?? 'home';
+ try {
+            // Vytvoříme potřebné služby
+            $articleService = new ArticleService($this->db);
+            $categoryService = new CategoryService($this->db);
 
-        switch ($page) {
-            case '':
-            case 'home':
-                return $this->handleHomepage();
+            // Získáme baseUrl z template (uložený přes assignMultiple)
+            $baseUrl = $this->template->getData()['baseUrl'] ?? '';
+            $menuService = new MenuService($categoryService, $baseUrl);
 
-            case 'login':
-                return $this->handleLogin();
+            // Vytvoříme controllery
+            $homeController = new HomeController(
+                $articleService,
+                $this->template,
+                $baseUrl,
+                $this->authService,
+                $menuService
+            );
 
-            case 'logout':
-                return $this->handleLogout();
+            $authController = new AuthController(
+                $this->authService,
+                $this->template,
+                $baseUrl,
+                $this->csrf
+            );
 
-            case 'admin':
-                return $this->handleAdmin($urlParts);
+            $adminController = new AdminController(
+                $this->template,
+                $baseUrl,
+                $this->authService,
+                $this->adminLayout
+            );
 
-            case 'clanek':
-                return $this->handleArticleDetail($urlParts);
+            // Zpracování URL zůstává stejné
+            if (empty($urlParts[0]) || $urlParts[0] === 'home') {
+                return $homeController->showHomepage();
+            }
 
-            default:
-                return $this->handleNotFound();
+            switch ($urlParts[0]) {
+                case 'article':
+                    if (!empty($urlParts[1])) {
+                        return $homeController->showArticleDetail($urlParts[1]);
+                    }
+                    break;
+
+                case 'category':
+                    if (!empty($urlParts[1])) {
+                        return $homeController->showCategoryArticles($urlParts[1]);
+                    }
+                    break;
+
+                case 'login':
+                    return $authController->showLogin();
+
+                case 'logout':
+                    return $authController->logout();
+
+                case 'admin':
+                    return $adminController->showDashboard();
+
+                default:
+                    return $this->template->render('pages/404.php', [
+                        'message' => 'Stránka nebyla nalezena'
+                    ]);
+            }
+
+        } catch (\Exception $e) {
+            error_log("Router error: " . $e->getMessage());
+            return $this->template->render('pages/500.php', [
+                'message' => 'Došlo k chybě na serveru'
+            ]);
         }
     }
 

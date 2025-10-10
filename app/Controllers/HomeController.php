@@ -12,21 +12,12 @@ use App\Auth\LoginService;
 /**
  * Controller pro hlavní stránku a detail článku
  *
- * Zpracovává zobrazení úvodní stránky s přehledem článků
- * a detailních stránek jednotlivých článků.
- *
  * @package App\Controllers
  * @author KRS3
- * @version 3.0
+ * @version 3.1
  */
 class HomeController extends BaseController
 {
-    /**
-     * @param ArticleService $articleService Služba pro práci s články
-     * @param Template $template Šablonovací systém
-     * @param string $baseUrl Základní URL aplikace
-     * @param LoginService $authService Služba pro autentizaci uživatelů
-     */
     public function __construct(
         private ArticleService $articleService,
         Template $template,
@@ -39,17 +30,12 @@ class HomeController extends BaseController
     /**
      * Zobrazí úvodní stránku s přehledem publikovaných článků
      *
-     * Načte všechny publikované články a zobrazí je
-     * v přehledové stránce s úvodním textem.
-     *
      * @return string HTML obsah úvodní stránky
-     *
-     * @uses ArticleService::getPublishedArticles()
-     * @uses BaseController::renderPage()
      */
     public function showHomepage(): string
     {
-        $articles = $this->articleService->getPublishedArticles();
+        // Získáme 10 nejnovějších článků s kategoriemi
+        $articles = $this->articleService->getLatestArticlesWithCategories(10);
 
         return $this->renderPage('pages/home.php', [
             'articles' => $articles,
@@ -60,16 +46,26 @@ class HomeController extends BaseController
     }
 
     /**
-     * Zobrazí detailní stránku konkrétního článku podle slug
+     * Zobrazí články v konkrétní kategorii
      *
-     * Na základě URL slug najde a zobrazí detail článku.
-     * Pokud článek neexistuje, zobrazí chybovou stránku.
+     * @param string $categorySlug Slug kategorie
+     * @return string HTML obsah stránky kategorie
+     */
+    public function showCategoryArticles(string $categorySlug): string
+    {
+        // Zde bychom potřebovali CategoryService pro získání kategorií
+        // Prozatím vrátíme základní informace
+        return $this->renderPage('pages/category.php', [
+            'categorySlug' => $categorySlug,
+            'message' => "Články v kategorii: " . htmlspecialchars($categorySlug)
+        ], 'category');
+    }
+
+    /**
+     * Zobrazí detailní stránku konkrétního článku podle slug
      *
      * @param string $slug URL identifikátor článku
      * @return string HTML obsah detailu článku nebo chybové stránky
-     *
-     * @uses ArticleService::getArticleBySlug()
-     * @uses BaseController::renderPage()
      */
     public function showArticleDetail(string $slug): string
     {
@@ -82,11 +78,15 @@ class HomeController extends BaseController
             ], 'article_not_found');
         }
 
+        // Získáme kategorie pro tento článek
+        $articleWithCategories = $this->articleService->getLatestArticlesWithCategories(1);
+        $currentArticle = !empty($articleWithCategories) ? $articleWithCategories[0] : $article;
+
         return $this->renderPage('pages/article-detail.php', [
-            'article' => $article,
+            'article' => $currentArticle,
             'backLinkText' => Config::text('ui.back_to_home')
         ], 'article_detail', [
-            'title' => $article['title'] // Toto se použije v {title} v konfiguraci
+            'title' => $article['title']
         ]);
     }
 }
