@@ -1,43 +1,21 @@
 <?php
-// public/index.php
+// public/index.php - KONEČNÁ VERZE
 declare(strict_types=1);
-
-/**
- * Hlavní vstupní bod aplikace KRS3
- *
- * Tento soubor inicializuje všechny potřebné služby, načte konfiguraci
- * a zpracuje příchozí HTTP požadavek pomocí routeru.
- * Slouží jako front controller celé aplikace.
- *
- * @package public
- * @author KRS3
- * @version 3.0
- */
 
 require_once __DIR__ . '/../autoload.php';
 
-use App\Logger\Logger;
-use App\Database\DatabaseConnection;
-use App\Session\SessionManager;
-use App\Auth\LoginService;
-use App\Security\CsrfProtection;
-use App\Core\AdminMenu;
-use App\Core\AdminLayout;
-use App\Core\Router;
 use App\Core\Config;
 use App\Core\Template;
 
-// ✅ NAČTENÍ KONFIGURAČNÍCH SOUBORŮ
-App\Core\Config::load(__DIR__ . '/../config/config.php');
-App\Core\Config::load(__DIR__ . '/../config/texts.php');
+// ✅ NAČTENÍ KONFIGURACE
+Config::load(__DIR__ . '/../config/config.php');
+Config::load(__DIR__ . '/../config/texts.php');
 
-//$logger = new AdvancedLogger("app.log", true, 'DEBUG');
-// Registrace error handleru
-$logger = Logger::getInstance();
+// ✅ ERROR HANDLING (váš existující kód)
+$logger = App\Logger\Logger::getInstance();
 set_exception_handler(function(\Throwable $e) use ($logger) {
     $logger->exception($e, "Uncaught exception");
 });
-
 
 set_error_handler(function($errno, $errstr, $errfile, $errline) use ($logger) {
     $logger->error("Error {$errno}: {$errstr} in {$errfile} on line {$errline}");
@@ -51,8 +29,6 @@ register_shutdown_function(function() use ($logger) {
     }
 });
 
-
-
 // ✅ ZPRACOVÁNÍ URL
 $url = $_GET['url'] ?? '';
 
@@ -63,27 +39,21 @@ if (empty($url)) {
     $url = ltrim($url, '/');
 }
 
-// Base URL pro odkazy v aplikaci
+// ✅ BASE URL
 $baseUrl = Config::site('base_path') ?? '';
 
-// Create services
+// ✅ VYTVOŘENÍ SLUŽEB
 $database = new App\Database\DatabaseConnection();
 $session = new App\Session\SessionManager();
 $csrf = new App\Security\CsrfProtection($session);
-$authService = new App\Auth\LoginService($database, $session,$csrf);
-$adminLayout = new App\Core\AdminLayout($authService, $baseUrl);
+$authService = new App\Auth\LoginService($database, $session, $csrf);
 
+// ✅ VYTVOŘENÍ CATEGORY A MENU SERVICE
+$categoryService = new App\Services\CategoryService($database);
+$menuService = new App\Services\MenuService($categoryService, $baseUrl);
 
-
-// ✅ VYTVOŘENÍ TEMPLATE SYSTÉMU A GLOBÁLNÍCH PROMĚNNÝCH
+// ✅ VYTVOŘENÍ TEMPLATE S GLOBÁLNÍMI PROMĚNNÝMI
 $template = new Template();
-
-// Vytvoříme služby pro kategorie a menu
-$categoryService = new CategoryService($database);
-$menuService = new MenuService($categoryService, $baseUrl);
-$articleService = new ArticleService($database);
-
-// ✅ NASTAVENÍ GLOBÁLNÍCH PROMĚNNÝCH PRO ŠABLONY pomocí assignMultiple
 $template->assignMultiple([
     'baseUrl' => $baseUrl,
     'siteName' => Config::site('name'),
@@ -91,32 +61,22 @@ $template->assignMultiple([
     'authService' => $authService
 ]);
 
-
-// ✅ PŘIDÁME CATEGORY A MENU SERVICE
-$categoryService = new App\Services\CategoryService($database);
-$menuService = new App\Services\MenuService($categoryService, $baseUrl);
-
 $adminLayout = new App\Core\AdminLayout($authService, $baseUrl);
 
-// ✅ REGISTRUJEME MENU SERVICE JAKO GLOBÁLNÍ PROMĚNNOU
-$template = new App\Core\Template();
-$template->addGlobal('menuService', $menuService);
-
+// ✅ VYTVOŘENÍ ROUTERU
 $router = new App\Core\Router(
     $authService,
     $database,
     $csrf,
     $adminLayout,
-    $template // Předáme template systém s již nastavenými globálními proměnnými
+    $template,
+    $menuService
 );
-
-
-$urlParts = explode('/', $url);
 
 // ✅ SPRÁVA JAZYKŮ
 if (isset($_GET['lang']) && in_array($_GET['lang'], ['cs', 'en', 'de'])) {
     $_SESSION['language'] = $_GET['lang'];
 }
 
-// ✅ ZPRACOVÁNÍ POŽADAVKU A VÝPIS VÝSLEDKU
-echo $router->handleRequest($url, $urlParts);
+// ✅ ZPRACOVÁNÍ POŽADAVKU
+echo $router->handleRequest($url, explode('/', $url));

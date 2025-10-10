@@ -62,6 +62,17 @@ HTML;
         return $this->adminLayout->wrap($content, $this->translate('admin.navigation.dashboard'));
     }
 
+
+	 /**
+     * Alias metody dashboard pro kompatibilitu s Routerem
+     *
+     * @return string HTML obsah administračního dashboardu
+     */
+    public function showDashboard(): string
+    {
+        return $this->dashboard();
+    }
+
     /**
      * Přeloží textový klíč pomocí konfiguračního systému
      *

@@ -261,28 +261,31 @@ class ArticleService
         return $result->rowCount() > 0;
     }
 
-/**
-     * Získá články v konkrétní kategorii
-     *
-     * @param int $categoryId ID kategorie
-     * @return array Seznam článků v kategorii
-     */
-    public function getArticlesByCategory(int $categoryId): array
-    {
-        $stmt = $this->db->query(
-            "SELECT a.*, u.username as author_name
-             FROM articles a
-             LEFT JOIN users u ON a.author_id = u.id
-             INNER JOIN article_categories ac ON a.id = ac.article_id
-             WHERE ac.category_id = ?
-             AND a.status = 'published'
-             AND a.deleted_at IS NULL
-             ORDER BY a.published_at DESC",
-            [$categoryId]
-        );
+	/**
+	 * Získá články pro konkrétní kategorii
+	 *
+	 * @param int $categoryId ID kategorie
+	 * @param int $limit Počet článků
+	 * @return array Seznam článků
+	 */
+	public function getArticlesByCategory(int $categoryId, int $limit = 10): array
+	{
+	    $stmt = $this->db->query(
+	        "SELECT a.*, u.username as author_name
+	         FROM articles a
+	         LEFT JOIN users u ON a.author_id = u.id
+	         INNER JOIN article_categories ac ON a.id = ac.article_id
+	         WHERE ac.category_id = ?
+	         AND a.status = 'published'
+	         AND a.published_at <= NOW()
+	         AND a.deleted_at IS NULL
+	         ORDER BY a.published_at DESC
+	         LIMIT ?",
+	        [$categoryId, $limit]
+	    );
 
-        return $stmt->fetchAll();
-    }
+	    return $stmt->fetchAll();
+	}
 
 	/**
 	 * Získá články s podrobnými informacemi o kategoriích
@@ -379,17 +382,44 @@ class ArticleService
 	            $categoryIds = explode(',', $article['category_ids']);
 
 	            for ($i = 0; $i < count($categoryNames); $i++) {
-	                if (!empty($categoryNames[$i])) {
+	                if (!empty($categoryNames[$i]) && isset($categoryIds[$i])) {
 	                    $article['categories'][] = [
-	                        'id' => $categoryIds[$i] ?? null,
-	                        'name' => $categoryNames[$i]
+	                        'id' => (int)$categoryIds[$i],
+	                        'name' => $categoryNames[$i],
+	                        'slug' => $this->generateCategorySlug($categoryNames[$i])
 	                    ];
 	                }
 	            }
 	        }
+
+	        // Formátování data pro zobrazení
+	        $article['formatted_date'] = $this->formatDate($article['published_at']);
 	    }
 
 	    return $articles;
+	}
+	/**
+	 * Vygeneruje slug pro kategorii
+	 *
+	 * @param string $name Název kategorie
+	 * @return string Slug
+	 */
+	private function generateCategorySlug(string $name): string
+	{
+	    $slug = iconv('UTF-8', 'ASCII//TRANSLIT', $name);
+	    $slug = preg_replace('/[^a-zA-Z0-9 -]/', '', $slug);
+	    $slug = strtolower(str_replace(' ', '-', $slug));
+	    return preg_replace('/-+/', '-', $slug);
+	}
+	/**
+	 * Formátuje datum do českého formátu
+	 *
+	 * @param string $date Datum
+	 * @return string Formátované datum
+	 */
+	private function formatDate(string $date): string
+	{
+	    return date('j. n. Y', strtotime($date));
 	}
 
 }

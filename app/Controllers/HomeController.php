@@ -1,71 +1,80 @@
 <?php
-// app/Controllers/HomeController.php
+// app/Controllers/HomeController.php - OPRAVENÁ VERZE
 declare(strict_types=1);
 
 namespace App\Controllers;
 
 use App\Services\ArticleService;
+use App\Services\CategoryService;
 use App\Core\Template;
 use App\Core\Config;
 use App\Auth\LoginService;
+use App\Services\MenuService;
 
-/**
- * Controller pro hlavní stránku a detail článku
- *
- * @package App\Controllers
- * @author KRS3
- * @version 3.1
- */
 class HomeController extends BaseController
 {
     public function __construct(
         private ArticleService $articleService,
+        private CategoryService $categoryService,
         Template $template,
         string $baseUrl,
-        LoginService $authService
+        LoginService $authService,
+        MenuService $menuService
     ) {
-        parent::__construct($template, $baseUrl, $authService);
+        parent::__construct($template, $baseUrl, $authService, $menuService);
     }
 
     /**
-     * Zobrazí úvodní stránku s přehledem publikovaných článků
-     *
-     * @return string HTML obsah úvodní stránky
+     * Zobrazí úvodní stránku s přehledem článků a sidebar menu
      */
     public function showHomepage(): string
     {
-        // Získáme 10 nejnovějších článků s kategoriemi
         $articles = $this->articleService->getLatestArticlesWithCategories(10);
+        $popularCategories = $this->categoryService->getPopularCategories(5);
 
-        return $this->renderPage('pages/home.php', [
+        // Použijeme sidebar layout pro homepage
+        return $this->renderPageWithSidebar('pages/home.php', [
             'articles' => $articles,
-            'welcomeMessage' => Config::text('messages.welcome'),
-            'noArticlesMessage' => Config::text('messages.no_articles'),
-            'readMoreText' => Config::text('ui.read_more')
+            'popularCategories' => $popularCategories,
+            'welcomeMessage' => Config::text('messages.welcome', [], 'Vítejte na našem webu'),
+            'noArticlesMessage' => Config::text('messages.no_articles', [], 'Zatím zde nejsou žádné články.'),
+            'readMoreText' => Config::text('ui.read_more', [], 'Číst více'),
+            'categoriesTitle' => Config::text('ui.categories', [], 'Kategorie')
         ], 'home');
     }
 
     /**
      * Zobrazí články v konkrétní kategorii
-     *
-     * @param string $categorySlug Slug kategorie
-     * @return string HTML obsah stránky kategorie
      */
     public function showCategoryArticles(string $categorySlug): string
     {
-        // Zde bychom potřebovali CategoryService pro získání kategorií
-        // Prozatím vrátíme základní informace
-        return $this->renderPage('pages/category.php', [
-            'categorySlug' => $categorySlug,
-            'message' => "Články v kategorii: " . htmlspecialchars($categorySlug)
-        ], 'category');
+        $category = $this->categoryService->getCategoryBySlug($categorySlug);
+
+        if (!$category) {
+            return $this->renderPage('partials/error.php', [
+                'message' => Config::text('messages.category_not_found', [], 'Kategorie nebyla nalezena.'),
+                'backLinkText' => Config::text('ui.back_to_home', [], 'Zpět na úvodní stránku')
+            ], 'category_not_found');
+        }
+
+        $articles = $this->articleService->getArticlesByCategory($category['id']);
+        $popularCategories = $this->categoryService->getPopularCategories(5);
+        $breadcrumb = $this->menuService->generateCategoryBreadcrumb($category['id']);
+
+        // Pro kategorii také použijeme sidebar layout
+        return $this->renderPageWithSidebar('pages/category.php', [
+            'category' => $category,
+            'articles' => $articles,
+            'popularCategories' => $popularCategories,
+            'breadcrumb' => $breadcrumb,
+            'noArticlesMessage' => Config::text('messages.no_articles_in_category', ['category' => $category['name']], "V kategorii {$category['name']} zatím nejsou žádné články.")
+        ], 'category', [
+            'category' => $category['name']
+        ]);
     }
 
     /**
-     * Zobrazí detailní stránku konkrétního článku podle slug
-     *
-     * @param string $slug URL identifikátor článku
-     * @return string HTML obsah detailu článku nebo chybové stránky
+     * Zobrazí detail článku
      */
     public function showArticleDetail(string $slug): string
     {
@@ -73,18 +82,18 @@ class HomeController extends BaseController
 
         if (!$article) {
             return $this->renderPage('partials/error.php', [
-                'message' => Config::text('messages.article_not_found'),
-                'backLinkText' => Config::text('ui.back_to_home')
+                'message' => Config::text('messages.article_not_found', [], 'Článek nebyl nalezen.'),
+                'backLinkText' => Config::text('ui.back_to_home', [], 'Zpět na úvodní stránku')
             ], 'article_not_found');
         }
 
-        // Získáme kategorie pro tento článek
-        $articleWithCategories = $this->articleService->getLatestArticlesWithCategories(1);
-        $currentArticle = !empty($articleWithCategories) ? $articleWithCategories[0] : $article;
+        $popularCategories = $this->categoryService->getPopularCategories(5);
 
-        return $this->renderPage('pages/article-detail.php', [
-            'article' => $currentArticle,
-            'backLinkText' => Config::text('ui.back_to_home')
+        // Pro detail článku také použijeme sidebar layout
+        return $this->renderPageWithSidebar('pages/article-detail.php', [
+            'article' => $article,
+            'popularCategories' => $popularCategories,
+            'backLinkText' => Config::text('ui.back_to_home', [], 'Zpět na úvodní stránku')
         ], 'article_detail', [
             'title' => $article['title']
         ]);

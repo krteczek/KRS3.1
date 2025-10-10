@@ -481,5 +481,101 @@ class CategoryService
 
         return false;
     }
+/**
+ * Získá počet publikovaných článků v kategorii
+ *
+ * @param int $categoryId ID kategorie
+ * @return int Počet článků
+ */
+public function getArticleCount(int $categoryId): int
+{
+    $stmt = $this->db->query(
+        "SELECT COUNT(DISTINCT a.id) as article_count
+         FROM articles a
+         INNER JOIN article_categories ac ON a.id = ac.article_id
+         WHERE ac.category_id = ?
+         AND a.status = 'published'
+         AND a.published_at <= NOW()
+         AND a.deleted_at IS NULL",
+        [$categoryId]
+    );
 
+    $result = $stmt->fetch();
+    return (int)($result['article_count'] ?? 0);
+}
+
+	/**
+	 * Získá breadcrumb navigaci pro kategorii
+	 *
+	 * @param int $categoryId ID kategorie
+	 * @return array Pole s breadcrumb položkami
+	 */
+	public function getCategoryBreadcrumb(int $categoryId): array
+	{
+	    $breadcrumbs = [];
+	    $currentCategory = $this->getCategory($categoryId);
+
+	    if (!$currentCategory) {
+	        return $breadcrumbs;
+	    }
+
+	    // Přidáme aktuální kategorii
+	    $breadcrumbs[] = $currentCategory;
+
+	    // Rekurzivně procházíme rodiče
+	    $parentId = $currentCategory['parent_id'];
+	    while ($parentId) {
+	        $parentCategory = $this->getCategory($parentId);
+	        if ($parentCategory) {
+	            array_unshift($breadcrumbs, $parentCategory);
+	            $parentId = $parentCategory['parent_id'];
+	        } else {
+	            break;
+	        }
+	    }
+
+	    return $breadcrumbs;
+	}
+
+	/**
+	 * Získá kategorii podle slugu
+	 *
+	 * @param string $slug Slug kategorie
+	 * @return array|null Data kategorie nebo null
+	 */
+	public function getCategoryBySlug(string $slug): ?array
+	{
+	    $stmt = $this->db->query(
+	        "SELECT * FROM categories WHERE slug = ? AND deleted_at IS NULL",
+	        [$slug]
+	    );
+
+	    return $stmt->fetch() ?: null;
+	}
+
+	/**
+	 * Získá populární kategorie (s nejvíce články)
+	 *
+	 * @param int $limit Počet kategorií
+	 * @return array Seznam populárních kategorií
+	 */
+	public function getPopularCategories(int $limit = 5): array
+	{
+	    $stmt = $this->db->query(
+	        "SELECT c.*, COUNT(ac.article_id) as article_count
+	         FROM categories c
+	         LEFT JOIN article_categories ac ON c.id = ac.category_id
+	         LEFT JOIN articles a ON ac.article_id = a.id
+	            AND a.status = 'published'
+	            AND a.published_at <= NOW()
+	            AND a.deleted_at IS NULL
+	         WHERE c.deleted_at IS NULL
+	         GROUP BY c.id
+	         ORDER BY article_count DESC, c.name ASC
+	         LIMIT ?",
+	        [$limit]
+	    );
+
+	    return $stmt->fetchAll();
+	}
 }

@@ -1,10 +1,13 @@
 <?php
-// templates/pages/home.php - OPRAVENÁ VERZE
+// templates/pages/category.php
 ?>
-<div class="homepage-content">
+<div class="category-content">
     <div class="row">
         <div class="col-12">
-            <h1 class="display-4 mb-4"><?= $welcomeMessage ?></h1>
+            <h1 class="display-4 mb-4">Články v kategorii: <?= htmlspecialchars($category['name']) ?></h1>
+            <?php if (!empty($category['description'])): ?>
+                <p class="lead"><?= htmlspecialchars($category['description']) ?></p>
+            <?php endif; ?>
         </div>
     </div>
 
@@ -38,21 +41,9 @@
                                 </p>
                             <?php endif; ?>
 
-                            <?php if (!empty($article['categories'])): ?>
-                                <div class="article-categories mb-3">
-                                    <?php foreach ($article['categories'] as $category): ?>
-                                        <a href="<?= $baseUrl ?>category/<?= $category['slug'] ?>"
-                                           class="badge bg-primary me-1 text-decoration-none">
-                                            <i class="fas fa-tag me-1"></i>
-                                            <?= htmlspecialchars($category['name']) ?>
-                                        </a>
-                                    <?php endforeach; ?>
-                                </div>
-                            <?php endif; ?>
-
                             <a href="<?= $baseUrl ?>article/<?= $article['slug'] ?>"
                                class="btn btn-outline-primary">
-                                <?= $readMoreText ?> <i class="fas fa-arrow-right ms-1"></i>
+                                Číst více <i class="fas fa-arrow-right ms-1"></i>
                             </a>
                         </div>
                     </div>

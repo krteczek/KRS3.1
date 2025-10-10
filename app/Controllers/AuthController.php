@@ -50,7 +50,7 @@ class AuthController
     {
 
         if ($this->loginService->isLoggedIn()) {
-            header('Location: ' . $this->baseUrl . '/admin');
+            header('Location: ' . $this->baseUrl . 'admin');
             exit;
         }
         $csrfField = $this->csrf->getTokenField();

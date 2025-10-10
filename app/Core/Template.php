@@ -24,6 +24,16 @@ class Template
         $this->data = array_merge($this->data, $data);
     }
 
+    /**
+     * Získá přiřazená data (nová metoda)
+     *
+     * @return array
+     */
+    public function getData(): array
+    {
+        return $this->data;
+    }
+
     public function render(string $template, array $data = []): string
     {
         $fullPath = $this->templatesDir . '/' . ltrim($template, '/');
@@ -46,7 +56,7 @@ class Template
         return file_exists($this->templatesDir . '/' . ltrim($template, '/'));
     }
 
-	/**
+    /**
      * Přeloží textový klíč
      *
      * @param string $key Klíč pro překlad
