@@ -168,22 +168,6 @@ public function createArticle(): void
 	        $articles = $this->articleService->getArticlesWithCategories();
 	    }
 
-	    // BEZPEČNÉ logování s kontrolou existence loggeru
-		
-	    if (isset($this->logger)) {
-	        $this->logger->info("Total articles: " . count($articles));
-	        foreach ($articles as $index => $article) {
-	            $this->logger->info("Article {$index}: " . $article['title']);
-	            $this->logger->info("Categories: " . ($article['category_names'] ?? 'none'));
-	            $this->logger->info("Category IDs: " . ($article['category_ids'] ?? 'none'));
-	        }
-	    }
-		// Debug: zkontrolujte první článek (pokud existuje)
-		    if (!empty($articles)) {
-		        $this->logger->info("First article title: " . $articles[0]['title']);
-		        $this->logger->info("First article deleted_at: " . ($articles[0]['deleted_at'] ?? 'NULL'));
-		    }
-
 	    // Připrav zprávy
 	    $message = '';
 	    if (isset($_GET['created'])) {

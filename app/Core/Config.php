@@ -84,7 +84,7 @@ class Config
 
 
     /**
-     * Získá nastavení webu podle klíče
+     * Získá nastavení logování webu podle klíče
      *
      * @param string $key Klíč nastavení webu (např. 'name', 'url')
      * @param mixed $default Výchozí hodnota pokud klíč neexistuje
@@ -99,6 +99,25 @@ class Config
     {
         return self::get("logs.{$key}", $default);
     }
+
+
+    /**
+     * Získá nastavení logování webu podle klíče
+     *
+     * @param string $key Klíč nastavení webu (např. 'name', 'url')
+     * @param mixed $default Výchozí hodnota pokud klíč neexistuje
+     * @return mixed Nalezená hodnota nebo výchozí hodnota
+     *
+     * @example
+     * $csfrTokenExpire = Config::csrf('token_expire');
+     * $csfrValidateOrigin = Config::csrf('validate_origin');
+     */
+
+    public static function csrf(string $key, $default = null)
+    {
+        return self::get("csrf.{$key}", $default);
+    }
+
 
     /**
      * Získá lokalizovaný text podle klíče

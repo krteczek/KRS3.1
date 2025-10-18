@@ -41,11 +41,11 @@ if (empty($url)) {
 
 // ✅ BASE URL
 $baseUrl = Config::site('base_path') ?? '';
-
+$csrfConfig = Config::get('csrf');
 // ✅ VYTVOŘENÍ SLUŽEB
 $database = new App\Database\DatabaseConnection();
 $session = new App\Session\SessionManager();
-$csrf = new App\Security\CsrfProtection($session);
+$csrf = new App\Security\CsrfProtection($session, $csrfConfig);
 $authService = new App\Auth\LoginService($database, $session, $csrf);
 
 // ✅ VYTVOŘENÍ CATEGORY A MENU SERVICE

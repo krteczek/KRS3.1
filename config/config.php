@@ -28,19 +28,27 @@ return [
         'password_cost' => 12
     ],
 
-	'templates' => [
-		'dir' => __DIR__ . '/../templates',
-		'cache' => __DIR__ . '/../cache/templates' // pro budoucí caching
-	],
+    'csrf' => [
+        'token_expire' => 3600,        // 1 hodina v sekundách
+        'max_tokens' => 10,            // Maximální počet současných tokenů
+        'validate_origin' => true,     // Validovat HTTP origin
+        'validate_referer' => true,    // Validovat HTTP referer
+        'token_name' => 'csrf_token'   // Název tokenu v formulářích
+    ],
 
-	'logs' => [
-		'level' => 'INFO',           // DEBUG, INFO, WARNING, ERROR, EXCEPTION, NONE
-	    'echo' => true,              // logovat na obrazovku
-	    'file' => true,              // logovat do souboru
-	    'rotation' => 'daily',       // none, daily, hourly, size
-	    'max_size' => 10485760,      // 10MB (pouze pro rotation = 'size')
-	    'max_files' => 30,           // maximální počet souborů
-	    'dir' => __DIR__ . '/../logs/',
-	    'file' => 'app.log'
-	]
+    'templates' => [
+        'dir' => __DIR__ . '/../templates',
+        'cache' => __DIR__ . '/../cache/templates' // pro budoucí caching
+    ],
+
+    'logs' => [
+        'level' => 'DEBUG',        // DEBUG, INFO, WARNING, ERROR, CRITICAL, EXCEPTION, NONE
+        'echo' => true,           // Vypnout výpis na obrazovku v produkci
+        'file' => true,            // Zapnout zápis do souboru
+        'rotation' => 'daily',     // daily, hourly, size, none
+        'max_size' => 10240,    // 10MB (pro size rotaci)
+        'max_files' => 30,         // Počet souborů k uchování
+        'dir' => __DIR__ . '/../logs/',
+        'file' => 'app.log'
+    ]
 ];

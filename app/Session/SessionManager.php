@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Session;
 
 use App\Core\Config;
+use App\Logger\Logger;
 
 /**
  * Správa PHP sessions s bezpečnostními opatřeními
@@ -15,10 +16,12 @@ use App\Core\Config;
  *
  * @package App\Session
  * @author KRS3
- * @version 1.0
+ * @version 2.0
  */
 class SessionManager
 {
+    private Logger $logger;
+
     /**
      * Inicializuje session s bezpečnostními nastaveními
      *
@@ -26,11 +29,23 @@ class SessionManager
      */
     public function __construct()
     {
+        $this->logger = Logger::getInstance();
+
         if (session_status() === PHP_SESSION_NONE) {
             $this->configureSession();
             if (!session_start()) {
+                $this->logger->error('Failed to start session', [
+                    'client_ip' => $this->getClientIp(),
+                    'user_agent' => $this->getUserAgent()
+                ]);
                 throw new \RuntimeException('Nepodařilo se inicializovat session');
             }
+
+            $this->logger->info('Session started', [
+                'session_id' => substr(session_id(), 0, 8) . '...',
+                'client_ip' => $this->getClientIp(),
+                'user_agent' => $this->getUserAgent()
+            ]);
         }
     }
 
@@ -55,6 +70,13 @@ class SessionManager
             'httponly' => true,
             'samesite' => 'Strict'
         ]);
+
+        $this->logger->debug('Session security parameters configured', [
+            'cookie_secure' => true,
+            'cookie_httponly' => true,
+            'cookie_samesite' => 'Strict',
+            'use_strict_mode' => true
+        ]);
     }
 
     /**
@@ -67,6 +89,12 @@ class SessionManager
     public function set(string $key, $value): void
     {
         $_SESSION[$key] = $value;
+
+        $this->logger->debug('Session value set', [
+            'key' => $key,
+            'value_type' => gettype($value),
+            'session_id' => substr(session_id(), 0, 8) . '...'
+        ]);
     }
 
     /**
@@ -78,7 +106,17 @@ class SessionManager
      */
     public function get(string $key, $default = null)
     {
-        return $_SESSION[$key] ?? $default;
+        $exists = isset($_SESSION[$key]);
+        $value = $_SESSION[$key] ?? $default;
+
+        $this->logger->debug('Session value retrieved', [
+            'key' => $key,
+            'exists' => $exists,
+            'returned_default' => !$exists,
+            'session_id' => substr(session_id(), 0, 8) . '...'
+        ]);
+
+        return $value;
     }
 
     /**
@@ -100,7 +138,14 @@ class SessionManager
      */
     public function remove(string $key): void
     {
+        $existed = isset($_SESSION[$key]);
         unset($_SESSION[$key]);
+
+        $this->logger->debug('Session value removed', [
+            'key' => $key,
+            'existed' => $existed,
+            'session_id' => substr(session_id(), 0, 8) . '...'
+        ]);
     }
 
     /**
@@ -110,7 +155,24 @@ class SessionManager
      */
     public function regenerate(): bool
     {
-        return session_regenerate_id(true);
+        $oldSessionId = session_id();
+        $result = session_regenerate_id(true);
+
+        if ($result) {
+            $this->logger->info('Session ID regenerated', [
+                'old_session_id' => substr($oldSessionId, 0, 8) . '...',
+                'new_session_id' => substr(session_id(), 0, 8) . '...',
+                'client_ip' => $this->getClientIp(),
+                'user_agent' => $this->getUserAgent()
+            ]);
+        } else {
+            $this->logger->warning('Session ID regeneration failed', [
+                'session_id' => substr($oldSessionId, 0, 8) . '...',
+                'client_ip' => $this->getClientIp()
+            ]);
+        }
+
+        return $result;
     }
 
     /**
@@ -120,7 +182,14 @@ class SessionManager
      */
     public function clear(): void
     {
+        $keysCount = count($_SESSION);
         $_SESSION = [];
+
+        $this->logger->info('Session data cleared', [
+            'cleared_keys_count' => $keysCount,
+            'session_id' => substr(session_id(), 0, 8) . '...',
+            'client_ip' => $this->getClientIp()
+        ]);
     }
 
     /**
@@ -130,6 +199,9 @@ class SessionManager
      */
     public function destroy(): void
     {
+        $sessionId = session_id();
+        $keysCount = count($_SESSION);
+
         $this->clear();
 
         if (session_status() === PHP_SESSION_ACTIVE) {
@@ -147,6 +219,13 @@ class SessionManager
             }
 
             session_destroy();
+
+            $this->logger->info('Session destroyed', [
+                'session_id' => substr($sessionId, 0, 8) . '...',
+                'cleared_keys_count' => $keysCount,
+                'client_ip' => $this->getClientIp(),
+                'user_agent' => $this->getUserAgent()
+            ]);
         }
     }
 
@@ -192,6 +271,13 @@ class SessionManager
     {
         $message = Config::text($messageKey, $params);
         $this->set("flash_{$type}", $message);
+
+        $this->logger->debug('Flash message set', [
+            'type' => $type,
+            'message_key' => $messageKey,
+            'params' => $params,
+            'session_id' => substr(session_id(), 0, 8) . '...'
+        ]);
     }
 
     /**
@@ -205,6 +291,13 @@ class SessionManager
     {
         $message = $this->get("flash_{$type}", $default);
         $this->remove("flash_{$type}");
+
+        $this->logger->debug('Flash message retrieved and removed', [
+            'type' => $type,
+            'has_message' => $message !== null,
+            'session_id' => substr(session_id(), 0, 8) . '...'
+        ]);
+
         return $message;
     }
 
@@ -277,5 +370,32 @@ class SessionManager
     {
         ini_set('session.gc_maxlifetime', $minutes * 60);
         session_set_cookie_params($minutes * 60);
+
+        $this->logger->info('Session expiration set', [
+            'minutes' => $minutes,
+            'seconds' => $minutes * 60,
+            'session_id' => substr(session_id(), 0, 8) . '...',
+            'client_ip' => $this->getClientIp()
+        ]);
+    }
+
+    /**
+     * Získá IP adresu klienta
+     *
+     * @return string IP adresa
+     */
+    private function getClientIp(): string
+    {
+        return $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+    }
+
+    /**
+     * Získá User Agent
+     *
+     * @return string User Agent
+     */
+    private function getUserAgent(): string
+    {
+        return $_SERVER['HTTP_USER_AGENT'] ?? 'unknown';
     }
 }
