@@ -16,12 +16,11 @@ use App\Core\Config;
  *
  * @package App\Controllers
  * @author KRS3
- * @version 3.0
+ * @version 3.1
  */
 class CategoryController
 {
-
-	 private Logger $logger;
+    private Logger $logger;
 
     /**
      * Konstruktor
@@ -39,8 +38,8 @@ class CategoryController
         private string $baseUrl,
         private AdminLayout $adminLayout
     ) {
-		$this->logger = Logger::getInstance();
-	}
+        $this->logger = Logger::getInstance();
+    }
 
     /**
      * Zobrazí seznam kategorií (aktivní a koš)
@@ -51,17 +50,211 @@ class CategoryController
     {
         $this->requireAdmin();
 
-        // Zjisti, zda se má zobrazit koš
         $isTrashView = isset($_GET['show']) && $_GET['show'] === 'trash';
 
-        if ($isTrashView) {
-            $categories = $this->categoryService->getDeletedCategories();
-        } else {
-            $categories = $this->categoryService->getCategoryTree();
+        $this->logger->debug('Displaying categories list', [
+            'is_trash_view' => $isTrashView,
+            'user' => $this->authService->getUsername()
+        ]);
+
+        try {
+            if ($isTrashView) {
+                $categories = $this->categoryService->getDeletedCategories();
+            } else {
+                $categories = $this->categoryService->getCategoryTree();
+            }
+
+            $content = $this->renderCategoryList($categories, $isTrashView);
+            return $this->adminLayout->wrap($content, $this->t('admin.categories.manage'));
+        } catch (\Exception $e) {
+            $this->logger->error('Failed to display categories list', [
+                'is_trash_view' => $isTrashView,
+                'error' => $e->getMessage(),
+                'user' => $this->authService->getUsername()
+            ]);
+            throw $e;
+        }
+    }
+
+    /**
+     * Zobrazí formulář pro vytvoření kategorie
+     *
+     * @return string HTML obsah formuláře
+     */
+    public function create(): string
+    {
+        $this->requireAdmin();
+
+        $this->logger->debug('Displaying category create form', [
+            'user' => $this->authService->getUsername()
+        ]);
+
+        $csrfField = $this->csrf->getTokenField();
+        $categories = $this->categoryService->getCategoriesForSelect();
+
+        $content = $this->renderCategoryForm([], $categories, $csrfField);
+        return $this->adminLayout->wrap($content, $this->t('admin.categories.create'));
+    }
+
+    /**
+     * Zpracuje vytvoření nové kategorie
+     *
+     * @return void
+     */
+    public function store(): void
+    {
+        $this->requireAdmin();
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->logger->warning('Invalid HTTP method for category creation', [
+                'method' => $_SERVER['REQUEST_METHOD'],
+                'user' => $this->authService->getUsername()
+            ]);
+            header("Location: {$this->baseUrl}admin/categories/create");
+            exit;
         }
 
-        $content = $this->renderCategoryList($categories, $isTrashView);
-        return $this->adminLayout->wrap($content, $this->t('admin.categories.manage'));
+        // Kontrola CSRF tokenu
+        if (!$this->csrf->validateToken($_POST['csrf_token'] ?? '')) {
+            $this->logger->warning('CSRF token validation failed for category creation', [
+                'user' => $this->authService->getUsername(),
+                'client_ip' => $this->getClientIp()
+            ]);
+            header("Location: {$this->baseUrl}admin/categories/create?error=csrf");
+            exit;
+        }
+
+        // Validace povinných polí
+        if (empty($_POST['name'])) {
+            $this->logger->warning('Category creation failed - empty name', [
+                'user' => $this->authService->getUsername()
+            ]);
+            header("Location: {$this->baseUrl}admin/categories/create?error=validation");
+            exit;
+        }
+
+        try {
+            $categoryId = $this->categoryService->createCategory([
+                'name' => trim($_POST['name']),
+                'description' => trim($_POST['description'] ?? ''),
+                'parent_id' => !empty($_POST['parent_id']) ? (int)$_POST['parent_id'] : null
+            ]);
+
+            $this->logger->info('Category created successfully', [
+                'category_id' => $categoryId,
+                'name' => trim($_POST['name']),
+                'parent_id' => $_POST['parent_id'] ?? null,
+                'user' => $this->authService->getUsername()
+            ]);
+
+            header("Location: {$this->baseUrl}admin/categories?created=1");
+            exit;
+
+        } catch (\Exception $e) {
+            $this->logger->error('Category creation failed', [
+                'name' => $_POST['name'] ?? '',
+                'error' => $e->getMessage(),
+                'user' => $this->authService->getUsername()
+            ]);
+            header("Location: {$this->baseUrl}admin/categories/create?error=1");
+            exit;
+        }
+    }
+
+    /**
+     * Zobrazí formulář pro editaci kategorie
+     *
+     * @param int $id ID kategorie
+     * @return string HTML obsah editačního formuláře
+     */
+    public function edit(int $id): string
+    {
+        $this->requireAdmin();
+
+        try {
+            $category = $this->categoryService->getCategory($id);
+
+            if (!$category) {
+                $this->logger->warning('Category not found for editing', [
+                    'category_id' => $id,
+                    'user' => $this->authService->getUsername()
+                ]);
+                header("Location: {$this->baseUrl}admin/categories?error=not_found");
+                exit;
+            }
+
+            $this->logger->debug('Displaying category edit form', [
+                'category_id' => $id,
+                'category_name' => $category['name'],
+                'user' => $this->authService->getUsername()
+            ]);
+
+            $csrfField = $this->csrf->getTokenField();
+            $categories = $this->categoryService->getCategoriesForSelect($id);
+
+            $content = $this->renderCategoryForm($category, $categories, $csrfField);
+            return $this->adminLayout->wrap($content, $this->t('admin.categories.edit'));
+        } catch (\Exception $e) {
+            $this->logger->error('Failed to display category edit form', [
+                'category_id' => $id,
+                'error' => $e->getMessage(),
+                'user' => $this->authService->getUsername()
+            ]);
+            throw $e;
+        }
+    }
+
+    /**
+     * Zpracuje aktualizaci kategorie
+     *
+     * @param int $id ID kategorie
+     * @return void
+     */
+    public function update(int $id): void
+    {
+        $this->requireAdmin();
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->logger->warning('Invalid HTTP method for category update', [
+                'method' => $_SERVER['REQUEST_METHOD'],
+                'category_id' => $id,
+                'user' => $this->authService->getUsername()
+            ]);
+            header("Location: {$this->baseUrl}admin/categories/edit/{$id}");
+            exit;
+        }
+
+        try {
+            $success = $this->categoryService->updateCategory($id, [
+                'name' => $_POST['name'],
+                'description' => $_POST['description'] ?? '',
+                'parent_id' => !empty($_POST['parent_id']) ? (int)$_POST['parent_id'] : null
+            ]);
+
+            if ($success) {
+                $this->logger->info('Category updated successfully', [
+                    'category_id' => $id,
+                    'name' => $_POST['name'],
+                    'user' => $this->authService->getUsername()
+                ]);
+                header("Location: {$this->baseUrl}admin/categories?updated=1");
+            } else {
+                $this->logger->warning('Category update returned false', [
+                    'category_id' => $id,
+                    'user' => $this->authService->getUsername()
+                ]);
+                header("Location: {$this->baseUrl}admin/categories/edit/{$id}?error=1");
+            }
+            exit;
+        } catch (\Exception $e) {
+            $this->logger->error('Category update failed', [
+                'category_id' => $id,
+                'error' => $e->getMessage(),
+                'user' => $this->authService->getUsername()
+            ]);
+            header("Location: {$this->baseUrl}admin/categories/edit/{$id}?error=1");
+            exit;
+        }
     }
 
     /**
@@ -83,9 +276,18 @@ class CategoryController
                 header("Location: {$this->baseUrl}admin/categories?error=1");
             }
         } catch (\InvalidArgumentException $e) {
-			$this->logger->exception($e, "Nelze smazat výchozí kategorii.");
+            $this->logger->warning('Cannot delete default category', [
+                'category_id' => $id,
+                'user' => $this->authService->getUsername()
+            ]);
             header("Location: {$this->baseUrl}admin/categories?error=default_category");
-
+        } catch (\Exception $e) {
+            $this->logger->error('Category deletion failed', [
+                'category_id' => $id,
+                'error' => $e->getMessage(),
+                'user' => $this->authService->getUsername()
+            ]);
+            header("Location: {$this->baseUrl}admin/categories?error=1");
         }
         exit;
     }
@@ -99,17 +301,22 @@ class CategoryController
     public function restore(int $id): void
     {
         $this->requireAdmin();
+
         try {
             $success = $this->categoryService->restoreCategory($id);
 
             if ($success) {
-            	header("Location: {$this->baseUrl}admin/categories?show=trash&restored=1");
+                header("Location: {$this->baseUrl}admin/categories?show=trash&restored=1");
             } else {
-            	header("Location: {$this->baseUrl}admin/categories?show=trash&error=1");
+                header("Location: {$this->baseUrl}admin/categories?show=trash&error=1");
             }
-        } catch (\InvalidArgumentException $e) {
-			$this->logger->exception($e, "Nepodařilo se obnovit kategorii.");
-
+        } catch (\Exception $e) {
+            $this->logger->error('Category restoration failed', [
+                'category_id' => $id,
+                'error' => $e->getMessage(),
+                'user' => $this->authService->getUsername()
+            ]);
+            header("Location: {$this->baseUrl}admin/categories?show=trash&error=1");
         }
         exit;
     }
@@ -133,8 +340,18 @@ class CategoryController
                 header("Location: {$this->baseUrl}admin/categories?show=trash&error=1");
             }
         } catch (\InvalidArgumentException $e) {
-			$this->logger->exception($e, "Nepodařilo se Smazat kategorii.");
+            $this->logger->warning('Cannot permanently delete default category', [
+                'category_id' => $id,
+                'user' => $this->authService->getUsername()
+            ]);
             header("Location: {$this->baseUrl}admin/categories?show=trash&error=default_category");
+        } catch (\Exception $e) {
+            $this->logger->error('Category permanent deletion failed', [
+                'category_id' => $id,
+                'error' => $e->getMessage(),
+                'user' => $this->authService->getUsername()
+            ]);
+            header("Location: {$this->baseUrl}admin/categories?show=trash&error=1");
         }
         exit;
     }
@@ -148,22 +365,7 @@ class CategoryController
      */
     private function renderCategoryList(array $categories, bool $isTrashView): string
     {
-        $message = '';
-        if (isset($_GET['restored'])) {
-            $message = '<div class="alert alert-success">' . $this->t('admin.categories.messages.restored') . '</div>';
-        } elseif (isset($_GET['deleted'])) {
-            $message = '<div class="alert alert-success">' . $this->t('admin.categories.messages.deleted') . '</div>';
-        } elseif (isset($_GET['permanent_deleted'])) {
-            $message = '<div class="alert alert-success">' . $this->t('admin.categories.messages.permanent_deleted') . '</div>';
-        } elseif (isset($_GET['error'])) {
-            if ($_GET['error'] === 'default_category') {
-                $message = '<div class="alert alert-error">' . $this->t('admin.categories.messages.cannot_delete_default') . '</div>';
-            } else {
-                $message = '<div class="alert alert-error">' . $this->t('admin.categories.messages.error') . '</div>';
-            }
-        }
-
-        // Připrav proměnné pro tabs
+        $message = $this->renderMessages();
         $activeClass = 'active';
         $mainTabClass = !$isTrashView ? $activeClass : '';
         $trashTabClass = $isTrashView ? $activeClass : '';
@@ -178,7 +380,6 @@ class CategoryController
 
 {$message}
 
-<!-- TABS -->
 <div class="tabs">
     <a href="{$this->baseUrl}admin/categories" class="tab {$mainTabClass}">
         {$this->t('admin.categories.active')}
@@ -202,8 +403,34 @@ HTML;
         }
 
         $html .= '</div>';
-
         return $html;
+    }
+
+    /**
+     * Vykreslí zprávy (success, error)
+     *
+     * @return string HTML zpráv
+     */
+    private function renderMessages(): string
+    {
+        if (isset($_GET['restored'])) {
+            return '<div class="alert alert-success">' . $this->t('admin.categories.messages.restored') . '</div>';
+        } elseif (isset($_GET['deleted'])) {
+            return '<div class="alert alert-success">' . $this->t('admin.categories.messages.deleted') . '</div>';
+        } elseif (isset($_GET['permanent_deleted'])) {
+            return '<div class="alert alert-success">' . $this->t('admin.categories.messages.permanent_deleted') . '</div>';
+        } elseif (isset($_GET['created'])) {
+            return '<div class="alert alert-success">' . $this->t('admin.categories.messages.created') . '</div>';
+        } elseif (isset($_GET['updated'])) {
+            return '<div class="alert alert-success">' . $this->t('admin.categories.messages.updated') . '</div>';
+        } elseif (isset($_GET['error'])) {
+            if ($_GET['error'] === 'default_category') {
+                return '<div class="alert alert-error">' . $this->t('admin.categories.messages.cannot_delete_default') . '</div>';
+            } else {
+                return '<div class="alert alert-error">' . $this->t('admin.categories.messages.error') . '</div>';
+            }
+        }
+        return '';
     }
 
     /**
@@ -254,7 +481,6 @@ HTML;
             $description = mb_substr($category['description'] ?? '', 0, 100);
             $indentation = str_repeat('&nbsp;&nbsp;&nbsp;&nbsp;', $category['depth'] ?? 0);
 
-            // Získáme název rodičovské kategorie
             $parentName = '';
             if ($category['parent_id']) {
                 $parent = $this->categoryService->getCategory($category['parent_id']);
@@ -289,7 +515,6 @@ HTML;
 </tr>
 HTML;
 
-            // Rekurzivně vykreslíme děti
             if (!empty($category['children'])) {
                 $html .= $this->renderCategoryTreeRecursive($category['children']);
             }
@@ -385,156 +610,6 @@ HTML;
 HTML;
     }
 
-    // ... ostatní metody (create, store, edit, update, renderCategoryForm) zůstávají stejné ...
-    // ... a také pomocné metody (requireAdmin, t, escape, escapeJs) ...
-
-	/**
-     * Zobrazí formulář pro vytvoření kategorie
-     *
-     * @return string HTML obsah formuláře
-     */
-	public function create(): string
-	    {
-	        $this->requireAdmin();
-	        $csrfField = $this->csrf->getTokenField();
-	        // Získáme kategorie ve formátu pro select s odsazením
-	        $categories = $this->categoryService->getCategoriesForSelect();
-
-	        $content = $this->renderCategoryForm([], $categories, $csrfField);
-	        return $this->adminLayout->wrap($content, $this->t('admin.categories.create'));
-	    }
-
-    /**
-     * Zpracuje vytvoření nové kategorie
-     *
-     * @return void
-     */
-    public function store(): void
-    {
-        $this->requireAdmin();
-
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            header("Location: {$this->baseUrl}admin/categories/create");
-            exit;
-        }
-
-        // Kontrola CSRF tokenu
-        if (!$this->csrf->validateToken($_POST['csrf_token'] ?? '')) {
-            header("Location: {$this->baseUrl}admin/categories/create?error=csrf");
-            exit;
-        }
-
-        // Validace povinných polí
-        if (empty($_POST['name'])) {
-            header("Location: {$this->baseUrl}admin/categories/create?error=validation");
-            exit;
-        }
-
-        try {
-            $categoryId = $this->categoryService->createCategory([
-                'name' => trim($_POST['name']),
-                'description' => trim($_POST['description'] ?? ''),
-                'parent_id' => !empty($_POST['parent_id']) ? (int)$_POST['parent_id'] : null
-            ]);
-
-            header("Location: {$this->baseUrl}admin/categories?created=1");
-            exit;
-
-        } catch (\Exception $e) {
-            header("Location: {$this->baseUrl}admin/categories/create?error=1");
-            exit;
-        }
-    }
-
-
-    /**
-     * Zobrazí formulář pro editaci kategorie
-     *
-     * @param int $id ID kategorie
-     * @return string HTML obsah editačního formuláře
-     */
-	public function edit(int $id): string
-	    {
-	        $this->requireAdmin();
-	        $category = $this->categoryService->getCategory($id);
-
-	        if (!$category) {
-	            header("Location: {$this->baseUrl}admin/categories?error=not_found");
-	            exit;
-	        }
-
-	        $csrfField = $this->csrf->getTokenField();
-	        // Získáme kategorie pro select, ale vynecháme aktuálně editovanou kategorii
-	        // (aby nemohla být rodičem sama sobě)
-	        $categories = $this->categoryService->getCategoriesForSelect($id);
-
-	        $content = $this->renderCategoryForm($category, $categories, $csrfField);
-	        return $this->adminLayout->wrap($content, $this->t('admin.categories.edit'));
-	    }
-
-
-    /**
-     * Zpracuje aktualizaci kategorie
-     *
-     * @param int $id ID kategorie
-     * @return void
-     */
-    public function update(int $id): void
-    {
-        $this->requireAdmin();
-
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            header("Location: {$this->baseUrl}admin/categories/edit/{$id}");
-            exit;
-        }
-
-        try {
-            $success = $this->categoryService->updateCategory($id, [
-                'name' => $_POST['name'],
-                'description' => $_POST['description'] ?? '',
-                'parent_id' => !empty($_POST['parent_id']) ? (int)$_POST['parent_id'] : null
-            ]);
-
-            if ($success) {
-                header("Location: {$this->baseUrl}admin/categories?updated=1");
-            } else {
-                header("Location: {$this->baseUrl}admin/categories/edit/{$id}?error=1");
-            }
-            exit;
-        } catch (\Exception $e) {
-            header("Location: {$this->baseUrl}admin/categories/edit/{$id}?error=1");
-            exit;
-        }
-    }
-
-
-
-    /**
-     * Ověří, že uživatel je přihlášen jako admin
-     *
-     * @return void
-     */
-    private function requireAdmin(): void
-    {
-        if (!$this->authService->isLoggedIn()) {
-            header("Location: {$this->baseUrl}login");
-            exit;
-        }
-    }
-
-    /**
-     * Přeloží textový klíč
-     *
-     * @param string $key Klíč pro překlad
-     * @return string Přeložený text
-     */
-    private function t(string $key): string
-    {
-        return Config::text($key);
-    }
-
-
-
     /**
      * Vykreslí formulář pro kategorii
      *
@@ -604,9 +679,32 @@ HTML;
 HTML;
     }
 
+    /**
+     * Ověří, že uživatel je přihlášen jako admin
+     *
+     * @return void
+     */
+    private function requireAdmin(): void
+    {
+        if (!$this->authService->isLoggedIn()) {
+            $this->logger->warning('Unauthorized access to categories admin', [
+                'client_ip' => $this->getClientIp()
+            ]);
+            header("Location: {$this->baseUrl}login");
+            exit;
+        }
+    }
 
-
-
+    /**
+     * Přeloží textový klíč
+     *
+     * @param string $key Klíč pro překlad
+     * @return string Přeložený text
+     */
+    private function t(string $key): string
+    {
+        return Config::text($key);
+    }
 
     /**
      * Escape HTML speciálních znaků
@@ -631,5 +729,15 @@ HTML;
     private function escapeJs(string $value): string
     {
         return str_replace(["'", "\"", "\n", "\r"], ["\\'", "\\\"", "\\n", "\\r"], $value);
+    }
+
+    /**
+     * Získá IP adresu klienta
+     *
+     * @return string IP adresa
+     */
+    private function getClientIp(): string
+    {
+        return $_SERVER['REMOTE_ADDR'] ?? 'unknown';
     }
 }

@@ -12,7 +12,6 @@ use App\Core\AdminLayout;
 use App\Core\Config;
 use App\Logger\Logger;
 
-
 /**
  * Správa článků v administraci
  *
@@ -21,11 +20,12 @@ use App\Logger\Logger;
  *
  * @package App\Controllers
  * @author KRS3
- * @version 4.0
+ * @version 4.1
  */
 class ArticleController
 {
-	private $logger = null;
+    private Logger $logger;
+
     /**
      * @param ArticleService $articleService Služba pro práci s články
      * @param LoginService $authService Služba pro autentizaci
@@ -42,65 +42,70 @@ class ArticleController
         private AdminLayout $adminLayout,
         private CategoryService $categoryService
     ) {
-		$this->logger = Logger::getInstance();
-	}
+        $this->logger = Logger::getInstance();
+    }
 
-		 /**
+    /**
      * Zobrazí formulář pro vytvoření nového článku
      *
      * @return string HTML obsah formuláře
      */
-	public function showCreateForm(): string
-	    {
-	        $this->requireAdmin();
-	        $csrfField = $this->csrf->getTokenField();
-	        $categories = $this->categoryService->getAllCategories();
-	        $categoryOptions = $this->renderCategoryOptions($categories, []);
+    public function showCreateForm(): string
+    {
+        $this->requireAdmin();
 
-	        $content = <<<HTML
-	<h1>{$this->t('admin.articles.create')}</h1>
-	<form method="POST" action="{$this->baseUrl}admin/articles/create" class="article-form">
-	    <div class="form-group">
-	        <label for="title">{$this->t('admin.articles.form.title')}:</label>
-	        <input type="text" id="title" name="title" required class="form-control">
-	    </div>
+        $this->logger->debug('Displaying article create form', [
+            'user' => $this->authService->getUsername()
+        ]);
 
-	    <div class="form-group">
-	        <label for="excerpt">{$this->t('admin.articles.form.excerpt')}:</label>
-	        <textarea id="excerpt" name="excerpt" class="form-control"></textarea>
-	    </div>
+        $csrfField = $this->csrf->getTokenField();
+        $categories = $this->categoryService->getCategoriesForSelect();
+        $categoryOptions = $this->renderCategorySelect($categories, []);
 
-	    <div class="form-group">
-	        <label for="content">{$this->t('admin.articles.form.content')}:</label>
-	        <textarea id="content" name="content" required class="form-control"></textarea>
-	    </div>
+        $content = <<<HTML
+<h1>{$this->t('admin.articles.create')}</h1>
+<form method="POST" action="{$this->baseUrl}admin/articles/create" class="article-form">
+    <div class="form-group">
+        <label for="title">{$this->t('admin.articles.form.title')}:</label>
+        <input type="text" id="title" name="title" required class="form-control">
+    </div>
 
-	    <div class="form-group">
-	        <label for="categories">{$this->t('admin.articles.form.categories')}:</label>
-	        <div class="categories-checkbox-group">
-	            {$categoryOptions}
-	        </div>
-	    </div>
+    <div class="form-group">
+        <label for="excerpt">{$this->t('admin.articles.form.excerpt')}:</label>
+        <textarea id="excerpt" name="excerpt" class="form-control"></textarea>
+    </div>
 
-	    <div class="form-group">
-	        <label for="status">{$this->t('admin.articles.form.status')}:</label>
-	        <select id="status" name="status" class="form-control">
-	            <option value="draft">{$this->t('admin.articles.status.draft')}</option>
-	            <option value="published">{$this->t('admin.articles.status.published')}</option>
-	        </select>
-	    </div>
+    <div class="form-group">
+        <label for="content">{$this->t('admin.articles.form.content')}:</label>
+        <textarea id="content" name="content" required class="form-control"></textarea>
+    </div>
 
-	    <div class="form-actions">
-	        {$csrfField}
-	        <button type="submit" class="btn btn-primary">{$this->t('admin.articles.form.create_button')}</button>
-	        <a href="{$this->baseUrl}admin/articles" class="btn btn-secondary">{$this->t('admin.articles.form.cancel')}</a>
-	    </div>
-	</form>
+    <div class="form-group">
+        <label for="categories">{$this->t('admin.articles.form.categories')}:</label>
+        <select id="categories" name="categories" class="form-control" size="1">
+            {$categoryOptions}
+        </select>
+        <small class="form-text">{$this->t('admin.articles.form.categories_help')}</small>
+    </div>
+
+    <div class="form-group">
+        <label for="status">{$this->t('admin.articles.form.status')}:</label>
+        <select id="status" name="status" class="form-control">
+            <option value="draft">{$this->t('admin.articles.status.draft')}</option>
+            <option value="published">{$this->t('admin.articles.status.published')}</option>
+        </select>
+    </div>
+
+    <div class="form-actions">
+        {$csrfField}
+        <button type="submit" class="btn btn-primary">{$this->t('admin.articles.form.create_button')}</button>
+        <a href="{$this->baseUrl}admin/articles" class="btn btn-secondary">{$this->t('admin.articles.form.cancel')}</a>
+    </div>
+</form>
 HTML;
 
         return $this->adminLayout->wrap($content, $this->t('admin.articles.create'));
     }
-
 
     /**
      * Zpracuje vytvoření nového článku
@@ -108,228 +113,285 @@ HTML;
      * @return void
      * @throws \Exception Pokud dojde k chybě při vytváření článku
      */
-public function createArticle(): void
-{
-    $this->requireAdmin();
+    public function createArticle(): void
+    {
+        $this->requireAdmin();
 
-    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-        header("Location: {$this->baseUrl}admin/articles/new");
-        exit;
-    }
-
-    $user = $this->authService->getUser();
-
-    try {
-        $articleId = $this->articleService->createArticle([
-            'title' => $_POST['title'],
-            'content' => $_POST['content'],
-            'excerpt' => $_POST['excerpt'] ?? '',
-            'author_id' => $user['id'],
-            'status' => $_POST['status'] ?? 'draft'
-        ]);
-
-        // Přiřazení kategorií k článku
-        $categoryIds = $_POST['categories'] ?? [];
-        $this->categoryService->assignCategoriesToArticle($articleId, $categoryIds);
-
-        header("Location: {$this->baseUrl}admin/articles?created=1");
-        exit;
-
-    } catch (\Exception $e) {
-        // BEZPEČNÉ použití loggeru s kontrolou
-        if (isset($this->logger)) {
-            $this->logger->exception($e, 'článek se nepodařilo uložit.');
-        } else {
-            // Fallback: zápis do error_log pokud logger není dostupný
-            error_log('Chyba při vytváření článku: ' . $e->getMessage());
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->logger->warning('Invalid HTTP method for article creation', [
+                'method' => $_SERVER['REQUEST_METHOD'],
+                'user' => $this->authService->getUsername()
+            ]);
+            header("Location: {$this->baseUrl}admin/articles/new");
+            exit;
         }
 
-        header("Location: {$this->baseUrl}admin/articles/new?error=1");
-        exit;
+        $user = $this->authService->getUser();
+
+        try {
+            $articleId = $this->articleService->createArticle([
+                'title' => $_POST['title'],
+                'content' => $_POST['content'],
+                'excerpt' => $_POST['excerpt'] ?? '',
+                'author_id' => $user['id'],
+                'status' => $_POST['status'] ?? 'draft'
+            ]);
+
+            // Přiřazení kategorií k článku
+            $categoryIds = [$_POST['categories']] ?? [];
+            $this->categoryService->assignCategoriesToArticle($articleId, $categoryIds);
+
+            $this->logger->info('Article created successfully', [
+                'article_id' => $articleId,
+                'title' => $_POST['title'],
+                'status' => $_POST['status'] ?? 'draft',
+                'categories_count' => count($categoryIds),
+                'user' => $this->authService->getUsername()
+            ]);
+
+            header("Location: {$this->baseUrl}admin/articles?created=1");
+            exit;
+
+        } catch (\Exception $e) {
+            $this->logger->error('Article creation failed', [
+                'title' => $_POST['title'] ?? '',
+                'error' => $e->getMessage(),
+                'user' => $this->authService->getUsername()
+            ]);
+
+            header("Location: {$this->baseUrl}admin/articles/new?error=1");
+            exit;
+        }
     }
-}
 
+    /**
+     * Zobrazí seznam článků s možností zobrazení koše
+     *
+     * @return string HTML obsah seznamu článků
+     */
+    public function showArticles(): string
+    {
+        $this->requireAdmin();
 
-	/**
-	 * Zobrazí seznam článků s možností zobrazení koše
-	 *
-	 * @return string HTML obsah seznamu článků
-	 */
-	public function showArticles(): string
-	{
-	    $this->requireAdmin();
+        $isTrashView = isset($_GET['show']) && $_GET['show'] === 'trash';
 
-	    // Zjisti, zda se má zobrazit koš
-	    $isTrashView = isset($_GET['show']) && $_GET['show'] === 'trash';
+        $this->logger->debug('Displaying articles list', [
+            'is_trash_view' => $isTrashView,
+            'user' => $this->authService->getUsername()
+        ]);
 
-	    if ($isTrashView) {
-	        $articles = $this->articleService->getDeletedArticlesWithCategories();
-	    } else {
-	        $articles = $this->articleService->getArticlesWithCategories();
-	    }
+        try {
+            if ($isTrashView) {
+                $articles = $this->articleService->getDeletedArticlesWithCategories();
+            } else {
+                $articles = $this->articleService->getArticlesWithCategories();
+            }
 
-	    // Připrav zprávy
-	    $message = '';
-	    if (isset($_GET['created'])) {
-	        $message = '<div class="alert alert-success">' . $this->t('admin.articles.messages.created') . '</div>';
-	    } elseif (isset($_GET['restored'])) {
-	        $message = '<div class="alert alert-success">' . $this->t('admin.articles.messages.restored') . '</div>';
-	    } elseif (isset($_GET['deleted'])) {
-	        $message = '<div class="alert alert-success">' . $this->t('admin.articles.messages.deleted') . '</div>';
-	    } elseif (isset($_GET['error'])) {
-	        $message = '<div class="alert alert-error">' . $this->t('admin.articles.messages.error') . '</div>';
-	    }
+            $message = $this->renderMessages();
+            $activeClass = 'active';
+            $mainTabClass = !$isTrashView ? $activeClass : '';
+            $trashTabClass = $isTrashView ? $activeClass : '';
 
-	    // Připrav proměnné pro tabs
-	    $activeClass = 'active';
-	    $mainTabClass = !$isTrashView ? $activeClass : '';
-	    $trashTabClass = $isTrashView ? $activeClass : '';
+            $emptyStateTitle = $isTrashView ?
+                $this->t('admin.articles.messages.empty_trash') :
+                $this->t('admin.articles.messages.empty_active');
+            $emptyStateText = $isTrashView ?
+                $this->t('admin.articles.messages.empty_text_trash') :
+                $this->t('admin.articles.messages.empty_text_active');
+            $emptyStateButton = $isTrashView ? '' :
+                "<a href='{$this->baseUrl}admin/articles/new' class='btn btn-primary'>" .
+                $this->t('admin.articles.messages.create_first') . "</a>";
+            $tableHeader = $isTrashView ?
+                $this->t('admin.articles.table.deleted') :
+                $this->t('admin.articles.table.created');
 
-	    // Připrav proměnné pro obsah
-	    $emptyStateTitle = $isTrashView ?
-	        $this->t('admin.articles.messages.empty_trash') :
-	        $this->t('admin.articles.messages.empty_active');
-	    $emptyStateText = $isTrashView ?
-	        $this->t('admin.articles.messages.empty_text_trash') :
-	        $this->t('admin.articles.messages.empty_text_active');
-	    $emptyStateButton = $isTrashView ? '' :
-	        "<a href='{$this->baseUrl}admin/articles/new' class='btn btn-primary'>" .
-	        $this->t('admin.articles.messages.create_first') . "</a>";
-	    $tableHeader = $isTrashView ?
-	        $this->t('admin.articles.table.deleted') :
-	        $this->t('admin.articles.table.created');
+            $html = <<<HTML
+<div class="page-header">
+    <h1>{$this->t('admin.articles.manage')}</h1>
+    <a href="{$this->baseUrl}admin/articles/new" class="btn btn-primary">
+        ＋ {$this->t('admin.articles.create')}
+    </a>
+</div>
 
-	    $html = <<<HTML
-	<div class="page-header">
-	    <h1>{$this->t('admin.articles.manage')}</h1>
-	    <a href="{$this->baseUrl}admin/articles/new" class="btn btn-primary">
-	        ＋ {$this->t('admin.articles.create')}
-	    </a>
-	</div>
+{$message}
 
-	{$message}
+<div class="tabs">
+    <a href="{$this->baseUrl}admin/articles" class="tab {$mainTabClass}">
+        {$this->t('admin.articles.active')}
+    </a>
+    <a href="{$this->baseUrl}admin/articles?show=trash" class="tab {$trashTabClass}">
+        {$this->t('admin.articles.trash')}
+    </a>
+</div>
 
-	<!-- TABS -->
-	<div class="tabs">
-	    <a href="{$this->baseUrl}admin/articles" class="tab {$mainTabClass}">
-	        {$this->t('admin.articles.active')}
-	    </a>
-	    <a href="{$this->baseUrl}admin/articles?show=trash" class="tab {$trashTabClass}">
-	        {$this->t('admin.articles.trash')}
-	    </a>
-	</div>
+<div class="articles-container">
+HTML;
 
-	<div class="articles-container">
-	HTML;
+            if (empty($articles)) {
+                $html .= <<<HTML
+<div class="empty-state">
+    <h3>{$emptyStateTitle}</h3>
+    <p>{$emptyStateText}</p>
+    {$emptyStateButton}
+</div>
+HTML;
+            } else {
+                $html .= $this->renderArticlesTable($articles, $isTrashView, $tableHeader);
+            }
 
-	    if (empty($articles)) {
-	        $html .= <<<HTML
-	<div class="empty-state">
-	    <h3>{$emptyStateTitle}</h3>
-	    <p>{$emptyStateText}</p>
-	    {$emptyStateButton}
-	</div>
-	HTML;
-	    } else {
-	        $html .= <<<HTML
-	<div class="articles-table-container">
-	    <table class="articles-table">
-	        <thead>
-	            <tr>
-	                <th>{$this->t('admin.articles.table.title')}</th>
-	                <th>{$this->t('admin.articles.table.categories')}</th>
-	                <th>{$this->t('admin.articles.table.status')}</th>
-	                <th>{$this->t('admin.articles.table.author')}</th>
-	                <th>{$tableHeader}</th>
-	                <th>{$this->t('admin.articles.table.actions')}</th>
-	            </tr>
-	        </thead>
-	        <tbody>
-	HTML;
+            $html .= '</div>';
 
-	        foreach ($articles as $article) {
-	            $dateColumn = $isTrashView
-	                ? date('j. n. Y H:i', strtotime($article['deleted_at']))
-	                : date('j. n. Y H:i', strtotime($article['created_at']));
+            return $this->adminLayout->wrap($html, $this->t('admin.articles.manage'));
+        } catch (\Exception $e) {
+            $this->logger->error('Failed to display articles list', [
+                'is_trash_view' => $isTrashView,
+                'error' => $e->getMessage(),
+                'user' => $this->authService->getUsername()
+            ]);
+            throw $e;
+        }
+    }
 
-	            $statusBadge = $this->getStatusBadge($article['status']);
+    /**
+     * Vykreslí tabulku článků
+     *
+     * @param array $articles Seznam článků
+     * @param bool $isTrashView Zda se jedná o koš
+     * @param string $tableHeader Název sloupce s datem
+     * @return string HTML obsah
+     */
+    private function renderArticlesTable(array $articles, bool $isTrashView, string $tableHeader): string
+    {
+        $html = <<<HTML
+<div class="articles-table-container">
+    <table class="articles-table">
+        <thead>
+            <tr>
+                <th>{$this->t('admin.articles.table.title')}</th>
+                <th>{$this->t('admin.articles.table.categories')}</th>
+                <th>{$this->t('admin.articles.table.status')}</th>
+                <th>{$this->t('admin.articles.table.author')}</th>
+                <th>{$tableHeader}</th>
+                <th>{$this->t('admin.articles.table.actions')}</th>
+            </tr>
+        </thead>
+        <tbody>
+HTML;
 
-	            // Zpracování kategorií
-	            $categoriesHtml = '';
-	            if (!empty($article['category_names'])) {
-	                $categoryNames = explode(',', $article['category_names']);
-	                $categoryIds = explode(',', $article['category_ids']);
+        foreach ($articles as $article) {
+            $dateColumn = $isTrashView
+                ? date('j. n. Y H:i', strtotime($article['deleted_at']))
+                : date('j. n. Y H:i', strtotime($article['created_at']));
 
-	                foreach ($categoryNames as $index => $categoryName) {
-	                    $categoryId = $categoryIds[$index] ?? '';
-	                    $categoriesHtml .= '<span class="category-badge">' . $this->escape(trim($categoryName)) . '</span>';
-	                }
-	            } else {
-	                $categoriesHtml = '<span class="no-categories">' . $this->t('admin.articles.table.no_categories') . '</span>';
-	            }
+            $statusBadge = $this->getStatusBadge($article['status']);
 
-	            if ($isTrashView) {
-	                $actions = <<<HTML
-	<div class="action-buttons">
-	    <a href="{$this->baseUrl}admin/articles/restore/{$article['id']}"
-	       class="btn btn-sm btn-success" title="{$this->t('admin.articles.actions.restore')}">
-	        ↶
-	    </a>
-	    <a href="{$this->baseUrl}admin/articles/permanent-delete/{$article['id']}"
-	       class="btn btn-sm btn-danger"
-	       onclick="return confirm('{$this->t('admin.articles.confirm.permanent_delete')} „{$this->escapeJs($article['title'])}‟? Tato akce je nevratná!')"
-	       title="{$this->t('admin.articles.actions.permanent_delete')}">
-	        🗑️
-	    </a>
-	</div>
-	HTML;
-	            } else {
-	                $actions = <<<HTML
-	<div class="action-buttons">
-	    <a href="{$this->baseUrl}admin/articles/edit/{$article['id']}"
-	       class="btn btn-sm btn-primary" title="{$this->t('admin.articles.actions.edit')}">
-	        ✏️
-	    </a>
-	    <a href="{$this->baseUrl}admin/articles/delete/{$article['id']}"
-	       class="btn btn-sm btn-danger"
-	       onclick="return confirm('{$this->t('admin.articles.confirm.delete')} „{$this->escapeJs($article['title'])}‟?')"
-	       title="{$this->t('admin.articles.actions.delete')}">
-	        🗑️
-	    </a>
-	</div>
-	HTML;
-	            }
+            // Zpracování kategorií
+            $categoriesHtml = '';
+            if (!empty($article['category_names'])) {
+                $categoryNames = explode(',', $article['category_names']);
+                foreach ($categoryNames as $categoryName) {
+                    $categoriesHtml .= '<span class="category-badge">' . $this->escape(trim($categoryName)) . '</span>';
+                }
+            } else {
+                $categoriesHtml = '<span class="no-categories">' . $this->t('admin.articles.table.no_categories') . '</span>';
+            }
 
-	            $html .= <<<HTML
-	<tr>
-	    <td>
-	        <div class="article-title">{$this->escape($article['title'])}</div>
-	        <div class="article-excerpt">{$this->escape(mb_substr($article['excerpt'] ?? '', 0, 100))}...</div>
-	    </td>
-	    <td>
-	        <div class="article-categories">
-	            {$categoriesHtml}
-	        </div>
-	    </td>
-	    <td>{$statusBadge}</td>
-	    <td>{$this->escape($article['author_name'])}</td>
-	    <td>{$dateColumn}</td>
-	    <td>{$actions}</td>
-	</tr>
-	HTML;
-	        }
+            $actions = $isTrashView ? $this->renderTrashActions($article) : $this->renderActiveActions($article);
 
-	        $html .= <<<HTML
-	        </tbody>
-	    </table>
-	</div>
-	HTML;
-	    }
+            $html .= <<<HTML
+<tr>
+    <td>
+        <div class="article-title">{$this->escape($article['title'])}</div>
+        <div class="article-excerpt">{$this->escape(mb_substr($article['excerpt'] ?? '', 0, 100))}...</div>
+    </td>
+    <td>
+        <div class="article-categories">
+            {$categoriesHtml}
+        </div>
+    </td>
+    <td>{$statusBadge}</td>
+    <td>{$this->escape($article['author_name'])}</td>
+    <td>{$dateColumn}</td>
+    <td>{$actions}</td>
+</tr>
+HTML;
+        }
 
-	    $html .= '</div>';
+        $html .= <<<HTML
+        </tbody>
+    </table>
+</div>
+HTML;
 
-	    return $this->adminLayout->wrap($html, $this->t('admin.articles.manage'));
-	}
+        return $html;
+    }
+
+    /**
+     * Vykreslí akce pro aktivní článek
+     *
+     * @param array $article Data článku
+     * @return string HTML obsah
+     */
+    private function renderActiveActions(array $article): string
+    {
+        return <<<HTML
+<div class="action-buttons">
+    <a href="{$this->baseUrl}admin/articles/edit/{$article['id']}"
+       class="btn btn-sm btn-primary" title="{$this->t('admin.articles.actions.edit')}">
+        ✏️
+    </a>
+    <a href="{$this->baseUrl}admin/articles/delete/{$article['id']}"
+       class="btn btn-sm btn-danger"
+       onclick="return confirm('{$this->t('admin.articles.confirm.delete')} „{$this->escapeJs($article['title'])}‟?')"
+       title="{$this->t('admin.articles.actions.delete')}">
+        🗑️
+    </a>
+</div>
+HTML;
+    }
+
+    /**
+     * Vykreslí akce pro článek v koši
+     *
+     * @param array $article Data článku
+     * @return string HTML obsah
+     */
+    private function renderTrashActions(array $article): string
+    {
+        return <<<HTML
+<div class="action-buttons">
+    <a href="{$this->baseUrl}admin/articles/restore/{$article['id']}"
+       class="btn btn-sm btn-success" title="{$this->t('admin.articles.actions.restore')}">
+        ↶
+    </a>
+    <a href="{$this->baseUrl}admin/articles/permanent-delete/{$article['id']}"
+       class="btn btn-sm btn-danger"
+       onclick="return confirm('{$this->t('admin.articles.confirm.permanent_delete')} „{$this->escapeJs($article['title'])}‟? Tato akce je nevratná!')"
+       title="{$this->t('admin.articles.actions.permanent_delete')}">
+        🗑️
+    </a>
+</div>
+HTML;
+    }
+
+    /**
+     * Vykreslí zprávy (success, error)
+     *
+     * @return string HTML zpráv
+     */
+    private function renderMessages(): string
+    {
+        if (isset($_GET['created'])) {
+            return '<div class="alert alert-success">' . $this->t('admin.articles.messages.created') . '</div>';
+        } elseif (isset($_GET['restored'])) {
+            return '<div class="alert alert-success">' . $this->t('admin.articles.messages.restored') . '</div>';
+        } elseif (isset($_GET['deleted'])) {
+            return '<div class="alert alert-success">' . $this->t('admin.articles.messages.deleted') . '</div>';
+        } elseif (isset($_GET['error'])) {
+            return '<div class="alert alert-error">' . $this->t('admin.articles.messages.error') . '</div>';
+        }
+        return '';
+    }
 
     /**
      * Zobrazí formulář pro editaci existujícího článku
@@ -340,38 +402,50 @@ public function createArticle(): void
     public function showEditForm(int $id): string
     {
         $this->requireAdmin();
-        $article = $this->articleService->getArticle($id);
 
-        if (!$article) {
-            header("Location: {$this->baseUrl}admin/articles?error=not_found");
-            exit;
-        }
+        try {
+            $article = $this->articleService->getArticle($id);
 
-        $csrfField = $this->csrf->getTokenField();
+            if (!$article) {
+                $this->logger->warning('Article not found for editing', [
+                    'article_id' => $id,
+                    'user' => $this->authService->getUsername()
+                ]);
+                header("Location: {$this->baseUrl}admin/articles?error=not_found");
+                exit;
+            }
 
-		// Načtení kategorií článku
-        $articleCategories = $this->categoryService->getCategoriesForArticle($id);
-        $selectedCategoryIds = array_column($articleCategories, 'id');
+            $this->logger->debug('Displaying article edit form', [
+                'article_id' => $id,
+                'article_title' => $article['title'],
+                'user' => $this->authService->getUsername()
+            ]);
 
-        $categories = $this->categoryService->getAllCategories();
-        $categoryOptions = $this->renderCategoryOptions($categories, $selectedCategoryIds);
+            $csrfField = $this->csrf->getTokenField();
 
-        // Zajistíme, že hodnoty nejsou null
-        $title = $article['title'] ?? '';
-        $excerpt = $article['excerpt'] ?? '';
-        $content = $article['content'] ?? '';
-        $status = $article['status'] ?? 'draft';
+            // Načtení kategorií článku
+            $articleCategories = $this->categoryService->getCategoriesForArticle($id);
+            $selectedCategoryIds = array_column($articleCategories, 'id');
 
-        $backButton = "<a href='{$this->baseUrl}admin/articles' class='btn btn-secondary'>{$this->t('admin.articles.form.back')}</a>";
+            $categories = $this->categoryService->getCategoriesForSelect();
+            $categoryOptions = $this->renderCategorySelect($categories, $selectedCategoryIds);
 
-        $message = '';
-        if (isset($_GET['saved'])) {
-            $message = '<div class="alert alert-success">' . $this->t('admin.articles.messages.updated') . '</div>';
-        } elseif (isset($_GET['error'])) {
-            $message = '<div class="alert alert-error">' . $this->t('admin.articles.messages.error') . '</div>';
-        }
+            // Zajistíme, že hodnoty nejsou null
+            $title = $article['title'] ?? '';
+            $excerpt = $article['excerpt'] ?? '';
+            $content = $article['content'] ?? '';
+            $status = $article['status'] ?? 'draft';
 
-        $content = <<<HTML
+            $backButton = "<a href='{$this->baseUrl}admin/articles' class='btn btn-secondary'>{$this->t('admin.articles.form.back')}</a>";
+
+            $message = '';
+            if (isset($_GET['saved'])) {
+                $message = '<div class="alert alert-success">' . $this->t('admin.articles.messages.updated') . '</div>';
+            } elseif (isset($_GET['error'])) {
+                $message = '<div class="alert alert-error">' . $this->t('admin.articles.messages.error') . '</div>';
+            }
+
+            $content = <<<HTML
 <div class="edit-header">
     {$backButton}
     <h1>{$this->t('admin.articles.edit')}: {$this->escape($title)}</h1>
@@ -379,18 +453,19 @@ public function createArticle(): void
 
 {$message}
 
-<form method="POST" action="{$this->baseUrl}admin/articles/edit/{$id}" class="article-form">
+<form method="POST" action="{$this->baseUrl}admin/articles/update/{$id}" class="article-form">
     <div class="form-group">
         <label for="title">{$this->t('admin.articles.form.title')}:</label>
         <input type="text" id="title" name="title" value="{$this->escape($title)}" required>
     </div>
 
-	<div class="form-group">
-	    <label for="categories">{$this->t('admin.articles.form.categories')}:</label>
-	    <div class="categories-checkbox-group">
-	        {$categoryOptions}
-	    </div>
-	</div>
+    <div class="form-group">
+        <label for="categories">{$this->t('admin.articles.form.categories')}:</label>
+        <select id="categories" name="categories[]" class="form-control" size="1">
+            {$categoryOptions}
+        </select>
+        <small class="form-text">{$this->t('admin.articles.form.categories_help')}</small>
+    </div>
 
     <div class="form-group">
         <label for="excerpt">{$this->t('admin.articles.form.excerpt')}:</label>
@@ -418,74 +493,211 @@ public function createArticle(): void
 </form>
 HTML;
 
-        return $this->adminLayout->wrap($content, $this->t('admin.articles.edit'));
+            return $this->adminLayout->wrap($content, $this->t('admin.articles.edit'));
+        } catch (\Exception $e) {
+            $this->logger->error('Failed to display article edit form', [
+                'article_id' => $id,
+                'error' => $e->getMessage(),
+                'user' => $this->authService->getUsername()
+            ]);
+            throw $e;
+        }
     }
 
-    /**
-     * Zpracuje aktualizaci existujícího článku
-     *
-     * @param int $id ID článku k aktualizaci
-     * @return void
-     */
-    public function updateArticle(int $id): void
-    {
-        $this->requireAdmin();
+	/**
+	 * Zpracuje aktualizaci existujícího článku
+	 *
+	 * @param int $id ID článku k aktualizaci
+	 * @return void
+	 */
+	public function updateArticle(int $id): void
+	{
+	    $this->requireAdmin();
 
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            header("Location: {$this->baseUrl}admin/articles/edit/{$id}");
-            exit;
+	    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+	        $this->logger->warning('Invalid HTTP method for article update', [
+	            'method' => $_SERVER['REQUEST_METHOD'],
+	            'article_id' => $id,
+	            'user' => $this->authService->getUsername()
+	        ]);
+	        header("Location: {$this->baseUrl}admin/articles/edit/{$id}");
+	        exit;
+	    }
+
+	    try {
+	        // DEBUG: Logujeme co přišlo v POST
+	        $this->logger->debug('UPDATE ARTICLE - POST DATA', [
+	            'article_id' => $id,
+	            'post_data' => $_POST,
+	            'user' => $this->authService->getUsername()
+	        ]);
+
+	        $categoryIds = $_POST['categories'] ?? [];
+	        // Pokud je categories pole, vezmeme první prvek (jedna kategorie)
+	        if (is_array($categoryIds) && !empty($categoryIds)) {
+	            $categoryIds = [reset($categoryIds)]; // vezmeme první vybranou kategorii
+	        } else {
+	            $categoryIds = [];
+	        }
+
+	        $updateData = [
+	            'title' => $_POST['title'],
+	            'content' => $_POST['content'],
+	            'excerpt' => $_POST['excerpt'] ?? '',
+	            'status' => $_POST['status'] ?? 'draft',
+	            'category_ids' => $categoryIds
+	        ];
+
+	        // DEBUG: Logujeme data co posíláme do service
+	        $this->logger->debug('UPDATE ARTICLE - DATA TO SERVICE', [
+	            'article_id' => $id,
+	            'update_data' => $updateData
+	        ]);
+
+	        $success = $this->articleService->updateArticle($id, $updateData);
+
+	        // DEBUG: Logujeme výsledek
+	        $this->logger->debug('UPDATE ARTICLE - RESULT', [
+	            'article_id' => $id,
+	            'success' => $success
+	        ]);
+
+	        if ($success) {
+	            $this->logger->info('Article updated successfully', [
+	                'article_id' => $id,
+	                'title' => $_POST['title'],
+	                'status' => $_POST['status'] ?? 'draft',
+	                'categories_count' => count($categoryIds),
+	                'user' => $this->authService->getUsername()
+	            ]);
+
+	            header("Location: {$this->baseUrl}admin/articles/edit/{$id}?saved=1");
+	        } else {
+	            $this->logger->warning('Article update returned false', [
+	                'article_id' => $id,
+	                'user' => $this->authService->getUsername()
+	            ]);
+	            header("Location: {$this->baseUrl}admin/articles/edit/{$id}?error=1");
+	        }
+	        exit;
+
+	    } catch (\Exception $e) {
+	        $this->logger->error('Article update failed', [
+	            'article_id' => $id,
+	            'error' => $e->getMessage(),
+	            'user' => $this->authService->getUsername()
+	        ]);
+	        header("Location: {$this->baseUrl}admin/articles/edit/{$id}?error=1");
+	        exit;
+	    }
+	}
+	/**
+public function updateArticle(int $id): void
+{
+    $this->requireAdmin();
+
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        $this->logger->warning('Invalid HTTP method for article update', [
+            'method' => $_SERVER['REQUEST_METHOD'],
+            'article_id' => $id,
+            'user' => $this->authService->getUsername()
+        ]);
+        header("Location: {$this->baseUrl}admin/articles/edit/{$id}");
+        exit;
+    }
+
+    try {
+        // DEBUG: Logujeme co přišlo v POST
+        $this->logger->debug('UPDATE ARTICLE - POST DATA', [
+            'article_id' => $id,
+            'post_data' => $_POST,
+            'user' => $this->authService->getUsername()
+        ]);
+
+        $categoryIds = $_POST['categories'] ?? [];
+        // Pokud je categories pole, vezmeme první prvek (jedna kategorie)
+        if (is_array($categoryIds) && !empty($categoryIds)) {
+            $categoryIds = [reset($categoryIds)]; // vezmeme první vybranou kategorii
+        } else {
+            $categoryIds = [];
         }
 
-        try {
-            $success = $this->articleService->updateArticle($id, [
+        $updateData = [
+            'title' => $_POST['title'],
+            'content' => $_POST['content'],
+            'excerpt' => $_POST['excerpt'] ?? '',
+            'status' => $_POST['status'] ?? 'draft',
+            'category_ids' => $categoryIds
+        ];
+
+        // DEBUG: Logujeme data co posíláme do service
+        $this->logger->debug('UPDATE ARTICLE - DATA TO SERVICE', [
+            'article_id' => $id,
+            'update_data' => $updateData
+        ]);
+
+        $success = $this->articleService->updateArticle($id, $updateData);
+
+        // DEBUG: Logujeme výsledek
+        $this->logger->debug('UPDATE ARTICLE - RESULT', [
+            'article_id' => $id,
+            'success' => $success
+        ]);
+
+        if ($success) {
+            $this->logger->info('Article updated successfully', [
+                'article_id' => $id,
                 'title' => $_POST['title'],
-                'content' => $_POST['content'],
-                'excerpt' => $_POST['excerpt'] ?? '',
-                'status' => $_POST['status'] ?? 'draft'
+                'status' => $_POST['status'] ?? 'draft',
+                'categories_count' => count($categoryIds),
+                'user' => $this->authService->getUsername()
             ]);
 
-            if ($success) {
-				// Aktualizace kategorií článku
-                $categoryIds = $_POST['categories'] ?? [];
-                $this->categoryService->assignCategoriesToArticle($id, $categoryIds);
-
-
-                header("Location: {$this->baseUrl}admin/articles/edit/{$id}?saved=1");
-            } else {
-                header("Location: {$this->baseUrl}admin/articles/edit/{$id}?error=1");
-            }
-            exit;
-
-        } catch (\Exception $e) {
+            header("Location: {$this->baseUrl}admin/articles/edit/{$id}?saved=1");
+        } else {
+            $this->logger->warning('Article update returned false', [
+                'article_id' => $id,
+                'user' => $this->authService->getUsername()
+            ]);
             header("Location: {$this->baseUrl}admin/articles/edit/{$id}?error=1");
-            exit;
         }
-    }
+        exit;
 
+    } catch (\Exception $e) {
+        $this->logger->error('Article update failed', [
+            'article_id' => $id,
+            'error' => $e->getMessage(),
+            'user' => $this->authService->getUsername()
+        ]);
+        header("Location: {$this->baseUrl}admin/articles/edit/{$id}?error=1");
+        exit;
+    }
+}
+	**/
 
     /**
-     * Vykreslí checkboxy pro výběr kategorií
+     * Vykreslí SELECT dropdown pro výběr kategorií s hierarchií
      *
-     * @param array $categories Seznam všech kategorií
+     * @param array $categories Seznam kategorií (id => name s odsazením)
      * @param array $selectedIds Pole ID vybraných kategorií
-     * @return string HTML obsah checkboxů
+     * @return string HTML obsah options
      */
-    private function renderCategoryOptions(array $categories, array $selectedIds): string
+    private function renderCategorySelect(array $categories, array $selectedIds): string
     {
-        $html = '';
-        foreach ($categories as $category) {
-            $checked = in_array($category['id'], $selectedIds) ? 'checked' : '';
-            $html .= <<<HTML
-<div class="checkbox-group">
-    <input type="checkbox" id="category_{$category['id']}" name="categories[]" value="{$category['id']}" {$checked}>
-    <label for="category_{$category['id']}">{$this->escape($category['name'])}</label>
-</div>
-HTML;
+        $options = '';
+
+        foreach ($categories as $id => $name) {
+            $selected = in_array($id, $selectedIds) ? 'selected' : '';
+            $options .= sprintf(
+                '<option value="%d" %s>%s</option>',
+                $id,
+                $selected,
+                $this->escape($name)
+            );
         }
-        return $html;
+
+        return $options;
     }
-
-
 
     /**
      * Přesune článek do koše (soft delete)
@@ -497,11 +709,25 @@ HTML;
     {
         $this->requireAdmin();
 
-        $success = $this->articleService->deleteArticle($id);
+        try {
+            $success = $this->articleService->deleteArticle($id);
 
-        if ($success) {
-            header("Location: {$this->baseUrl}admin/articles?deleted=1");
-        } else {
+            if ($success) {
+                $this->logger->warning('Article moved to trash', [
+                    'article_id' => $id,
+                    'user' => $this->authService->getUsername(),
+                    'client_ip' => $this->getClientIp()
+                ]);
+                header("Location: {$this->baseUrl}admin/articles?deleted=1");
+            } else {
+                header("Location: {$this->baseUrl}admin/articles?error=1");
+            }
+        } catch (\Exception $e) {
+            $this->logger->error('Article deletion failed', [
+                'article_id' => $id,
+                'error' => $e->getMessage(),
+                'user' => $this->authService->getUsername()
+            ]);
             header("Location: {$this->baseUrl}admin/articles?error=1");
         }
         exit;
@@ -517,11 +743,24 @@ HTML;
     {
         $this->requireAdmin();
 
-        $success = $this->articleService->restoreArticle($id);
+        try {
+            $success = $this->articleService->restoreArticle($id);
 
-        if ($success) {
-            header("Location: {$this->baseUrl}admin/articles?show=trash&restored=1");
-        } else {
+            if ($success) {
+                $this->logger->info('Article restored from trash', [
+                    'article_id' => $id,
+                    'user' => $this->authService->getUsername()
+                ]);
+                header("Location: {$this->baseUrl}admin/articles?show=trash&restored=1");
+            } else {
+                header("Location: {$this->baseUrl}admin/articles?show=trash&error=1");
+            }
+        } catch (\Exception $e) {
+            $this->logger->error('Article restoration failed', [
+                'article_id' => $id,
+                'error' => $e->getMessage(),
+                'user' => $this->authService->getUsername()
+            ]);
             header("Location: {$this->baseUrl}admin/articles?show=trash&error=1");
         }
         exit;
@@ -537,11 +776,25 @@ HTML;
     {
         $this->requireAdmin();
 
-        $success = $this->articleService->permanentDeleteArticle($id);
+        try {
+            $success = $this->articleService->permanentDeleteArticle($id);
 
-        if ($success) {
-            header("Location: {$this->baseUrl}admin/articles?show=trash&deleted=1");
-        } else {
+            if ($success) {
+                $this->logger->critical('Article permanently deleted', [
+                    'article_id' => $id,
+                    'user' => $this->authService->getUsername(),
+                    'client_ip' => $this->getClientIp()
+                ]);
+                header("Location: {$this->baseUrl}admin/articles?show=trash&deleted=1");
+            } else {
+                header("Location: {$this->baseUrl}admin/articles?show=trash&error=1");
+            }
+        } catch (\Exception $e) {
+            $this->logger->error('Article permanent deletion failed', [
+                'article_id' => $id,
+                'error' => $e->getMessage(),
+                'user' => $this->authService->getUsername()
+            ]);
             header("Location: {$this->baseUrl}admin/articles?show=trash&error=1");
         }
         exit;
@@ -556,6 +809,9 @@ HTML;
     private function requireAdmin(): void
     {
         if (!$this->authService->isLoggedIn()) {
+            $this->logger->warning('Unauthorized access to articles admin', [
+                'client_ip' => $this->getClientIp()
+            ]);
             header("Location: {$this->baseUrl}login");
             exit;
         }
@@ -627,5 +883,15 @@ HTML;
         $statusInfo = $statuses[$status] ?? ['text' => $status, 'class' => 'badge-secondary'];
 
         return '<span class="badge ' . $statusInfo['class'] . '">' . $statusInfo['text'] . '</span>';
+    }
+
+    /**
+     * Získá IP adresu klienta
+     *
+     * @return string IP adresa
+     */
+    private function getClientIp(): string
+    {
+        return $_SERVER['REMOTE_ADDR'] ?? 'unknown';
     }
 }

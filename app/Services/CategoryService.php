@@ -6,16 +6,19 @@ namespace App\Services;
 
 use App\Database\DatabaseConnection;
 use App\Core\Config;
+use App\Logger\Logger;
 
 /**
  * Služba pro správu kategorií článků
  *
  * @package App\Services
  * @author KRS3
- * @version 3.0
+ * @version 3.1
  */
 class CategoryService
 {
+    private Logger $logger;
+
     /**
      * @var int ID výchozí kategorie pro sirotky
      */
@@ -28,8 +31,14 @@ class CategoryService
      */
     public function __construct(private DatabaseConnection $db)
     {
+        $this->logger = Logger::getInstance();
+
         // Načteme ID výchozí kategorie z konfigurace
         $this->defaultCategoryId = Config::get('categories.default_category_id', 1);
+
+        $this->logger->debug('CategoryService initialized', [
+            'default_category_id' => $this->defaultCategoryId
+        ]);
     }
 
     /**
@@ -39,10 +48,23 @@ class CategoryService
      */
     public function getAllCategories(): array
     {
-        $stmt = $this->db->query(
-            "SELECT * FROM categories WHERE deleted_at IS NULL ORDER BY name ASC"
-        );
-        return $stmt->fetchAll();
+        try {
+            $stmt = $this->db->query(
+                "SELECT * FROM categories WHERE deleted_at IS NULL ORDER BY name ASC"
+            );
+            $categories = $stmt->fetchAll();
+
+            $this->logger->debug('Retrieved all active categories', [
+                'count' => count($categories)
+            ]);
+
+            return $categories;
+        } catch (\Exception $e) {
+            $this->logger->error('Failed to retrieve categories', [
+                'error' => $e->getMessage()
+            ]);
+            throw $e;
+        }
     }
 
     /**
@@ -53,11 +75,26 @@ class CategoryService
      */
     public function getCategory(int $id): ?array
     {
-        $stmt = $this->db->query(
-            "SELECT * FROM categories WHERE id = ? AND deleted_at IS NULL",
-            [$id]
-        );
-        return $stmt->fetch() ?: null;
+        try {
+            $stmt = $this->db->query(
+                "SELECT * FROM categories WHERE id = ? AND deleted_at IS NULL",
+                [$id]
+            );
+            $category = $stmt->fetch() ?: null;
+
+            $this->logger->debug('Category lookup', [
+                'category_id' => $id,
+                'found' => $category !== null
+            ]);
+
+            return $category;
+        } catch (\Exception $e) {
+            $this->logger->error('Failed to get category', [
+                'category_id' => $id,
+                'error' => $e->getMessage()
+            ]);
+            throw $e;
+        }
     }
 
     /**
@@ -67,10 +104,23 @@ class CategoryService
      */
     public function getDeletedCategories(): array
     {
-        $stmt = $this->db->query(
-            "SELECT * FROM categories WHERE deleted_at IS NOT NULL ORDER BY deleted_at DESC"
-        );
-        return $stmt->fetchAll();
+        try {
+            $stmt = $this->db->query(
+                "SELECT * FROM categories WHERE deleted_at IS NOT NULL ORDER BY deleted_at DESC"
+            );
+            $categories = $stmt->fetchAll();
+
+            $this->logger->debug('Retrieved deleted categories', [
+                'count' => count($categories)
+            ]);
+
+            return $categories;
+        } catch (\Exception $e) {
+            $this->logger->error('Failed to retrieve deleted categories', [
+                'error' => $e->getMessage()
+            ]);
+            throw $e;
+        }
     }
 
     /**
@@ -78,33 +128,56 @@ class CategoryService
      *
      * @param int $id ID kategorie
      * @return bool True pokud byla kategorie úspěšně přesunuta do koše
+     * @throws \InvalidArgumentException Pokud se pokusíme smazat výchozí kategorii
      */
     public function deleteCategory(int $id): bool
     {
         // Zabráníme smazání výchozí kategorie
         if ($id === $this->defaultCategoryId) {
+            $this->logger->warning('Attempt to delete default category blocked', [
+                'category_id' => $id
+            ]);
             throw new \InvalidArgumentException('Nelze smazat výchozí kategorii');
         }
 
-        // Začneme transakci pro bezpečnost
+        $category = $this->getCategory($id);
+        if (!$category) {
+            $this->logger->warning('Attempt to delete non-existent category', [
+                'category_id' => $id
+            ]);
+            return false;
+        }
+
         $this->db->beginTransaction();
 
         try {
-            // 1. Přesuneme potomky této kategorie pod výchozí kategorii
-            $this->moveChildrenToParent($id, $this->defaultCategoryId);
+            // Přesuneme potomky této kategorie pod výchozí kategorii
+            $movedChildren = $this->moveChildrenToParent($id, $this->defaultCategoryId);
 
-            // 2. Přesuneme kategorii do koše
-            $result = $this->db->query(
+            // Přesuneme kategorii do koše
+            $result = $this->db->execute(
                 "UPDATE categories SET deleted_at = NOW() WHERE id = ?",
                 [$id]
             );
 
             $this->db->commit();
-            return $result->rowCount() > 0;
+
+            $this->logger->info('Category moved to trash', [
+                'category_id' => $id,
+                'category_name' => $category['name'],
+                'children_moved' => $movedChildren
+            ]);
+
+            return $result > 0;
 
         } catch (\Exception $e) {
             $this->db->rollBack();
-            error_log("Chyba při mazání kategorie: " . $e->getMessage());
+
+            $this->logger->error('Failed to delete category', [
+                'category_id' => $id,
+                'error' => $e->getMessage()
+            ]);
+
             return false;
         }
     }
@@ -117,12 +190,28 @@ class CategoryService
      */
     public function restoreCategory(int $id): bool
     {
-        $result = $this->db->query(
-            "UPDATE categories SET deleted_at = NULL WHERE id = ?",
-            [$id]
-        );
+        try {
+            $result = $this->db->execute(
+                "UPDATE categories SET deleted_at = NULL WHERE id = ?",
+                [$id]
+            );
 
-        return $result->rowCount() > 0;
+            if ($result > 0) {
+                $category = $this->getCategory($id);
+                $this->logger->info('Category restored from trash', [
+                    'category_id' => $id,
+                    'category_name' => $category['name'] ?? 'unknown'
+                ]);
+            }
+
+            return $result > 0;
+        } catch (\Exception $e) {
+            $this->logger->error('Failed to restore category', [
+                'category_id' => $id,
+                'error' => $e->getMessage()
+            ]);
+            return false;
+        }
     }
 
     /**
@@ -130,39 +219,53 @@ class CategoryService
      *
      * @param int $id ID kategorie
      * @return bool True pokud byla kategorie úspěšně trvale smazána
+     * @throws \InvalidArgumentException Pokud se pokusíme smazat výchozí kategorii
      */
     public function permanentDeleteCategory(int $id): bool
     {
-        // Zabráníme smazání výchozí kategorie
         if ($id === $this->defaultCategoryId) {
+            $this->logger->warning('Attempt to permanently delete default category blocked', [
+                'category_id' => $id
+            ]);
             throw new \InvalidArgumentException('Nelze smazat výchozí kategorii');
         }
 
-        // Začneme transakci pro bezpečnost
         $this->db->beginTransaction();
 
         try {
-            // 1. Přesuneme potomky pod výchozí kategorii
-            $this->moveChildrenToParent($id, $this->defaultCategoryId);
+            // Přesuneme potomky pod výchozí kategorii
+            $movedChildren = $this->moveChildrenToParent($id, $this->defaultCategoryId);
 
-            // 2. Smažeme vazby na články
-            $this->db->query(
+            // Smažeme vazby na články
+            $deletedLinks = $this->db->execute(
                 "DELETE FROM article_categories WHERE category_id = ?",
                 [$id]
             );
 
-            // 3. Smažeme kategorii z databáze
-            $result = $this->db->query(
+            // Smažeme kategorii z databáze
+            $result = $this->db->execute(
                 "DELETE FROM categories WHERE id = ?",
                 [$id]
             );
 
             $this->db->commit();
-            return $result->rowCount() > 0;
+
+            $this->logger->critical('Category permanently deleted', [
+                'category_id' => $id,
+                'children_moved' => $movedChildren,
+                'article_links_removed' => $deletedLinks
+            ]);
+
+            return $result > 0;
 
         } catch (\Exception $e) {
             $this->db->rollBack();
-            error_log("Chyba při trvalém mazání kategorie: " . $e->getMessage());
+
+            $this->logger->error('Failed to permanently delete category', [
+                'category_id' => $id,
+                'error' => $e->getMessage()
+            ]);
+
             return false;
         }
     }
@@ -172,22 +275,34 @@ class CategoryService
      *
      * @param int $categoryId ID mazané kategorie
      * @param int|null $newParentId Nový rodič pro potomky
-     * @return bool True pokud se přesun podařil
+     * @return int Počet přesunutých potomků
      */
-    public function moveChildrenToParent(int $categoryId, ?int $newParentId = null): bool
+    private function moveChildrenToParent(int $categoryId, ?int $newParentId = null): int
     {
         try {
-            // Pokud je newParentId 0, nastavíme na NULL (kořenová úroveň)
             $actualParentId = ($newParentId === 0) ? null : $newParentId;
 
-            $this->db->query(
+            $result = $this->db->execute(
                 "UPDATE categories SET parent_id = ? WHERE parent_id = ? AND deleted_at IS NULL",
                 [$actualParentId, $categoryId]
             );
-            return true;
+
+            if ($result > 0) {
+                $this->logger->debug('Category children moved', [
+                    'from_parent_id' => $categoryId,
+                    'to_parent_id' => $actualParentId,
+                    'children_count' => $result
+                ]);
+            }
+
+            return $result;
         } catch (\Exception $e) {
-            error_log("Chyba při přesunu potomků: " . $e->getMessage());
-            return false;
+            $this->logger->error('Failed to move category children', [
+                'category_id' => $categoryId,
+                'new_parent_id' => $newParentId,
+                'error' => $e->getMessage()
+            ]);
+            return 0;
         }
     }
 
@@ -199,7 +314,14 @@ class CategoryService
     public function getCategoryTree(): array
     {
         $categories = $this->getAllCategories();
-        return $this->buildTree($categories);
+        $tree = $this->buildTree($categories);
+
+        $this->logger->debug('Category tree built', [
+            'total_categories' => count($categories),
+            'root_categories' => count($tree)
+        ]);
+
+        return $tree;
     }
 
     /**
@@ -229,65 +351,40 @@ class CategoryService
     }
 
     /**
-     * Získá kategorie ve formátu pro výběr (s odsazením podle hierarchie)
+     * Získá kategorie ve formátu pro select dropdown s odsazením podle hierarchie
      *
      * @param int|null $excludeId ID kategorie, kterou vynechat
-     * @return array Kategorie připravené pro výběr v selectu
+     * @return array Kategorie připravené pro select (id => name s odsazením)
      */
-	public function getCategoriesForSelect(int $excludeId = null): array
-	{
-	    $categories = $this->getCategoryTree();
-	    $result = [];
-
-	    $flatten = function($categories, $level = 0) use (&$flatten, &$result, $excludeId) {
-	        foreach ($categories as $category) {
-	            if ($excludeId && $category['id'] == $excludeId) {
-	                continue;
-	            }
-
-	            $prefix = str_repeat('--', $level);
-	            $result[$category['id']] = $prefix . ' ' . $category['name'];
-
-	            if (!empty($category['children'])) {
-	                $flatten($category['children'], $level + 1);
-	            }
-	        }
-	    };
-
-	    $flatten($categories);
-	    return $result;
-	}
-
-
-    /**
-     * Zploští stromovou strukturu pro výběr v selectu
-     *
-     * @param array $tree Stromová struktura
-     * @param int $depth Hloubka
-     * @param int|null $excludeId ID kategorie, kterou vynechat
-     * @return array Zploštěné pole s odsazením
-     */
-    private function flattenTreeForSelect(array $tree, int $depth = 0, ?int $excludeId = null): array
+    public function getCategoriesForSelect(int $excludeId = null): array
     {
+        $categories = $this->getCategoryTree();
         $result = [];
-        $prefix = str_repeat('--', $depth);
 
-        foreach ($tree as $category) {
-            // Vynecháme kategorii, která má být vyloučena
-            if ($excludeId !== null && $category['id'] === $excludeId) {
-                continue;
+        $flatten = function($categories, $level = 0) use (&$flatten, &$result, $excludeId) {
+            foreach ($categories as $category) {
+                if ($excludeId && $category['id'] == $excludeId) {
+                    continue;
+                }
+
+                $prefix = str_repeat('— ', $level);
+                $result[$category['id']] = $prefix . $category['name'];
+
+                if (!empty($category['children'])) {
+                    $flatten($category['children'], $level + 1);
+                }
             }
+        };
 
-            $result[$category['id']] = ($prefix ? $prefix . ' ' : '') . $category['name'];
+        $flatten($categories);
 
-            if (!empty($category['children'])) {
-                $result += $this->flattenTreeForSelect($category['children'], $depth + 1, $excludeId);
-            }
-        }
+        $this->logger->debug('Categories prepared for select', [
+            'excluded_id' => $excludeId,
+            'count' => count($result)
+        ]);
 
         return $result;
     }
-
 
     /**
      * Vygeneruje slug z názvu kategorie
@@ -300,9 +397,15 @@ class CategoryService
         $slug = iconv('UTF-8', 'ASCII//TRANSLIT', $name);
         $slug = preg_replace('/[^a-zA-Z0-9 -]/', '', $slug);
         $slug = strtolower(str_replace(' ', '-', $slug));
-        return preg_replace('/-+/', '-', $slug);
-    }
+        $slug = preg_replace('/-+/', '-', trim($slug, '-'));
 
+        $this->logger->debug('Slug generated', [
+            'name' => $name,
+            'slug' => $slug
+        ]);
+
+        return $slug;
+    }
 
     /**
      * Vytvoří novou kategorii
@@ -314,94 +417,95 @@ class CategoryService
     public function createCategory(array $data): int
     {
         if (empty($data['name'])) {
+            $this->logger->warning('Attempt to create category without name');
             throw new \InvalidArgumentException('Název kategorie je povinný');
         }
 
-        $slug = $this->generateSlug($data['name']);
+        try {
+            $slug = $this->generateSlug($data['name']);
 
-        $this->db->query(
-            "INSERT INTO categories (name, slug, description, parent_id)
-             VALUES (?, ?, ?, ?)",
-            [
-                $data['name'],
-                $slug,
-                $data['description'] ?? '',
-                $data['parent_id'] ?? null
-            ]
-        );
+            $this->db->execute(
+                "INSERT INTO categories (name, slug, description, parent_id)
+                 VALUES (?, ?, ?, ?)",
+                [
+                    $data['name'],
+                    $slug,
+                    $data['description'] ?? '',
+                    $data['parent_id'] ?? null
+                ]
+            );
 
-        return $this->db->getLastInsertId();
+            $categoryId = $this->db->getLastInsertId();
+
+            $this->logger->info('Category created', [
+                'category_id' => $categoryId,
+                'name' => $data['name'],
+                'slug' => $slug,
+                'parent_id' => $data['parent_id'] ?? null
+            ]);
+
+            return $categoryId;
+        } catch (\Exception $e) {
+            $this->logger->error('Failed to create category', [
+                'data' => $data,
+                'error' => $e->getMessage()
+            ]);
+            throw $e;
+        }
     }
 
-	/**
+    /**
      * Aktualizuje existující kategorii
      *
      * @param int $id ID kategorie
      * @param array $data Nová data kategorie
      * @return bool True pokud byla kategorie úspěšně aktualizována
+     * @throws \InvalidArgumentException Pokud chybí povinná data
      */
     public function updateCategory(int $id, array $data): bool
     {
         if (empty($data['name'])) {
+            $this->logger->warning('Attempt to update category without name', [
+                'category_id' => $id
+            ]);
             throw new \InvalidArgumentException('Název kategorie je povinný');
         }
 
-        $slug = $data['slug'] ?? $this->generateSlug($data['name']);
+        try {
+            $slug = $data['slug'] ?? $this->generateSlug($data['name']);
 
-        $result = $this->db->query(
-            "UPDATE categories SET
-                name = ?, slug = ?, description = ?, parent_id = ?
-             WHERE id = ?",
-            [
-                $data['name'],
-                $slug,
-                $data['description'] ?? '',
-                $data['parent_id'] ?? null,
-                $id
-            ]
-        );
+            $result = $this->db->execute(
+                "UPDATE categories SET
+                    name = ?, slug = ?, description = ?, parent_id = ?
+                 WHERE id = ?",
+                [
+                    $data['name'],
+                    $slug,
+                    $data['description'] ?? '',
+                    $data['parent_id'] ?? null,
+                    $id
+                ]
+            );
 
-        return $result->rowCount() > 0;
+            if ($result > 0) {
+                $this->logger->info('Category updated', [
+                    'category_id' => $id,
+                    'name' => $data['name'],
+                    'slug' => $slug,
+                    'parent_id' => $data['parent_id'] ?? null
+                ]);
+            }
+
+            return $result > 0;
+        } catch (\Exception $e) {
+            $this->logger->error('Failed to update category', [
+                'category_id' => $id,
+                'data' => $data,
+                'error' => $e->getMessage()
+            ]);
+            throw $e;
+        }
     }
-
-	/**
-	 * Získá všechny kategorie pro dropdown
-	 *
-	 * @return array
-	 */
-	public function getAllCategoriesForDropdown(): array
-	{
-	    $categories = $this->getAllCategories();
-	    $result = [];
-
-	    foreach ($categories as $category) {
-	        $result[] = [
-	            'id' => $category['id'],
-	            'name' => $category['name'],
-	            'level' => $this->calculateCategoryLevel($category['id'])
-	        ];
-	    }
-
-	    return $result;
-	}
-
-
-	/**
-	 * Vypočítá úroveň kategorie v hierarchii
-	 *
-	 * @param int $categoryId
-	 * @param int $level
-	 * @return int
-	 */
-	private function calculateCategoryLevel(int $categoryId, int $level = 0): int
-	{
-	    $category = $this->getCategory($categoryId);
-	    if ($category && $category['parent_id']) {
-	        return $this->calculateCategoryLevel($category['parent_id'], $level + 1);
-	    }
-	    return $level;
-	}
-
 
     /**
      * Získá kategorie pro konkrétní článek
@@ -409,20 +513,34 @@ class CategoryService
      * @param int $articleId ID článku
      * @return array Seznam kategorií článku
      */
-	public function getCategoriesForArticle(int $articleId): array
-	{
-	    $stmt = $this->db->query(
-	        "SELECT c.*
-	         FROM categories c
-	         INNER JOIN article_categories ac ON c.id = ac.category_id
-	         WHERE ac.article_id = ? AND c.deleted_at IS NULL
-	         ORDER BY c.name",
-	        [$articleId]
-	    );
+    public function getCategoriesForArticle(int $articleId): array
+    {
+        try {
+            $stmt = $this->db->query(
+                "SELECT c.*
+                 FROM categories c
+                 INNER JOIN article_categories ac ON c.id = ac.category_id
+                 WHERE ac.article_id = ? AND c.deleted_at IS NULL
+                 ORDER BY c.name",
+                [$articleId]
+            );
 
-	    return $stmt->fetchAll();
-	}
+            $categories = $stmt->fetchAll();
 
+            $this->logger->debug('Retrieved categories for article', [
+                'article_id' => $articleId,
+                'count' => count($categories)
+            ]);
+
+            return $categories;
+        } catch (\Exception $e) {
+            $this->logger->error('Failed to get categories for article', [
+                'article_id' => $articleId,
+                'error' => $e->getMessage()
+            ]);
+            return [];
+        }
+    }
 
     /**
      * Přiřadí kategorie k článku
@@ -431,151 +549,183 @@ class CategoryService
      * @param array $categoryIds Pole ID kategorií
      * @return bool True pokud byly kategorie úspěšně přiřazeny
      */
-	public function assignCategoriesToArticle(int $articleId, array $categoryIds): bool
-	{
-	    try {
-	        // Nejprve odstraníme stávající přiřazení
-	        $this->db->query(
-	            "DELETE FROM article_categories WHERE article_id = ?",
-	            [$articleId]
-	        );
-
-	        // Pak přidáme nová přiřazení
-	        foreach ($categoryIds as $categoryId) {
-	            if (!empty($categoryId)) {
-	                $this->db->query(
-	                    "INSERT INTO article_categories (article_id, category_id) VALUES (?, ?)",
-	                    [$articleId, (int)$categoryId]
-	                );
-	            }
-	        }
-
-	        return true;
-	    } catch (\Exception $e) {
-	        error_log("Error assigning categories: " . $e->getMessage());
-	        return false;
-	    }
-	}
-
-    /**
-     * Zkontroluje, zda je kategorie potomkem jiné kategorie
-     *
-     * @param int $categoryId ID kategorie
-     * @param int $potentialParentId ID potenciálního rodiče
-     * @return bool True pokud je potomkem
-     */
-    public function isDescendantOf(int $categoryId, int $potentialParentId): bool
+    public function assignCategoriesToArticle(int $articleId, array $categoryIds): bool
     {
-        $category = $this->getCategory($categoryId);
-        if (!$category) {
+        try {
+            // Odstraníme stávající přiřazení
+            $removed = $this->db->execute(
+                "DELETE FROM article_categories WHERE article_id = ?",
+                [$articleId]
+            );
+
+            // Přidáme nová přiřazení
+            $added = 0;
+            foreach ($categoryIds as $categoryId) {
+                if (!empty($categoryId)) {
+                    $this->db->execute(
+                        "INSERT INTO article_categories (article_id, category_id) VALUES (?, ?)",
+                        [$articleId, (int)$categoryId]
+                    );
+                    $added++;
+                }
+            }
+
+            $this->logger->info('Categories assigned to article', [
+                'article_id' => $articleId,
+                'removed_count' => $removed,
+                'added_count' => $added,
+                'category_ids' => $categoryIds
+            ]);
+
+            return true;
+        } catch (\Exception $e) {
+            $this->logger->error('Failed to assign categories to article', [
+                'article_id' => $articleId,
+                'category_ids' => $categoryIds,
+                'error' => $e->getMessage()
+            ]);
             return false;
         }
+    }
 
-        // Procházíme rodiče až ke kořeni
-        while ($category && $category['parent_id'] !== null) {
-            if ($category['parent_id'] === $potentialParentId) {
-                return true;
-            }
-            $category = $this->getCategory($category['parent_id']);
+    /**
+     * Získá kategorii podle slugu
+     *
+     * @param string $slug Slug kategorie
+     * @return array|null Data kategorie nebo null
+     */
+    public function getCategoryBySlug(string $slug): ?array
+    {
+        try {
+            $stmt = $this->db->query(
+                "SELECT * FROM categories WHERE slug = ? AND deleted_at IS NULL",
+                [$slug]
+            );
+
+            $category = $stmt->fetch() ?: null;
+
+            $this->logger->debug('Category lookup by slug', [
+                'slug' => $slug,
+                'found' => $category !== null
+            ]);
+
+            return $category;
+        } catch (\Exception $e) {
+            $this->logger->error('Failed to get category by slug', [
+                'slug' => $slug,
+                'error' => $e->getMessage()
+            ]);
+            return null;
+        }
+    }
+
+    /**
+     * Získá počet publikovaných článků v kategorii
+     *
+     * @param int $categoryId ID kategorie
+     * @return int Počet článků
+     */
+    public function getArticleCount(int $categoryId): int
+    {
+        try {
+            $stmt = $this->db->query(
+                "SELECT COUNT(DISTINCT a.id) as article_count
+                 FROM articles a
+                 INNER JOIN article_categories ac ON a.id = ac.article_id
+                 WHERE ac.category_id = ?
+                 AND a.status = 'published'
+                 AND a.published_at <= NOW()
+                 AND a.deleted_at IS NULL",
+                [$categoryId]
+            );
+
+            $result = $stmt->fetch();
+            $count = (int)($result['article_count'] ?? 0);
+
+            $this->logger->debug('Article count retrieved for category', [
+                'category_id' => $categoryId,
+                'count' => $count
+            ]);
+
+            return $count;
+        } catch (\Exception $e) {
+            $this->logger->error('Failed to get article count for category', [
+                'category_id' => $categoryId,
+                'error' => $e->getMessage()
+            ]);
+            return 0;
+        }
+    }
+
+    /**
+     * Získá breadcrumb navigaci pro kategorii
+     *
+     * @param int $categoryId ID kategorie
+     * @return array Pole s breadcrumb položkami
+     */
+    public function getCategoryBreadcrumb(int $categoryId): array
+    {
+        $breadcrumbs = [];
+        $currentCategory = $this->getCategory($categoryId);
+
+        if (!$currentCategory) {
+            return $breadcrumbs;
         }
 
-        return false;
+        $breadcrumbs[] = $currentCategory;
+
+        $parentId = $currentCategory['parent_id'];
+        while ($parentId) {
+            $parentCategory = $this->getCategory($parentId);
+            if ($parentCategory) {
+                array_unshift($breadcrumbs, $parentCategory);
+                $parentId = $parentCategory['parent_id'];
+            } else {
+                break;
+            }
+        }
+
+        return $breadcrumbs;
     }
-/**
- * Získá počet publikovaných článků v kategorii
- *
- * @param int $categoryId ID kategorie
- * @return int Počet článků
- */
-public function getArticleCount(int $categoryId): int
-{
-    $stmt = $this->db->query(
-        "SELECT COUNT(DISTINCT a.id) as article_count
-         FROM articles a
-         INNER JOIN article_categories ac ON a.id = ac.article_id
-         WHERE ac.category_id = ?
-         AND a.status = 'published'
-         AND a.published_at <= NOW()
-         AND a.deleted_at IS NULL",
-        [$categoryId]
-    );
 
-    $result = $stmt->fetch();
-    return (int)($result['article_count'] ?? 0);
-}
+    /**
+     * Získá populární kategorie (s nejvíce články)
+     *
+     * @param int $limit Počet kategorií
+     * @return array Seznam populárních kategorií
+     */
+    public function getPopularCategories(int $limit = 5): array
+    {
+        try {
+            $stmt = $this->db->query(
+                "SELECT c.*, COUNT(ac.article_id) as article_count
+                 FROM categories c
+                 LEFT JOIN article_categories ac ON c.id = ac.category_id
+                 LEFT JOIN articles a ON ac.article_id = a.id
+                    AND a.status = 'published'
+                    AND a.published_at <= NOW()
+                    AND a.deleted_at IS NULL
+                 WHERE c.deleted_at IS NULL
+                 GROUP BY c.id
+                 ORDER BY article_count DESC, c.name ASC
+                 LIMIT ?",
+                [$limit]
+            );
 
-	/**
-	 * Získá breadcrumb navigaci pro kategorii
-	 *
-	 * @param int $categoryId ID kategorie
-	 * @return array Pole s breadcrumb položkami
-	 */
-	public function getCategoryBreadcrumb(int $categoryId): array
-	{
-	    $breadcrumbs = [];
-	    $currentCategory = $this->getCategory($categoryId);
+            $categories = $stmt->fetchAll();
 
-	    if (!$currentCategory) {
-	        return $breadcrumbs;
-	    }
+            $this->logger->debug('Popular categories retrieved', [
+                'limit' => $limit,
+                'count' => count($categories)
+            ]);
 
-	    // Přidáme aktuální kategorii
-	    $breadcrumbs[] = $currentCategory;
-
-	    // Rekurzivně procházíme rodiče
-	    $parentId = $currentCategory['parent_id'];
-	    while ($parentId) {
-	        $parentCategory = $this->getCategory($parentId);
-	        if ($parentCategory) {
-	            array_unshift($breadcrumbs, $parentCategory);
-	            $parentId = $parentCategory['parent_id'];
-	        } else {
-	            break;
-	        }
-	    }
-
-	    return $breadcrumbs;
-	}
-
-	/**
-	 * Získá kategorii podle slugu
-	 *
-	 * @param string $slug Slug kategorie
-	 * @return array|null Data kategorie nebo null
-	 */
-	public function getCategoryBySlug(string $slug): ?array
-	{
-	    $stmt = $this->db->query(
-	        "SELECT * FROM categories WHERE slug = ? AND deleted_at IS NULL",
-	        [$slug]
-	    );
-
-	    return $stmt->fetch() ?: null;
-	}
-
-	/**
-	 * Získá populární kategorie (s nejvíce články)
-	 *
-	 * @param int $limit Počet kategorií
-	 * @return array Seznam populárních kategorií
-	 */
-	public function getPopularCategories(int $limit = 5): array
-	{
-	    $stmt = $this->db->query(
-	        "SELECT c.*, COUNT(ac.article_id) as article_count
-	         FROM categories c
-	         LEFT JOIN article_categories ac ON c.id = ac.category_id
-	         LEFT JOIN articles a ON ac.article_id = a.id
-	            AND a.status = 'published'
-	            AND a.published_at <= NOW()
-	            AND a.deleted_at IS NULL
-	         WHERE c.deleted_at IS NULL
-	         GROUP BY c.id
-	         ORDER BY article_count DESC, c.name ASC
-	         LIMIT ?",
-	        [$limit]
-	    );
-
-	    return $stmt->fetchAll();
-	}
+            return $categories;
+        } catch (\Exception $e) {
+            $this->logger->error('Failed to get popular categories', [
+                'limit' => $limit,
+                'error' => $e->getMessage()
+            ]);
+            return [];
+        }
+    }
 }
