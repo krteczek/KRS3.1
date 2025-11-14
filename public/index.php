@@ -9,7 +9,7 @@ use App\Core\Template;
 
 // ✅ NAČTENÍ KONFIGURACE
 Config::load(__DIR__ . '/../config/config.php');
-Config::load(__DIR__ . '/../config/texts.php');
+//Config::load(__DIR__ . '/../config/texts.php');
 
 // ✅ ERROR HANDLING (váš existující kód)
 $logger = App\Logger\Logger::getInstance();

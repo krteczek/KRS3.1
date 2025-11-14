@@ -71,6 +71,7 @@ class AdminMenu
         <li><a href="{$this->baseUrl}admin/articles">{$this->translate('admin.navigation.articles')}</a></li>
         <li><a href="{$this->baseUrl}admin/categories">{$this->translate('admin.navigation.categories')}</a></li>
         <li><a href="{$this->baseUrl}admin/gallery">{$this->translate('admin.navigation.gallery')}</a></li>
+        <li><a href="{$this->baseUrl}admin/images">{$this->translate('admin.navigation.images')}</a></li>
         <li><a href="{$this->baseUrl}admin/users">{$this->translate('admin.navigation.users')}</a></li>
         <li><a href="{$this->baseUrl}logout">{$this->translate('navigation.logout')}</a></li>
     </ul>

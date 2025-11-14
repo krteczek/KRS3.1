@@ -301,7 +301,7 @@ HTML;
             $html .= <<<HTML
 <tr>
     <td>
-        <div class="article-title">{$this->escape($article['title'])}</div>
+        <div class="article-title"><b>{$this->escape($article['title'])}</b></div>
         <div class="article-excerpt">{$this->escape(mb_substr($article['excerpt'] ?? '', 0, 100))}...</div>
     </td>
     <td>

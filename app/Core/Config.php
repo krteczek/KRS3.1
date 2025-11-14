@@ -12,7 +12,7 @@ namespace App\Core;
  *
  * @package App\Core
  * @author KRS3
- * @version 3.0
+ * @version 3.1
  */
 class Config
 {
@@ -20,6 +20,16 @@ class Config
      * @var array Hlavní konfigurační pole
      */
     private static array $config = [];
+
+    /**
+     * @var array Načtené překlady
+     */
+    private static array $texts = [];
+
+    /**
+     * @var bool Příznak, zda byly překlady načteny
+     */
+    private static bool $textsLoaded = false;
 
     /**
      * Načte konfigurační soubor a sloučí ho s existující konfigurací
@@ -38,6 +48,47 @@ class Config
 
         $loadedConfig = require $configPath;
         self::$config = array_merge(self::$config, $loadedConfig);
+    }
+
+    /**
+     * Načte překlady pro aktuální jazyk
+     *
+     * @return void
+     */
+    private static function loadTexts(): void
+    {
+        if (self::$textsLoaded) {
+            return;
+        }
+
+        $language = self::getCurrentLanguage();
+
+        try {
+            require_once __DIR__ . '/../../config/texts/loader.php';
+            self::$texts = \TextLoader::loadWithFallback($language);
+            self::$textsLoaded = true;
+        } catch (\Exception $e) {
+            // Fallback na prázdné pole
+            self::$texts = [];
+            self::$textsLoaded = true;
+            // Můžeme zalogovat chybu, ale nesmíme aplikaci zastavit
+            error_log("Chyba při načítání překladů: " . $e->getMessage());
+        }
+    }
+
+    /**
+     * Získá aktuální jazyk
+     *
+     * @return string Kód jazyka
+     */
+    private static function getCurrentLanguage(): string
+    {
+        // Pro přihlašovací stránku bere v úvahu URL parametr
+        if (isset($_GET['lang']) && in_array($_GET['lang'], ['cs', 'en', 'de'])) {
+            return $_GET['lang'];
+        }
+
+        return $_SESSION['language'] ?? 'cs';
     }
 
     /**
@@ -82,11 +133,10 @@ class Config
         return self::get("site.{$key}", $default);
     }
 
-
     /**
-     * Získá nastavení logování webu podle klíče
+     * Získá nastavení logování podle klíče
      *
-     * @param string $key Klíč nastavení webu (např. 'name', 'url')
+     * @param string $key Klíč nastavení logování
      * @param mixed $default Výchozí hodnota pokud klíč neexistuje
      * @return mixed Nalezená hodnota nebo výchozí hodnota
      *
@@ -94,17 +144,15 @@ class Config
      * $logsDir = Config::logs('dir');
      * $logsFile = Config::logs('file');
      */
-
     public static function logs(string $key, $default = null)
     {
         return self::get("logs.{$key}", $default);
     }
 
-
     /**
-     * Získá nastavení logování webu podle klíče
+     * Získá nastavení CSRF podle klíče
      *
-     * @param string $key Klíč nastavení webu (např. 'name', 'url')
+     * @param string $key Klíč nastavení CSRF
      * @param mixed $default Výchozí hodnota pokud klíč neexistuje
      * @return mixed Nalezená hodnota nebo výchozí hodnota
      *
@@ -112,17 +160,45 @@ class Config
      * $csfrTokenExpire = Config::csrf('token_expire');
      * $csfrValidateOrigin = Config::csrf('validate_origin');
      */
-
     public static function csrf(string $key, $default = null)
     {
         return self::get("csrf.{$key}", $default);
     }
 
+    /**
+     * Získá nastavení zabezpečení podle klíče
+     *
+     * @param string $key Klíč nastavení zabezpečení
+     * @param mixed $default Výchozí hodnota pokud klíč neexistuje
+     * @return mixed Nalezená hodnota nebo výchozí hodnota
+     *
+     * @example
+     * $passwordAlgo = Config::security('password_algo');
+     */
+    public static function security(string $key, $default = null)
+    {
+        return self::get("security.{$key}", $default);
+    }
+
+    /**
+     * Získá nastavení šablon podle klíče
+     *
+     * @param string $key Klíč nastavení šablon
+     * @param mixed $default Výchozí hodnota pokud klíč neexistuje
+     * @return mixed Nalezená hodnota nebo výchozí hodnota
+     *
+     * @example
+     * $templatesDir = Config::templates('dir');
+     */
+    public static function templates(string $key, $default = null)
+    {
+        return self::get("templates.{$key}", $default);
+    }
 
     /**
      * Získá lokalizovaný text podle klíče
      *
-     * Texty se načítají podle aktuálního jazyka z session.
+     * Texty se načítají podle aktuálního jazyka s fallback na češtinu.
      * Podporuje nahrazování parametrů v textu pomocí {param}.
      *
      * @param string $key Klíč textu (např. 'pages.home', 'messages.welcome')
@@ -142,25 +218,30 @@ class Config
      */
     public static function text(string $key, array $replace = [], string $default = ''): string
     {
-        // Získání jazyka z session nebo z URL parametru pro přihlášení
-        if (strpos($key, 'pages.login') !== false || strpos($key, 'ui.login') !== false) {
-            $language = $_SESSION['language'] ?? $_GET['lang'] ?? 'cs';
-        } else {
-            $language = $_SESSION['language'] ?? 'cs';
+        self::loadTexts();
+
+        $keys = explode('.', $key);
+        $value = self::$texts;
+
+        foreach ($keys as $k) {
+            if (!isset($value[$k])) {
+                return $default;
+            }
+            $value = $value[$k];
         }
 
-        $value = self::get("texts.{$language}.{$key}", $default);
-
-        // Pokud není nalezeno, zkusíme výchozí jazyk 'cs'
-        if ($value === $default && $language !== 'cs') {
-            $value = self::get("texts.cs.{$key}", $default);
+        // Pokud je hodnota pole, vrátíme výchozí hodnotu
+        if (is_array($value)) {
+            return $default;
         }
+
+        $text = (string)$value;
 
         foreach ($replace as $search => $replacement) {
-            $value = str_replace('{' . $search . '}', (string)$replacement, $value);
+            $text = str_replace('{' . $search . '}', (string)$replacement, $text);
         }
 
-        return $value;
+        return $text;
     }
 
     /**
@@ -192,7 +273,59 @@ class Config
      */
     public static function hasText(string $key): bool
     {
-        $language = $_SESSION['language'] ?? 'cs';
-        return self::has("texts.{$language}.{$key}");
+        self::loadTexts();
+
+        $keys = explode('.', $key);
+        $value = self::$texts;
+
+        foreach ($keys as $k) {
+            if (!isset($value[$k])) {
+                return false;
+            }
+            $value = $value[$k];
+        }
+
+        return !is_array($value);
+    }
+
+    /**
+     * Vynutí znovunačtení překladů (užitečné pro testování)
+     *
+     * @return void
+     */
+    public static function reloadTexts(): void
+    {
+        self::$textsLoaded = false;
+        self::$texts = [];
+    }
+
+    /**
+     * Získá základní URL aplikace
+     *
+     * @return string Základní URL
+     */
+    public static function getBaseUrl(): string
+    {
+        return self::site('base_path', '/');
+    }
+
+    /**
+     * Získá cestu k adresáři šablon
+     *
+     * @return string Cesta k šablonám
+     */
+    public static function getTemplatesDir(): string
+    {
+        return self::templates('dir', __DIR__ . '/../../templates');
+    }
+
+    /**
+     * Získá cestu k adresáři logů
+     *
+     * @return string Cesta k logům
+     */
+    public static function getLogsDir(): string
+    {
+        return self::logs('dir', __DIR__ . '/../../logs');
     }
 }

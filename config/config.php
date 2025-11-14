@@ -50,5 +50,30 @@ return [
         'max_files' => 30,         // Počet souborů k uchování
         'dir' => __DIR__ . '/../logs/',
         'file' => 'app.log'
-    ]
+    ],
+
+    // Nové sekce pro kompatibilitu s existujícím kódem
+    'app' => [
+        'debug' => true,
+        'env' => $_ENV['APP_ENV'] ?? 'development'
+    ],
+
+    'session' => [
+        'name' => 'krs3_session',
+        'lifetime' => 7200, // 2 hodiny
+        'path' => '/',
+        'domain' => '',
+        'secure' => false,
+        'httponly' => true
+    ],
+	'uploads' => [
+	    'gallery' => [
+	        'path' => __DIR__ . '/../public/uploads/gallery',
+	        'url' => '/uploads/gallery/',
+	        'max_file_size' => 10 * 1024 * 1024, // 10MB
+	        'allowed_types' => ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
+	        'thumb_width' => 300,
+	        'thumb_height' => 200
+	    ]
+	],
 ];

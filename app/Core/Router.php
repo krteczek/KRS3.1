@@ -9,9 +9,15 @@ use App\Controllers\CategoryController;
 use App\Controllers\HomeController;
 use App\Controllers\AuthController;
 use App\Controllers\AdminController;
+use App\Controllers\GalleryController;
+use App\Controllers\ImagesController;
+
 use App\Services\ArticleService;
 use App\Services\CategoryService;
+use App\Services\GalleryService;
 use App\Services\MenuService;
+use App\Services\ImageService;
+
 use App\Auth\LoginService;
 use App\Database\DatabaseConnection;
 use App\Security\CsrfProtection;
@@ -215,7 +221,7 @@ class Router
 
         $subPage = $urlParts[1] ?? 'dashboard';
         $action = $urlParts[2] ?? '';
-        $id = $urlParts[3] ?? null;
+        $id = isset($urlParts[3]) ? (int)$urlParts[3] : null;
 
         $this->logger->info('Admin request', [
             'user_id' => $user['id'],
@@ -233,6 +239,12 @@ class Router
             case 'categories':
                 return $this->handleAdminCategories($action, $id, $categoryService, $baseUrl);
 
+            case 'gallery':
+                return $this->handleAdminGallery($action, $id, $baseUrl);
+
+            case 'images':
+                return $this->handleAdminImages($action, $id, $baseUrl);
+
             case 'dashboard':
             default:
                 $this->logger->debug('Showing admin dashboard');
@@ -245,7 +257,7 @@ class Router
      */
     private function handleAdminArticles(
         string $action,
-        $id,
+        ?int $id,
         ArticleService $articleService,
         CategoryService $categoryService,
         string $baseUrl
@@ -280,7 +292,7 @@ class Router
             case 'edit':
                 if ($id) {
                     $this->logger->debug('Showing article edit form', ['article_id' => $id]);
-                    return $controller->showEditForm((int)$id);
+                    return $controller->showEditForm($id);
                 }
                 break;
 
@@ -290,7 +302,7 @@ class Router
                         'article_id' => $id,
                         'user' => $this->authService->getUsername()
                     ]);
-                    $controller->updateArticle((int)$id);
+                    $controller->updateArticle($id);
                 }
                 return '';
 
@@ -301,7 +313,7 @@ class Router
                         'user' => $this->authService->getUsername(),
                         'client_ip' => $this->getClientIp()
                     ]);
-                    $controller->deleteArticle((int)$id);
+                    $controller->deleteArticle($id);
                 }
                 return '';
 
@@ -311,7 +323,7 @@ class Router
                         'article_id' => $id,
                         'user' => $this->authService->getUsername()
                     ]);
-                    $controller->restoreArticle((int)$id);
+                    $controller->restoreArticle($id);
                 }
                 return '';
 
@@ -322,7 +334,7 @@ class Router
                         'user' => $this->authService->getUsername(),
                         'client_ip' => $this->getClientIp()
                     ]);
-                    $controller->permanentDeleteArticle((int)$id);
+                    $controller->permanentDeleteArticle($id);
                 }
                 return '';
 
@@ -344,7 +356,7 @@ class Router
      */
     private function handleAdminCategories(
         string $action,
-        $id,
+        ?int $id,
         CategoryService $categoryService,
         string $baseUrl
     ): string {
@@ -377,7 +389,7 @@ class Router
             case 'edit':
                 if ($id) {
                     $this->logger->debug('Showing category edit form', ['category_id' => $id]);
-                    return $controller->edit((int)$id);
+                    return $controller->edit($id);
                 }
                 break;
 
@@ -387,7 +399,7 @@ class Router
                         'category_id' => $id,
                         'user' => $this->authService->getUsername()
                     ]);
-                    $controller->update((int)$id);
+                    $controller->update($id);
                 }
                 return '';
 
@@ -398,7 +410,7 @@ class Router
                         'user' => $this->authService->getUsername(),
                         'client_ip' => $this->getClientIp()
                     ]);
-                    $controller->delete((int)$id);
+                    $controller->delete($id);
                 }
                 return '';
 
@@ -408,7 +420,7 @@ class Router
                         'category_id' => $id,
                         'user' => $this->authService->getUsername()
                     ]);
-                    $controller->restore((int)$id);
+                    $controller->restore($id);
                 }
                 return '';
 
@@ -419,7 +431,7 @@ class Router
                         'user' => $this->authService->getUsername(),
                         'client_ip' => $this->getClientIp()
                     ]);
-                    $controller->permanentDelete((int)$id);
+                    $controller->permanentDelete($id);
                 }
                 return '';
 
@@ -429,6 +441,221 @@ class Router
         }
 
         $this->logger->warning('Invalid category action', [
+            'action' => $action,
+            'id' => $id
+        ]);
+
+        return $this->handleNotFound();
+    }
+
+    /**
+     * Zpracuje administrační požadavky pro Galerii
+     */
+    private function handleAdminGallery(
+        string $action,
+        ?int $id,
+        string $baseUrl
+    ): string {
+        $galleryService = new GalleryService($this->db);
+        $controller = new GalleryController(
+            $galleryService,
+            $this->authService,
+            $this->csrf,
+            $baseUrl,
+            $this->adminLayout
+        );
+
+        $this->logger->debug('Admin gallery action', [
+            'action' => $action,
+            'gallery_id' => $id,
+            'user' => $this->authService->getUsername()
+        ]);
+
+        switch ($action) {
+            case 'create':
+                $this->logger->debug('Showing gallery create form');
+                return $controller->create();
+
+            case 'store':
+                $this->logger->info('Creating new gallery', [
+                    'user' => $this->authService->getUsername()
+                ]);
+                $controller->store();
+                return '';
+
+            case 'restore':
+                if ($id) {
+                    $this->logger->info('Restoring deleted gallery', [
+                        'user' => $this->authService->getUsername(),
+                        'gallery_id' => $id
+                    ]);
+                    $controller->restore($id);
+                }
+                return '';
+
+            case 'edit':
+                if ($id) {
+                    $this->logger->debug('Showing gallery edit form', ['gallery_id' => $id]);
+                    return $controller->edit($id);
+                }
+                break;
+
+            case 'update':
+                if ($id) {
+                    $this->logger->info('Updating gallery', [
+                        'gallery_id' => $id,
+                        'user' => $this->authService->getUsername()
+                    ]);
+                    $controller->update($id);
+                }
+                return '';
+
+            case 'view':
+                if ($id) {
+                    $this->logger->debug('Showing gallery view', ['gallery_id' => $id]);
+                    return $controller->view($id);
+                }
+                break;
+
+            case 'manage':
+                $this->logger->debug('Showing gallery management');
+                return $controller->index();
+
+            case 'confirm-delete':
+                if ($id) {
+                    $this->logger->debug('Showing gallery delete confirmation', ['gallery_id' => $id]);
+                    return $controller->confirmDelete($id);
+                }
+                break;
+
+            case 'delete':
+                if ($id) {
+                    $this->logger->warning('Deleting gallery', [
+                        'gallery_id' => $id,
+                        'user' => $this->authService->getUsername(),
+                        'client_ip' => $this->getClientIp()
+                    ]);
+                    $controller->delete($id);
+                }
+                return '';
+
+			case 'confirm-permanent-delete':
+			    if ($id) {
+			        $this->logger->debug('Showing gallery permanent delete confirmation', ['gallery_id' => $id]);
+			        return $controller->confirmPermanentDelete($id);
+			    }
+			    break;
+
+			case 'permanent-delete':
+			    if ($id) {
+			        $this->logger->critical('Permanently deleting gallery', [
+			            'gallery_id' => $id,
+			            'user' => $this->authService->getUsername(),
+			            'client_ip' => $this->getClientIp()
+			        ]);
+			        $controller->permanentDelete($id);
+			    }
+			    return '';
+            default:
+                $this->logger->debug('Showing gallery index');
+                return $controller->index();
+        }
+
+        $this->logger->warning('Invalid gallery action', [
+            'action' => $action,
+            'id' => $id
+        ]);
+
+        return $this->handleNotFound();
+    }
+
+    /**
+     * Zpracuje administrační požadavky pro Obrázky
+     */
+    private function handleAdminImages(
+        string $action,
+        ?int $id,
+        string $baseUrl
+    ): string {
+        $imageService = new \App\Services\ImageService($this->db);
+        $controller = new \App\Controllers\ImagesController(
+            $imageService,
+            $this->authService,
+            $this->csrf,
+            $baseUrl,
+            $this->adminLayout,
+            $this->db
+        );
+
+        $this->logger->debug('Admin images action', [
+            'action' => $action,
+            'image_id' => $id,
+            'user' => $this->authService->getUsername()
+        ]);
+
+        switch ($action) {
+            case 'manage':
+                $this->logger->debug('Showing images management');
+                return $controller->manage();
+
+            case 'upload':
+                $this->logger->debug('Showing upload form');
+                return $controller->upload();
+
+            case 'upload-image':
+                if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+                    $this->logger->info('Uploading image', [
+                        'user' => $this->authService->getUsername()
+                    ]);
+                    $controller->uploadImage();
+                }
+                return '';
+
+            case 'delete':
+                if ($id) {
+                    $this->logger->info('Deleting image', [
+                        'image_id' => $id,
+                        'user' => $this->authService->getUsername(),
+                        'client_ip' => $this->getClientIp()
+                    ]);
+                    $controller->deleteImage($id);
+                }
+                return '';
+
+            case 'restore':
+                if ($id) {
+                    $this->logger->info('Restoring image from trash', [
+                        'image_id' => $id,
+                        'user' => $this->authService->getUsername()
+                    ]);
+                    $controller->restoreImage($id);
+                }
+                return '';
+
+            case 'confirm-permanent-delete':
+                if ($id) {
+                    $this->logger->debug('Showing image permanent delete confirmation', ['image_id' => $id]);
+                    return $controller->confirmPermanentDeleteImage($id);
+                }
+                break;
+
+            case 'permanent-delete':
+                if ($id) {
+                    $this->logger->critical('Permanently deleting image', [
+                        'image_id' => $id,
+                        'user' => $this->authService->getUsername(),
+                        'client_ip' => $this->getClientIp()
+                    ]);
+                    $controller->permanentDeleteImage($id);
+                }
+                return '';
+
+            default:
+                $this->logger->debug('Showing images management (default)');
+                return $controller->manage();
+        }
+
+        $this->logger->warning('Invalid image action', [
             'action' => $action,
             'id' => $id
         ]);

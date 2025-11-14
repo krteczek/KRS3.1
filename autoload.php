@@ -5,7 +5,7 @@ declare(strict_types=1);
 // Načti Config třídu
 require_once __DIR__ . '/app/Core/Config.php';
 require_once __DIR__ . '/config/config.php';
-require_once __DIR__ . '/config/texts.php'; // ← PŘIDEJ TUTO ŘÁDKU!
+//require_once __DIR__ . '/config/texts.php'; // ← PŘIDEJ TUTO ŘÁDKU!
 
 
 // Inicializuj konfiguraci
@@ -29,10 +29,16 @@ require_once __DIR__ . '/app/Controllers/ArticleController.php';
 require_once __DIR__ . '/app/Controllers/BaseController.php';
 require_once __DIR__ . '/app/Controllers/HomeController.php';
 require_once __DIR__ . '/app/Controllers/CategoryController.php';
+require_once __DIR__ . '/app/Controllers/GalleryController.php';
+require_once __DIR__ . '/app/Controllers/ImagesController.php';
+
 
 require_once __DIR__ . '/app/Services/ArticleService.php';
 require_once __DIR__ . '/app/Services/CategoryService.php';
 require_once __DIR__ . '/app/Services/MenuService.php';
+require_once __DIR__ . '/app/Services/GalleryService.php';
+require_once __DIR__ . '/app/Services/ImageService.php';
+
 require_once __DIR__ . '/app/Core/AdminMenu.php';
 require_once __DIR__ . '/app/Core/AdminLayout.php';
 require_once __DIR__ . '/app/Core/Router.php';
