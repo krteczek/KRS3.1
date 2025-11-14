@@ -40,7 +40,7 @@ return [
             'gallery' => 'Galerie',
             'users' => 'Uživatelé',
             'settings' => 'Nastavení',
-			 'images' => 'Správa obrázků'
+            'images' => 'Správa obrázků'
         ],
         'titles' => [
             'administration' => 'Administrace',
@@ -182,25 +182,21 @@ return [
             'create_first' => 'Vytvořit první galerii',
             'upload_first' => 'Nahrát první obrázek',
             'unknown_parent' => 'Neznámý rodič',
-        	'tabs' => [
-            	'active' => 'Aktivní galerie',
-            	'trash' => 'Koš',
-        	],
-
-			'trash' => [
-            	'empty_title' => 'Koš je prázdný',
-            	'empty_text' => 'Žádné galerie nebyly smazány.',
-        	],
-
-			'status' => [
-				'active' => 'Aktivní',
-				'deleted' => 'V koši',
-			],
-
-			'restore' => [
-    	        'button' => 'Obnovit'
-
-			],
+            'tabs' => [
+                'active' => 'Aktivní galerie',
+                'trash' => 'Koš',
+            ],
+            'trash' => [
+                'empty_title' => 'Koš je prázdný',
+                'empty_text' => 'Žádné galerie nebyly smazány.',
+            ],
+            'status' => [
+                'active' => 'Aktivní',
+                'deleted' => 'V koši',
+            ],
+            'restore' => [
+                'button' => 'Obnovit'
+            ],
             'actions' => [
                 'view' => 'Zobrazit',
                 'edit' => 'Upravit',
@@ -214,7 +210,7 @@ return [
                     'parent' => 'Nadřazená galerie',
                     'images_count' => 'Počet obrázků',
                     'actions' => 'Akce',
-					'deleted_at' => 'Smazáno',
+                    'deleted_at' => 'Smazáno',
                 ]
             ],
             'create' => [
@@ -237,7 +233,7 @@ return [
                 'confirm_title' => 'Smazat galerii',
                 'confirm_button' => 'Ano, smazat galerii',
                 'cancel_button' => 'Zrušit',
-                'confirm_message' => 'Chystáte se smazat galerii „{name}“. Tato akce je nevratná.',
+                'confirm_message' => 'Chystáte se smazat galerii „{name}". Tato akce je nevratná.',
                 'warning' => 'Varování',
                 'gallery_info' => 'Informace o galerii',
                 'images_count' => 'Počet obrázků',
@@ -248,20 +244,22 @@ return [
                 'error_not_found' => 'Galerie nebyla nalezena.',
                 'error_not_confirmed' => 'Musíte potvrdit smazání galerie.'
             ],
-			'permanent_delete' => [
-	            'button' => 'Trvale smazat',
-	            'confirm_title' => 'Trvalé smazání galerie',
-	            'warning' => 'Varování: Trvalé smazání',
-	            'confirm_message' => 'Chystáte se trvale smazat galerii „{name}“.',
-	            'irreversible' => 'Tato akce je nevratná a nelze ji vrátit zpět!',
-	            'gallery_info' => 'Informace o galerii',
-	            'images_warning' => 'Pozor: Galerie obsahuje obrázky',
-	            'images_warning_text' => 'Všechny vazby na obrázky budou odstraněny, ale samotné obrázky zůstanou v systému.',
-	            'confirm_checkbox' => 'Ano, chci trvale smazat galerii „{name}“ a všechny její vazby na obrázky.',
-	            'confirm_button' => 'Trvale smazat',
-	            'cancel_button' => 'Zrušit'
-	        ],
+            'permanent_delete' => [
+                'button' => 'Trvale smazat',
+                'confirm_title' => 'Trvalé smazání galerie',
+                'warning' => 'Varování: Trvalé smazání',
+                'confirm_message' => 'Chystáte se trvale smazat galerii „{name}".
+',
+                'irreversible' => 'Tato akce je nevratná a nelze ji vrátit zpět!',
+                'gallery_info' => 'Informace o galerii',
+                'images_warning' => 'Pozor: Galerie obsahuje obrázky',
+                'images_warning_text' => 'Všechny vazby na obrázky budou odstraněny, ale samotné obrázky zůstanou v systému.',
+                'confirm_checkbox' => 'Ano, chci trvale smazat galerii „{name}“ a všechny její vazby na obrázky.',
+                'confirm_button' => 'Trvale smazat',
+                'cancel_button' => 'Zrušit'
+            ],
             'form' => [
+				'featured_image' => 'Tématický obrázek',
                 'name' => 'Název galerie',
                 'description' => 'Popis',
                 'parent' => 'Nadřazená galerie',
@@ -300,100 +298,133 @@ return [
                 'in_articles' => 'Články používající tento obrázek',
                 'in_galleries' => 'Galerie obsahující tento obrázek',
                 'no_usage' => 'Tento obrázek není použit v žádném článku ani galerii',
-				'confirm_delete' => 'Opravdu chcete smazat tento obrázek?'
+                'confirm_delete' => 'Opravdu chcete smazat tento obrázek?'
             ],
+	        'featured_image' => [
+	            'button' => 'Vybrat tématický obrázek',
+	            'modal_title' => 'Vyberte tématický obrázek',
+	            'search_placeholder' => 'Hledat obrázky...',
+	            'no_images' => 'Žádné obrázky nenalezeny',
+	            'select' => 'Vybrat',
+	            'remove' => 'Odstranit',
+	            'current' => 'Aktuální obrázek',
+	            'no_image_selected' => 'Není vybrán žádný obrázek',
+	            'preview' => 'Náhled',
+	            'dimensions' => 'Rozměry',
+	            'size' => 'Velikost',
+	            'uploaded' => 'Nahráno'
+	        ],
             'confirm' => [
                 'delete' => 'Opravdu chcete smazat galerii?',
-				'permanent_delete' => 'Opravdu chcete trvale smazat tuto galerii? Tato akce je nevratná.',
+                'permanent_delete' => 'Opravdu chcete trvale smazat tuto galerii? Tato akce je nevratná.',
             ],
-			'back_to_trash' => 'Zpět do koše',
+            'back_to_trash' => 'Zpět do koše',
         ],
-		'images' => [
-		    'manage' => [
-		        'title' => 'Správa obrázků',
-		        'empty_text' => 'Zatím nemáte žádné obrázky.',
-		        'table' => [
-		            'image' => 'Obrázek',
-		            'name' => 'Název',
-		            'description' => 'Popis',
-		            'size' => 'Velikost',
-		            'dimensions' => 'Rozměry',
-		            'status' => 'Status',
-		            'deleted_at' => 'Smazáno',
-		            'actions' => 'Akce'
-		        ]
-		    ],
-		    'upload_button' => 'Nahrát obrázek',
-		    'back_to_images' => 'Zpět na obrázky',
-		    'back_to_trash' => 'Zpět do koše',
-		    'tabs' => [
-		        'active' => 'Aktivní obrázky',
-		        'trash' => 'Koš'
-		    ],
-		    'trash' => [
-		        'empty_title' => 'Koš je prázdný',
-		        'empty_text' => 'Žádné obrázky nebyly smazány.'
-		    ],
-		    'empty' => [
-		        'title' => 'Žádné obrázky',
-		        'text' => 'Zatím nemáte žádné obrázky.'
-		    ],
-		    'status' => [
-		        'active' => 'Aktivní',
-		        'deleted' => 'V koši'
-		    ],
-		    'upload' => [
-		        'title' => 'Nahrát obrázek',
-		        'select_file' => 'Vybrat soubor',
-		        'file_help' => 'Podporované formáty: JPG, PNG, GIF, WebP. Maximální velikost: 10MB.',
-		        'title_label' => 'Název',
-		        'title_placeholder' => 'Volitelný název obrázku',
-		        'description' => 'Popis',
-		        'description_placeholder' => 'Volitelný popis obrázku',
-		        'assign_to_galleries' => 'Přiřadit k galeriím',
-		        'submit' => 'Nahrát',
-		        'cancel' => 'Zrušit',
-		        'csrf_error' => 'Neplatný CSRF token'
-		    ],
-		    'form' => [
-		        'name' => 'Název',
-		        'original_name' => 'Původní název',
-		        'description' => 'Popis',
-		        'size' => 'Velikost',
-		        'dimensions' => 'Rozměry',
-		        'format' => 'Formát'
-		    ],
-		    'actions' => [
-		        'view' => 'Zobrazit',
-		        'delete' => 'Smazat',
-		        'restore' => 'Obnovit',
-		        'permanent_delete' => 'Trvale smazat'
-		    ],
-		    'confirm' => [
-		        'delete' => 'Opravdu chcete smazat tento obrázek?'
-		    ],
-		    'permanent_delete' => [
-		        'confirm_title' => 'Trvalé smazání obrázku',
-		        'warning' => 'Varování: Trvalé smazání',
-		        'confirm_message' => 'Chystáte se trvale smazat obrázek „{name}“.',
-		        'irreversible' => 'Tato akce je nevratná a nelze ji vrátit zpět!',
-		        'image_info' => 'Informace o obrázku',
-		        'usage_warning' => 'Pozor: Obrázek je používán',
-		        'in_articles' => 'Články',
-		        'in_galleries' => 'Galerie',
-		        'confirm_checkbox' => 'Ano, chci trvale smazat obrázek „{name}“ a všechny jeho soubory.',
-		        'confirm_button' => 'Trvale smazat',
-		        'cancel_button' => 'Zrušit'
-		    ],
-		    'messages' => [
-		        'upload_success' => 'Obrázek byl úspěšně nahrán.',
-		        'upload_failed' => 'Nahrávání obrázku selhalo.',
-		        'delete_success' => 'Obrázek byl úspěšně smazán.',
-		        'restore_success' => 'Obrázek byl úspěšně obnoven z koše.',
-		        'permanent_delete_success' => 'Obrázek byl trvale smazán.',
-		        'error' => 'Došlo k chybě'
-		    ]
-		],
+        'images' => [
+            'manage' => [
+                'title' => 'Správa obrázků',
+                'empty_text' => 'Zatím nemáte žádné obrázky.',
+                'table' => [
+                    'image' => 'Obrázek',
+                    'name' => 'Název',
+                    'description' => 'Popis',
+                    'size' => 'Velikost',
+                    'dimensions' => 'Rozměry',
+                    'status' => 'Status',
+                    'deleted_at' => 'Smazáno',
+                    'actions' => 'Akce'
+                ]
+            ],
+            'upload_button' => 'Nahrát obrázek',
+            'back_to_images' => 'Zpět na obrázky',
+            'back_to_trash' => 'Zpět do koše',
+            'tabs' => [
+                'active' => 'Aktivní obrázky',
+                'trash' => 'Koš'
+            ],
+            'trash' => [
+                'empty_title' => 'Koš je prázdný',
+                'empty_text' => 'Žádné obrázky nebyly smazány.'
+            ],
+            'empty' => [
+                'title' => 'Žádné obrázky',
+                'text' => 'Zatím nemáte žádné obrázky.'
+            ],
+            'status' => [
+                'active' => 'Aktivní',
+                'deleted' => 'V koši'
+            ],
+            'upload' => [
+                'title' => 'Nahrát obrázek',
+                'select_file' => 'Vybrat soubor',
+                'file_help' => 'Podporované formáty: JPG, PNG, GIF, WebP. Maximální velikost: 10MB.',
+                'title_label' => 'Název',
+                'title_placeholder' => 'Volitelný název obrázku',
+                'description' => 'Popis',
+                'description_placeholder' => 'Volitelný popis obrázku',
+                'assign_to_galleries' => 'Přiřadit k galeriím',
+                'submit' => 'Nahrát',
+                'cancel' => 'Zrušit',
+                'csrf_error' => 'Neplatný CSRF token'
+            ],
+            'edit' => [
+                'title' => 'Upravit obrázek',
+                'image_preview' => 'Náhled obrázku',
+                'view_original' => 'Zobrazit originál',
+                'file_info' => 'Informace o souboru',
+                'uploaded' => 'Nahráno',
+                'assign_to_galleries' => 'Přiřadit k galeriím',
+                'galleries_help' => 'Vyberte galerie, do kterých má být obrázek zařazen',
+                'usage_info' => 'Využití obrázku',
+                'used_in_articles' => 'Použito v článcích',
+                'used_in_galleries' => 'Použito v galeriích',
+                'submit' => 'Uložit změny',
+                'cancel' => 'Zrušit',
+                'success_message' => 'Obrázek byl úspěšně aktualizován',
+                'error_message' => 'Chyba při aktualizaci obrázku',
+                'csrf_error' => 'Neplatný CSRF token'
+            ],
+            'form' => [
+                'name' => 'Název',
+                'original_name' => 'Původní název',
+                'description' => 'Popis',
+                'size' => 'Velikost',
+                'dimensions' => 'Rozměry',
+                'format' => 'Formát'
+            ],
+            'actions' => [
+                'view' => 'Zobrazit',
+                'edit' => 'Upravit',
+                'delete' => 'Smazat',
+                'restore' => 'Obnovit',
+                'permanent_delete' => 'Trvale smazat'
+            ],
+            'confirm' => [
+                'delete' => 'Opravdu chcete smazat tento obrázek?'
+            ],
+            'permanent_delete' => [
+                'confirm_title' => 'Trvalé smazání obrázku',
+                'warning' => 'Varování: Trvalé smazání',
+                'confirm_message' => 'Chystáte se trvale smazat obrázek „{name}".
+',
+                'irreversible' => 'Tato akce je nevratná a nelze ji vrátit zpět!',
+                'image_info' => 'Informace o obrázku',
+                'usage_warning' => 'Pozor: Obrázek je používán',
+                'in_articles' => 'Články',
+                'in_galleries' => 'Galerie',
+                'confirm_checkbox' => 'Ano, chci trvale smazat obrázek „{name}“ a všechny jeho soubory.',
+                'confirm_button' => 'Trvale smazat',
+                'cancel_button' => 'Zrušit'
+            ],
+            'messages' => [
+                'upload_success' => 'Obrázek byl úspěšně nahrán.',
+                'upload_failed' => 'Nahrávání obrázku selhalo.',
+                'delete_success' => 'Obrázek byl úspěšně smazán.',
+                'restore_success' => 'Obrázek byl úspěšně obnoven z koše.',
+                'permanent_delete_success' => 'Obrázek byl trvale smazán.',
+                'error' => 'Došlo k chybě'
+            ]
+        ],
         'layout' => [
             'administration' => 'Administrace',
             'articles' => 'Články',

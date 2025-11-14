@@ -611,6 +611,24 @@ class Router
                 }
                 return '';
 
+			case 'edit':
+			    if ($id) {
+			        $this->logger->debug('Showing image edit form', ['image_id' => $id]);
+			        return $controller->edit($id);
+			    }
+			    break;
+
+			case 'update':
+			    if ($id) {
+			        $this->logger->info('Updating image', [
+			            'image_id' => $id,
+			            'user' => $this->authService->getUsername()
+			        ]);
+			        $controller->update($id);
+			    }
+			    return '';
+
+
             case 'delete':
                 if ($id) {
                     $this->logger->info('Deleting image', [
@@ -649,7 +667,26 @@ class Router
                     $controller->permanentDeleteImage($id);
                 }
                 return '';
+			case 'featured-image-modal':
+			    $this->logger->debug('Showing featured image modal');
+			    return $controller->featuredImageModal();
 
+			case 'select-featured-image':
+			    if ($id) {
+			        $this->logger->info('Selecting featured image', [
+			            'gallery_id' => $id,
+			            'user' => $this->authService->getUsername()
+			        ]);
+			        return $controller->selectFeaturedImage($id);
+			    }
+			    return '';
+
+			case 'image-info':
+			    if ($id) {
+			        $this->logger->debug('Getting image info', ['image_id' => $id]);
+			        return $controller->getImageInfo($id);
+			    }
+			    return '';
             default:
                 $this->logger->debug('Showing images management (default)');
                 return $controller->manage();

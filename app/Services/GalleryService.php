@@ -587,4 +587,146 @@ class GalleryService
             ];
         }
     }
+
+	 /**
+     * Nastaví tématický obrázek pro galerii
+     *
+     * @param int $galleryId ID galerie
+     * @param int|null $imageId ID obrázku nebo null pro odstranění
+     * @return bool True pokud bylo nastavení úspěšné
+     */
+    public function setFeaturedImage(int $galleryId, ?int $imageId): bool
+    {
+        // Validace, že obrázek existuje (pokud není null)
+        if ($imageId !== null) {
+            $image = $this->getImage($imageId);
+            if (!$image) {
+                return false;
+            }
+        }
+
+        $stmt = $this->db->query("
+            UPDATE galleries
+            SET featured_image_id = ?, updated_at = NOW()
+            WHERE id = ?
+        ", [$imageId, $galleryId]);
+
+        return $stmt->rowCount() > 0;
+    }
+
+    /**
+     * Získá tématický obrázek galerie
+     *
+     * @param int $galleryId ID galerie
+     * @return array|null Data obrázku nebo null pokud není nastaven
+     */
+    public function getFeaturedImage(int $galleryId): ?array
+    {
+        $stmt = $this->db->query("
+            SELECT i.* FROM images i
+            INNER JOIN galleries g ON i.id = g.featured_image_id
+            WHERE g.id = ? AND i.deleted_at IS NULL
+        ", [$galleryId]);
+
+        $result = $stmt->fetch(\PDO::FETCH_ASSOC);
+        return $result ?: null;
+    }
+
+    /**
+     * Získá všechny dostupné obrázky pro výběr tématického obrázku
+     *
+     * @param int $page Číslo stránky
+     * @param int $perPage Počet obrázků na stránku
+     * @param string $search Hledaný výraz
+     * @return array Pole s obrázky a metadaty
+     */
+	public function getAvailableImages(int $page = 1, int $perPage = 20, string $search = ''): array
+	{
+	    $offset = ($page - 1) * $perPage;
+
+	    $whereConditions = ["deleted_at IS NULL"];
+	    $params = [];
+
+	    if (!empty($search)) {
+	        $whereConditions[] = "(title LIKE ? OR original_name LIKE ?)";
+	        $searchTerm = "%{$search}%";
+	        $params[] = $searchTerm;
+	        $params[] = $searchTerm;
+	    }
+
+	    $whereClause = implode(' AND ', $whereConditions);
+
+	    // Celkový počet
+	    $countStmt = $this->db->query("
+	        SELECT COUNT(*) as total FROM images WHERE {$whereClause}
+	    ", $params);
+	    $total = (int)$countStmt->fetch(\PDO::FETCH_ASSOC)['total'];
+
+	    // Data obrázků
+	    $stmt = $this->db->query("
+	        SELECT id, title, thumb_path, file_path, original_name,
+	               width, height, file_size, created_at
+	        FROM images
+	        WHERE {$whereClause}
+	        ORDER BY created_at DESC
+	        LIMIT ? OFFSET ?
+	    ", array_merge($params, [$perPage, $offset]));
+
+	    $images = $stmt->fetchAll(\PDO::FETCH_ASSOC) ?: [];
+
+	    return [
+	        'images' => $images,
+	        'pagination' => [
+	            'current_page' => $page,
+	            'per_page' => $perPage,
+	            'total' => $total,
+	            'total_pages' => ceil($total / $perPage)
+	        ]
+	    ];
+	}
+
+
+    /**
+     * Získá základní informace o obrázku pro rychlý náhled
+     *
+     * @param int $imageId ID obrázku
+     * @return array|null Základní data obrázku
+     */
+    public function getImagePreview(int $imageId): ?array
+    {
+        $stmt = $this->db->query("
+            SELECT id, title, thumb_path, file_path, width, height
+            FROM images
+            WHERE id = ? AND deleted_at IS NULL
+        ", [$imageId]);
+
+        $result = $stmt->fetch(\PDO::FETCH_ASSOC);
+        return $result ?: null;
+    }
+
+    /**
+     * Aktualizuje galerii včetně tématického obrázku
+     *
+     * @param int $id ID galerie
+     * @param array $data Data galerie
+     * @return bool True pokud byla galerie úspěšně aktualizována
+     */
+	public function updateGalleryWithFeaturedImage(int $id, array $data): bool
+	{
+	    $stmt = $this->db->query("
+	        UPDATE galleries
+	        SET parent_id = ?, name = ?, slug = ?, description = ?,
+	            featured_image_id = ?, updated_at = NOW()
+	        WHERE id = ?
+	    ", [
+	        $data['parent_id'] ?: null,
+	        $data['name'],
+	        $this->slugify($data['name']),
+	        $data['description'] ?? '',
+	        !empty($data['featured_image_id']) ? (int)$data['featured_image_id'] : null,
+	        $id
+	    ]);
+
+	    return $stmt->rowCount() > 0;
+	}
 }

@@ -488,6 +488,7 @@ class ImagesController
 
         if (!$isTrashView) {
             // Aktivní obrázek
+			$content .= '<a href="' . $this->baseUrl . 'admin/images/edit/' . $image['id'] . '" class="btn btn-sm btn-primary" title="' . $this->t('admin.images.actions.edit') . '">✏️</a>';
             $content .= '<a href="' . $imageUrl . '" target="_blank" class="btn btn-sm btn-info" title="' . $this->t('admin.images.actions.view') . '">👁️</a>';
             $content .= '<form action="' . $this->baseUrl . 'admin/images/delete/' . $image['id'] . '" method="post" style="display: inline;">';
             $content .= '<input type="hidden" name="csrf_token" value="' . $this->csrf->getToken() . '">';
@@ -604,4 +605,201 @@ class ImagesController
             exit;
         }
     }
+
+	/**
+	 * Zobrazí formulář pro úpravu obrázku
+	 *
+	 * @param int $id ID obrázku
+	 * @return string HTML obsah edit formuláře
+	 */
+	public function edit(int $id): string
+	{
+	    $this->requireAdmin();
+
+	    $image = $this->imageService->getImage($id);
+
+	    if (!$image) {
+	        header("Location: {$this->baseUrl}admin/images/manage?error=not_found");
+	        exit;
+	    }
+
+	    // Potřebujeme GalleryService pro seznam galerií
+	    $galleryService = new \App\Services\GalleryService($this->db);
+	    $allGalleries = $galleryService->getAllGalleries();
+	    $currentGalleries = $this->imageService->getImageGalleries($id);
+
+	    $currentGalleryIds = array_column($currentGalleries, 'id');
+
+	    $content = '<div class="page-header">';
+	    $content .= '<h1>' . $this->t('admin.images.edit.title') . '</h1>';
+	    $content .= '<div class="header-actions">';
+	    $content .= '<a href="' . $this->baseUrl . 'admin/images/manage" class="btn btn-secondary">' . $this->t('admin.images.back_to_images') . '</a>';
+	    $content .= '</div>';
+	    $content .= '</div>';
+
+	    $content .= $this->renderEditForm($image, $allGalleries, $currentGalleryIds);
+
+	    return $this->adminLayout->wrap($content, $this->t('admin.images.edit.title'));
+	}
+
+	/**
+	 * Zpracuje aktualizaci obrázku
+	 *
+	 * @param int $id ID obrázku
+	 * @return void
+	 */
+	public function update(int $id): void
+	{
+	    $this->requireAdmin();
+
+	    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+	        header("Location: {$this->baseUrl}admin/images/edit/" . $id);
+	        exit;
+	    }
+
+	    // Kontrola CSRF tokenu
+	    if (!$this->csrf->validateToken($_POST['csrf_token'] ?? '')) {
+	        $_SESSION['flash_message'] = [
+	            'type' => 'error',
+	            'message' => $this->t('admin.images.edit.csrf_error')
+	        ];
+	        header("Location: {$this->baseUrl}admin/images/edit/" . $id . "?error=csrf");
+	        exit;
+	    }
+
+	    $data = [
+	        'title' => $_POST['title'] ?? '',
+	        'description' => $_POST['description'] ?? '',
+	        'galleries' => $_POST['galleries'] ?? []
+	    ];
+
+	    // Aktualizovat informace o obrázku
+	    $imageUpdated = $this->imageService->updateImage($id, $data);
+
+	    // Aktualizovat galerie
+	    $galleriesUpdated = $this->imageService->updateImageGalleries($id, $data['galleries']);
+
+	    if ($imageUpdated || $galleriesUpdated) {
+	        $_SESSION['flash_message'] = [
+	            'type' => 'success',
+	            'message' => $this->t('admin.images.edit.success_message')
+	        ];
+	        header("Location: {$this->baseUrl}admin/images/manage?updated=success");
+	    } else {
+	        $_SESSION['flash_message'] = [
+	            'type' => 'error',
+	            'message' => $this->t('admin.images.edit.error_message')
+	        ];
+	        header("Location: {$this->baseUrl}admin/images/edit/" . $id . "?error=update_failed");
+	    }
+	    exit;
+	}
+
+	/**
+	 * Vykreslí formulář pro úpravu obrázku
+	 *
+	 * @param array $image Data obrázku
+	 * @param array $allGalleries Seznam všech galerií
+	 * @param array $currentGalleryIds Pole ID aktuálně přiřazených galerií
+	 * @return string HTML edit formuláře
+	 */
+	private function renderEditForm(array $image, array $allGalleries, array $currentGalleryIds): string
+	{
+	    $csrfField = $this->csrf->getTokenField();
+
+	    $thumbUrl = $this->baseUrl . 'uploads/gallery/' . $image['thumb_path'];
+	    $imageUrl = $this->baseUrl . 'uploads/gallery/' . $image['file_path'];
+
+	    $content = '<div class="form-container">';
+	    $content .= '<form action="' . $this->baseUrl . 'admin/images/update/' . $image['id'] . '" method="post">';
+	    $content .= $csrfField;
+
+	    // Náhled obrázku
+	    $content .= '<div class="image-preview mb-4">';
+	    $content .= '<div class="card">';
+	    $content .= '<div class="card-header">';
+	    $content .= '<h5>' . $this->t('admin.images.edit.image_preview') . '</h5>';
+	    $content .= '</div>';
+	    $content .= '<div class="card-body text-center">';
+	    $content .= '<img src="' . $thumbUrl . '" alt="' . htmlspecialchars($image['title']) . '" style="max-width: 300px; max-height: 200px;" class="mb-2">';
+	    $content .= '<br>';
+	    $content .= '<a href="' . $imageUrl . '" target="_blank" class="btn btn-sm btn-outline-primary">' . $this->t('admin.images.edit.view_original') . '</a>';
+	    $content .= '</div>';
+	    $content .= '</div>';
+	    $content .= '</div>';
+
+	    // Informace o souboru
+	    $content .= '<div class="card mb-4">';
+	    $content .= '<div class="card-header">';
+	    $content .= '<h5>' . $this->t('admin.images.edit.file_info') . '</h5>';
+	    $content .= '</div>';
+	    $content .= '<div class="card-body">';
+	    $content .= '<p><strong>' . $this->t('admin.images.form.original_name') . ':</strong> ' . htmlspecialchars($image['original_name']) . '</p>';
+	    $content .= '<p><strong>' . $this->t('admin.images.form.size') . ':</strong> ' . $this->formatBytes((int)$image['file_size']) . '</p>';
+	    $content .= '<p><strong>' . $this->t('admin.images.form.dimensions') . ':</strong> ' . $image['width'] . '×' . $image['height'] . '</p>';
+	    $content .= '<p><strong>' . $this->t('admin.images.form.format') . ':</strong> ' . $image['mime_type'] . '</p>';
+	    $content .= '<p><strong>' . $this->t('admin.images.edit.uploaded') . ':</strong> ' . date('d.m.Y H:i', strtotime($image['created_at'])) . '</p>';
+	    $content .= '</div>';
+	    $content .= '</div>';
+
+	    // Formulářové pole pro název
+	    $content .= '<div class="form-group">';
+	    $content .= '<label for="image_title">' . $this->t('admin.images.form.name') . ' *</label>';
+	    $content .= '<input type="text" id="image_title" name="title" value="' . htmlspecialchars($image['title']) . '" class="form-control" required>';
+	    $content .= '</div>';
+
+	    // Formulářové pole pro popis
+	    $content .= '<div class="form-group">';
+	    $content .= '<label for="image_description">' . $this->t('admin.images.form.description') . '</label>';
+	    $content .= '<textarea id="image_description" name="description" class="form-control" rows="4">' . htmlspecialchars($image['description']) . '</textarea>';
+	    $content .= '</div>';
+
+	    // Výběr galerií
+	    $content .= '<div class="form-group">';
+	    $content .= '<label>' . $this->t('admin.images.edit.assign_to_galleries') . '</label>';
+	    $content .= '<div class="gallery-checkboxes">';
+
+	    foreach ($allGalleries as $gallery) {
+	        $checked = in_array($gallery['id'], $currentGalleryIds) ? 'checked' : '';
+	        $content .= '<div class="form-check">';
+	        $content .= '<input type="checkbox" id="gallery_' . $gallery['id'] . '" name="galleries[]" value="' . $gallery['id'] . '" class="form-check-input" ' . $checked . '>';
+	        $content .= '<label for="gallery_' . $gallery['id'] . '" class="form-check-label">' . htmlspecialchars($gallery['name']) . '</label>';
+	        $content .= '</div>';
+	    }
+
+	    $content .= '</div>';
+	    $content .= '<small class="form-text">' . $this->t('admin.images.edit.galleries_help') . '</small>';
+	    $content .= '</div>';
+
+	    // Využití obrázku
+	    $usage = $this->imageService->getImageUsage((int)$image['id']);
+	    if (!empty($usage['articles']) || !empty($usage['galleries'])) {
+	        $content .= '<div class="card mb-4">';
+	        $content .= '<div class="card-header">';
+	        $content .= '<h5>' . $this->t('admin.images.edit.usage_info') . '</h5>';
+	        $content .= '</div>';
+	        $content .= '<div class="card-body">';
+
+	        if (!empty($usage['articles'])) {
+	            $content .= '<p><strong>' . $this->t('admin.images.edit.used_in_articles') . ':</strong> ' . count($usage['articles']) . '</p>';
+	        }
+
+	        if (!empty($usage['galleries'])) {
+	            $content .= '<p><strong>' . $this->t('admin.images.edit.used_in_galleries') . ':</strong> ' . count($usage['galleries']) . '</p>';
+	        }
+
+	        $content .= '</div>';
+	        $content .= '</div>';
+	    }
+
+	    $content .= '<div class="form-actions">';
+	    $content .= '<button type="submit" class="btn btn-primary">' . $this->t('admin.images.edit.submit') . '</button>';
+	    $content .= '<a href="' . $this->baseUrl . 'admin/images/manage" class="btn btn-secondary">' . $this->t('admin.images.edit.cancel') . '</a>';
+	    $content .= '</div>';
+
+	    $content .= '</form>';
+	    $content .= '</div>';
+
+	    return $content;
+	}
 }

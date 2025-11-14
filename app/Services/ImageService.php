@@ -591,4 +591,57 @@ class ImageService
 
         return $result;
     }
+
+	/**
+	 * Aktualizuje informace o obrázku
+	 *
+	 * @param int $id ID obrázku
+	 * @param array $data Nová data obrázku
+	 * @return bool True pokud byl obrázek úspěšně aktualizován
+	 */
+	public function updateImage(int $id, array $data): bool
+	{
+	    $stmt = $this->db->query("
+	        UPDATE images
+	        SET title = ?, description = ?, updated_at = NOW()
+	        WHERE id = ?
+	    ", [
+	        $data['title'] ?? '',
+	        $data['description'] ?? '',
+	        $id
+	    ]);
+
+	    return $stmt->rowCount() > 0;
+	}
+
+	/**
+	 * Aktualizuje galerie přiřazené k obrázku
+	 *
+	 * @param int $imageId ID obrázku
+	 * @param array $galleryIds Pole ID galerií
+	 * @return bool True pokud byly galerie úspěšně aktualizovány
+	 */
+	public function updateImageGalleries(int $imageId, array $galleryIds): bool
+	{
+	    try {
+	        $this->db->beginTransaction();
+
+	        // Smazat stávající přiřazení
+	        $this->db->query("DELETE FROM gallery_images WHERE image_id = ?", [$imageId]);
+
+	        // Přidat nová přiřazení
+	        foreach ($galleryIds as $galleryId) {
+	            if ($galleryId) {
+	                $this->addImageToGallery((int)$galleryId, $imageId);
+	            }
+	        }
+
+	        $this->db->commit();
+	        return true;
+
+	    } catch (\Exception $e) {
+	        $this->db->rollBack();
+	        return false;
+	    }
+	}
 }

@@ -240,43 +240,44 @@ class GalleryController
      *
      * @return void
      */
-    public function store(): void
-    {
-        $this->requireAdmin();
+	public function store(): void
+	{
+	    $this->requireAdmin();
 
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            header("Location: {$this->baseUrl}admin/gallery/create");
-            exit;
-        }
+	    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+	        header("Location: {$this->baseUrl}admin/gallery/create");
+	        exit;
+	    }
 
-        $data = [
-            'name' => $_POST['name'] ?? '',
-            'description' => $_POST['description'] ?? '',
-            'parent_id' => $_POST['parent_id'] ?? null
-        ];
+	    $data = [
+	        'name' => $_POST['name'] ?? '',
+	        'description' => $_POST['description'] ?? '',
+	        'parent_id' => $_POST['parent_id'] ?? null,
+	        'featured_image_id' => !empty($_POST['featured_image_id']) ? (int)$_POST['featured_image_id'] : null
+	    ];
 
-        if (empty($data['name'])) {
-            header("Location: {$this->baseUrl}admin/gallery/create?error=name_required");
-            exit;
-        }
+	    if (empty($data['name'])) {
+	        header("Location: {$this->baseUrl}admin/gallery/create?error=name_required");
+	        exit;
+	    }
 
-        $result = $this->galleryService->createGalleryWithValidation($data);
+	    $result = $this->galleryService->createGalleryWithValidation($data);
 
-        if ($result['success']) {
-            $_SESSION['flash_message'] = [
-                'type' => 'success',
-                'message' => $result['message']
-            ];
-            header("Location: {$this->baseUrl}admin/gallery?created=success");
-        } else {
-            $_SESSION['flash_message'] = [
-                'type' => 'error',
-                'message' => $result['message']
-            ];
-            header("Location: {$this->baseUrl}admin/gallery/create?error=validation_failed");
-        }
-        exit;
-    }
+	    if ($result['success']) {
+	        $_SESSION['flash_message'] = [
+	            'type' => 'success',
+	            'message' => $result['message']
+	        ];
+	        header("Location: {$this->baseUrl}admin/gallery?created=success");
+	    } else {
+	        $_SESSION['flash_message'] = [
+	            'type' => 'error',
+	            'message' => $result['message']
+	        ];
+	        header("Location: {$this->baseUrl}admin/gallery/create?error=validation_failed");
+	    }
+	    exit;
+	}
 
     /**
      * Aktualizuje existující galerii
@@ -284,44 +285,48 @@ class GalleryController
      * @param int $id ID galerie
      * @return void
      */
-    public function update(int $id): void
-    {
-        $this->requireAdmin();
+/**
+ * Aktualizuje existující galerii
+ */
+public function update(int $id): void
+{
+    $this->requireAdmin();
 
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            header("Location: {$this->baseUrl}admin/gallery/edit/" . $id);
-            exit;
-        }
-
-        $data = [
-            'name' => $_POST['name'] ?? '',
-            'description' => $_POST['description'] ?? '',
-            'parent_id' => $_POST['parent_id'] ?? null
-        ];
-
-        if (empty($data['name'])) {
-            header("Location: {$this->baseUrl}admin/gallery/edit/" . $id . "?error=name_required");
-            exit;
-        }
-
-        $result = $this->galleryService->updateGalleryWithValidation($id, $data);
-
-        if ($result['success']) {
-            $_SESSION['flash_message'] = [
-                'type' => 'success',
-                'message' => $result['message']
-            ];
-            header("Location: {$this->baseUrl}admin/gallery?updated=success");
-        } else {
-            $_SESSION['flash_message'] = [
-                'type' => 'error',
-                'message' => $result['message']
-            ];
-            header("Location: {$this->baseUrl}admin/gallery/edit/" . $id . "?error=validation_failed");
-        }
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        header("Location: {$this->baseUrl}admin/gallery/edit/" . $id);
         exit;
     }
 
+    $data = [
+        'name' => $_POST['name'] ?? '',
+        'description' => $_POST['description'] ?? '',
+        'parent_id' => $_POST['parent_id'] ?? null,
+        'featured_image_id' => !empty($_POST['featured_image_id']) ? (int)$_POST['featured_image_id'] : null
+    ];
+
+    if (empty($data['name'])) {
+        header("Location: {$this->baseUrl}admin/gallery/edit/" . $id . "?error=name_required");
+        exit;
+    }
+
+    // Použijeme novou metodu pro aktualizaci s tématickým obrázkem
+    $success = $this->galleryService->updateGalleryWithFeaturedImage($id, $data);
+
+    if ($success) {
+        $_SESSION['flash_message'] = [
+            'type' => 'success',
+            'message' => 'Galerie byla úspěšně aktualizována.'
+        ];
+        header("Location: {$this->baseUrl}admin/gallery?updated=success");
+    } else {
+        $_SESSION['flash_message'] = [
+            'type' => 'error',
+            'message' => 'Chyba při aktualizaci galerie.'
+        ];
+        header("Location: {$this->baseUrl}admin/gallery/edit/" . $id . "?error=update_failed");
+    }
+    exit;
+}
     /**
      * Zobrazí potvrzovací stránku pro smazání galerie
      *
@@ -706,71 +711,86 @@ class GalleryController
      * @param array $allowedParents Povolené nadřazené galerie
      * @return string HTML formuláře
      */
-    private function renderGalleryForm(?array $gallery = null, array $allowedParents = []): string
-    {
-        $csrfField = $this->csrf->getTokenField();
+	private function renderGalleryForm(?array $gallery = null, array $allowedParents = []): string
+	{
+	    $csrfField = $this->csrf->getTokenField();
 
-        $action = $gallery
-            ? $this->baseUrl . 'admin/gallery/update/' . $gallery['id']
-            : $this->baseUrl . 'admin/gallery/store';
+	    $action = $gallery
+	        ? $this->baseUrl . 'admin/gallery/update/' . $gallery['id']
+	        : $this->baseUrl . 'admin/gallery/store';
 
-        $name = $gallery['name'] ?? '';
-        $description = $gallery['description'] ?? '';
-        $parentId = $gallery['parent_id'] ?? '';
+	    $name = $gallery['name'] ?? '';
+	    $description = $gallery['description'] ?? '';
+	    $parentId = $gallery['parent_id'] ?? '';
 
-        $content = '<div class="form-container">';
-        $content .= '<form action="' . $action . '" method="post">';
-        $content .= $csrfField;
+	    // OPRAVA: Správná inicializace proměnných pro tématický obrázek
+	    $featuredImageId = $gallery['featured_image_id'] ?? null;
+	    $currentFeaturedImage = null;
 
-        $content .= '<div class="form-group">';
-        $content .= '<label for="gallery_name">' . $this->t('admin.gallery.form.name') . ' *</label>';
-        $content .= '<input type="text" id="gallery_name" name="name" value="' . htmlspecialchars($name) . '" class="form-control" required>';
-        $content .= '</div>';
+	    // Načtení informací o aktuálním tématickém obrázku pouze pokud máme galerii a featured_image_id
+	    if ($gallery && !empty($gallery['featured_image_id'])) {
+	        $currentFeaturedImage = $this->galleryService->getFeaturedImage((int)$gallery['id']);
+	    }
 
-        $content .= '<div class="form-group">';
-        $content .= '<label for="gallery_description">' . $this->t('admin.gallery.form.description') . '</label>';
-        $content .= '<textarea id="gallery_description" name="description" class="form-control">' . htmlspecialchars($description) . '</textarea>';
-        $content .= '</div>';
+	    $content = '<div class="form-container">';
+	    $content .= '<form action="' . $action . '" method="post" id="galleryForm">';
+	    $content .= $csrfField;
 
-        $content .= '<div class="form-group">';
-        $content .= '<label for="gallery_parent">' . $this->t('admin.gallery.form.parent') . '</label>';
-        $content .= '<select id="gallery_parent" name="parent_id" class="form-control">';
-        $content .= '<option value="">' . $this->t('admin.gallery.form.no_parent') . '</option>';
+	    // Formulářové pole pro název
+	    $content .= '<div class="form-group">';
+	    $content .= '<label for="gallery_name">' . $this->t('admin.gallery.form.name') . ' *</label>';
+	    $content .= '<input type="text" id="gallery_name" name="name" value="' . htmlspecialchars($name) . '" class="form-control" required>';
+	    $content .= '</div>';
 
-        foreach ($allowedParents as $parentGallery) {
-            $selected = $parentId == $parentGallery['id'] ? 'selected' : '';
+	    // Formulářové pole pro popis
+	    $content .= '<div class="form-group">';
+	    $content .= '<label for="gallery_description">' . $this->t('admin.gallery.form.description') . '</label>';
+	    $content .= '<textarea id="gallery_description" name="description" class="form-control">' . htmlspecialchars($description) . '</textarea>';
+	    $content .= '</div>';
 
-            // Přidáme odsazení pro lepší přehlednost hierarchie
-            $level = $this->getGalleryLevel($parentGallery);
-            $indent = str_repeat('&nbsp;&nbsp;&nbsp;', $level);
+	    // Formulářové pole pro nadřazenou galerii
+	    $content .= '<div class="form-group">';
+	    $content .= '<label for="gallery_parent">' . $this->t('admin.gallery.form.parent') . '</label>';
+	    $content .= '<select id="gallery_parent" name="parent_id" class="form-control">';
+	    $content .= '<option value="">' . $this->t('admin.gallery.form.no_parent') . '</option>';
 
-            $content .= '<option value="' . $parentGallery['id'] . '" ' . $selected . '>' . $indent . htmlspecialchars($parentGallery['name']) . '</option>';
-        }
+	    foreach ($allowedParents as $parentGallery) {
+	        $selected = $parentId == $parentGallery['id'] ? 'selected' : '';
 
-        $content .= '</select>';
-        $content .= '<small class="form-text">' . $this->t('admin.gallery.form.parent_help') . '</small>';
+	        // Přidáme odsazení pro lepší přehlednost hierarchie
+	        $level = $this->getGalleryLevel($parentGallery);
+	        $indent = str_repeat('&nbsp;&nbsp;&nbsp;', $level);
 
-        // Informace o omezeních
-        if ($gallery) {
-            $content .= '<div class="alert alert-info mt-2">';
-            $content .= '<small>' . $this->t('admin.gallery.form.parent_restrictions') . '</small>';
-            $content .= '</div>';
-        }
+	        $content .= '<option value="' . $parentGallery['id'] . '" ' . $selected . '>' . $indent . htmlspecialchars($parentGallery['name']) . '</option>';
+	    }
 
-        $content .= '</div>';
+	    $content .= '</select>';
+	    $content .= '<small class="form-text">' . $this->t('admin.gallery.form.parent_help') . '</small>';
 
-        $content .= '<div class="form-actions">';
-        $content .= '<button type="submit" class="btn btn-primary">';
-        $content .= $gallery ? $this->t('admin.gallery.edit.submit') : $this->t('admin.gallery.create.submit');
-        $content .= '</button>';
-        $content .= '<a href="' . $this->baseUrl . 'admin/gallery" class="btn btn-secondary">' . $this->t('admin.gallery.form.cancel') . '</a>';
-        $content .= '</div>';
+	    // Informace o omezeních
+	    if ($gallery) {
+	        $content .= '<div class="alert alert-info mt-2">';
+	        $content .= '<small>' . $this->t('admin.gallery.form.parent_restrictions') . '</small>';
+	        $content .= '</div>';
+	    }
 
-        $content .= '</form>';
-        $content .= '</div>';
+	    $content .= '</div>';
 
-        return $content;
-    }
+	    // Pole pro tématický obrázek
+	    $content .= $this->renderFeaturedImageField($featuredImageId, $currentFeaturedImage);
+
+	    $content .= '<div class="form-actions">';
+	    $content .= '<button type="submit" class="btn btn-primary">';
+	    $content .= $gallery ? $this->t('admin.gallery.edit.submit') : $this->t('admin.gallery.create.submit');
+	    $content .= '</button>';
+	    $content .= '<a href="' . $this->baseUrl . 'admin/gallery" class="btn btn-secondary">' . $this->t('admin.gallery.form.cancel') . '</a>';
+	    $content .= '</div>';
+
+	    $content .= '</form>';
+	    $content .= '</div>';
+
+	    return $content;
+	}
 
     /**
      * Vykreslí kartu obrázku
@@ -878,4 +898,250 @@ class GalleryController
             exit;
         }
     }
+
+	    public function featuredImageModal(): string
+    {
+        $this->requireAdmin();
+
+        $page = (int)($_GET['page'] ?? 1);
+        $search = $_GET['search'] ?? '';
+        $perPage = 20;
+
+        $imageService = new \App\Services\ImageService($this->db);
+        $imagesData = $imageService->getAvailableImages($page, $perPage, $search);
+
+        $content = $this->renderFeaturedImageModal($imagesData);
+
+        // Vrátíme HTML pro AJAX
+        header('Content-Type: application/json');
+        return json_encode([
+            'success' => true,
+            'html' => $content,
+            'pagination' => $imagesData['pagination']
+        ]);
+    }
+
+    /**
+     * Vykreslí modal pro výběr tématického obrázku
+     *
+     * @param array $imagesData Data obrázků a stránkování
+     * @return string HTML modalu
+     */
+    private function renderFeaturedImageModal(array $imagesData): string
+    {
+        $images = $imagesData['images'];
+        $pagination = $imagesData['pagination'];
+
+        $content = '<div class="featured-image-modal">';
+        $content .= '<div class="modal-header">';
+        $content .= '<h3>' . $this->t('admin.gallery.featured_image.modal_title') . '</h3>';
+        $content .= '<button type="button" class="close-modal" onclick="closeFeaturedImageModal()">&times;</button>';
+        $content .= '</div>';
+
+        $content .= '<div class="modal-body">';
+
+        // Vyhledávací pole
+        $content .= '<div class="search-box">';
+        $content .= '<input type="text" id="featuredImageSearch"
+                            placeholder="' . $this->t('admin.gallery.featured_image.search_placeholder') . '"
+                            onkeyup="searchFeaturedImages(this.value)">';
+        $content .= '</div>';
+
+        // Mřížka obrázků
+        $content .= '<div class="images-grid" id="featuredImagesGrid">';
+
+        if (empty($images)) {
+            $content .= '<div class="no-images">';
+            $content .= '<p>' . $this->t('admin.gallery.featured_image.no_images') . '</p>';
+            $content .= '</div>';
+        } else {
+            foreach ($images as $image) {
+                $content .= $this->renderImageThumbnail($image);
+            }
+        }
+
+        $content .= '</div>';
+
+        // Stránkování
+        if ($pagination['total_pages'] > 1) {
+            $content .= $this->renderPagination($pagination);
+        }
+
+        $content .= '</div>'; // .modal-body
+        $content .= '</div>'; // .featured-image-modal
+
+        return $content;
+    }
+
+    /**
+     * Vykreslí thumbnail obrázku pro výběr
+     *
+     * @param array $image Data obrázku
+     * @return string HTML thumbnailu
+     */
+    private function renderImageThumbnail(array $image): string
+    {
+        $thumbUrl = $this->baseUrl . 'uploads/gallery/' . $image['thumb_path'];
+        $dimensions = $image['width'] . '×' . $image['height'];
+        $fileSize = $this->formatBytes((int)$image['file_size']);
+        $uploadDate = date('d.m.Y', strtotime($image['created_at']));
+
+        $content = '<div class="image-thumbnail" data-image-id="' . $image['id'] . '">';
+        $content .= '<div class="image-preview">';
+        $content .= '<img src="' . $thumbUrl . '" alt="' . htmlspecialchars($image['title']) . '"
+                         onclick="selectFeaturedImage(' . $image['id'] . ', this)">';
+        $content .= '</div>';
+
+        $content .= '<div class="image-info">';
+        $content .= '<div class="image-title">' . htmlspecialchars($image['title'] ?: $image['original_name']) . '</div>';
+        $content .= '<div class="image-meta">';
+        $content .= '<span class="dimensions">' . $dimensions . '</span>';
+        $content .= '<span class="size">' . $fileSize . '</span>';
+        $content .= '</div>';
+        $content .= '<div class="image-date">' . $uploadDate . '</div>';
+        $content .= '</div>';
+
+        $content .= '<button type="button" class="select-btn"
+                            onclick="selectFeaturedImage(' . $image['id'] . ', this)">
+                    ' . $this->t('admin.gallery.featured_image.select') . '
+                    </button>';
+        $content .= '</div>';
+
+        return $content;
+    }
+
+    /**
+     * Vykreslí stránkování pro modal
+     *
+     * @param array $pagination Data stránkování
+     * @return string HTML stránkování
+     */
+    private function renderPagination(array $pagination): string
+    {
+        $content = '<div class="modal-pagination">';
+
+        if ($pagination['current_page'] > 1) {
+            $content .= '<button type="button" class="page-btn"
+                                onclick="loadFeaturedImagesPage(' . ($pagination['current_page'] - 1) . ')">
+                        ← Předchozí
+                        </button>';
+        }
+
+        $content .= '<span class="page-info">';
+        $content .= 'Stránka ' . $pagination['current_page'] . ' z ' . $pagination['total_pages'];
+        $content .= '</span>';
+
+        if ($pagination['current_page'] < $pagination['total_pages']) {
+            $content .= '<button type="button" class="page-btn"
+                                onclick="loadFeaturedImagesPage(' . ($pagination['current_page'] + 1) . ')">
+                        Další →
+                        </button>';
+        }
+
+        $content .= '</div>';
+        return $content;
+    }
+
+    /**
+     * Zpracuje výběr tématického obrázku
+     *
+     * @param int $galleryId ID galerie
+     * @return string JSON response
+     */
+    public function selectFeaturedImage(int $galleryId): string
+    {
+        $this->requireAdmin();
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            return json_encode(['success' => false, 'message' => 'Neplatný požadavek']);
+        }
+
+        // Kontrola CSRF tokenu
+        if (!$this->csrf->validateToken($_POST['csrf_token'] ?? '')) {
+            return json_encode(['success' => false, 'message' => 'Neplatný CSRF token']);
+        }
+
+        $imageId = isset($_POST['image_id']) ? (int)$_POST['image_id'] : null;
+
+        $success = $this->galleryService->setFeaturedImage($galleryId, $imageId);
+
+        header('Content-Type: application/json');
+        return json_encode([
+            'success' => $success,
+            'message' => $success ? 'Tématický obrázek byl nastaven.' : 'Chyba při nastavování obrázku.',
+            'image_id' => $imageId
+        ]);
+    }
+
+    /**
+     * Získá informace o obrázku pro AJAX
+     *
+     * @param int $imageId ID obrázku
+     * @return string JSON response
+     */
+    public function getImageInfo(int $imageId): string
+    {
+        $this->requireAdmin();
+
+        $image = $this->galleryService->getImagePreview($imageId);
+
+        header('Content-Type: application/json');
+        if ($image) {
+            $image['thumb_url'] = $this->baseUrl . 'uploads/gallery/' . $image['thumb_path'];
+            return json_encode(['success' => true, 'image' => $image]);
+        } else {
+            return json_encode(['success' => false, 'message' => 'Obrázek nebyl nalezen']);
+        }
+    }
+
+
+	/**
+	 * Vykreslí pole pro výběr tématického obrázku
+	 */
+	private function renderFeaturedImageField(?int $currentImageId, ?array $currentImage): string
+	{
+	    $content = '<div class="form-group">';
+	    $content .= '<label>' . $this->t('admin.gallery.form.featured_image') . '</label>';
+	    $content .= '<div class="featured-image-selector">';
+
+	    if ($currentImageId && $currentImage) {
+	        // Máme platný obrázek - zobrazíme náhled
+	        $thumbUrl = $this->baseUrl . 'uploads/gallery/' . $currentImage['thumb_path'];
+	        $content .= '<div class="current-featured-image">';
+	        $content .= '<img src="' . $thumbUrl . '" alt="' . htmlspecialchars($currentImage['title'] ?? '') . '">';
+	        $content .= '<div class="image-details">';
+	        $content .= '<strong>' . htmlspecialchars($currentImage['title'] ?? $currentImage['original_name']) . '</strong>';
+	        $content .= '<br><small>' . ($currentImage['width'] ?? '0') . '×' . ($currentImage['height'] ?? '0') . '</small>';
+	        $content .= '</div>';
+	        $content .= '</div>';
+	    } else {
+	        // Nemáme obrázek - zobrazíme placeholder
+	        $content .= '<div class="no-image-selected">';
+	        $content .= '<span>' . $this->t('admin.gallery.featured_image.no_image_selected') . '</span>';
+	        $content .= '</div>';
+	    }
+
+	    $content .= '<div class="featured-image-actions">';
+	    $content .= '<button type="button" class="btn btn-outline-primary"
+	                        onclick="openFeaturedImageModal()">
+	                ' . $this->t('admin.gallery.featured_image.button') . '
+	                </button>';
+
+	    if ($currentImageId) {
+	        $content .= '<button type="button" class="btn btn-outline-danger"
+	                            onclick="removeFeaturedImage()">
+	                    ' . $this->t('admin.gallery.featured_image.remove') . '
+	                    </button>';
+	    }
+
+	    $content .= '</div>'; // .featured-image-actions
+
+	    // Skryté pole pro ID obrázku
+	    $content .= '<input type="hidden" name="featured_image_id" id="featuredImageId" value="' . ($currentImageId ?: '') . '">';
+
+	    $content .= '</div>'; // .featured-image-selector
+	    $content .= '</div>'; // .form-group
+
+	    return $content;
+	}
 }

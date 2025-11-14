@@ -59,7 +59,9 @@ class AdminLayout
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{$title}</title>
-    <link rel="stylesheet" href="{$this->baseUrl}/css/admin.css">
+    <link rel="stylesheet" href="{$this->baseUrl}css/admin.css">
+    <link rel="javascript" href="{$this->baseUrl}js/adminjs.css">
+
 </head>
 <body>
     {$menu}
