@@ -3,19 +3,13 @@
 -- https://www.phpmyadmin.net/
 --
 -- Počítač: 127.0.0.1
--- Vytvořeno: Pát 10. říj 2025, 00:56
+-- Vytvořeno: Stř 19. lis 2025, 22:57
 -- Verze serveru: 10.4.32-MariaDB
 -- Verze PHP: 8.2.12
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
 SET time_zone = "+00:00";
-
-
-/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
-/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
-/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
-/*!40101 SET NAMES utf8mb4 */;
 
 --
 -- Databáze: `krs`
@@ -63,7 +57,10 @@ INSERT INTO `articles` (`id`, `title`, `slug`, `content`, `excerpt`, `author_id`
 (20, 'vcxbcvbv ,. ,nb nvbnnn', 'vcxbcvbv-nb-nvbnnn-1760040641', 'vb nhbm,jmnn,b,n,mn', '12345grccxbm xcv.nvbxmnb xc,v', 1, 'draft', NULL, '2025-10-09 20:10:41', '2025-10-09 20:10:41', NULL);
 INSERT INTO `articles` (`id`, `title`, `slug`, `content`, `excerpt`, `author_id`, `status`, `published_at`, `created_at`, `updated_at`, `deleted_at`) VALUES
 (21, 'khuzjgfr', 'khuzjgfr-1760043920', ' fzjfzujf fzzkfzjmvmbi ,v  m v mf v f f tg', 'hjgjmnhmvmgmguuuuuuuuuuuuuuuuuuuuuuuuuuuu  fzu ufu ufjuf uf ', 1, 'draft', NULL, '2025-10-09 21:05:20', '2025-10-09 21:05:20', NULL),
-(22, 'Sentinel-6B je vybalen  hh', 'sentinel-6b-je-vybalen-hh-1760044121', 'gfgfghfggh', 'dfhgfgthfgtgfcggncfgchgh', 1, 'published', '2025-10-09 21:08:41', '2025-10-09 21:08:41', '2025-10-09 21:45:01', '2025-10-09 21:45:01');
+(22, 'Sentinel-6B je vybalen  hh', 'sentinel-6b-je-vybalen-hh-1760044121', 'gfgfghfggh', 'dfhgfgthfgtgfcggncfgchgh', 1, 'published', '2025-10-09 21:08:41', '2025-10-09 21:08:41', '2025-11-13 09:52:40', NULL),
+(23, 'o dobré vodě', 'o-dobre-vode-1761050460', 'Stáhněte si Firefox do svého telefonu a tabletuStáhněte si Firefox do svého telefonu a tabletuStáhněte si Firefox do svého telefonu a tabletuStáhněte si Firefox do svého telefonu a tabletuStáhněte si Firefox do svého telefonu a tabletuStáhněte si Firefox do svého telefonu a tabletuStáhněte si Firefox do svého telefonu a tabletuStáhněte si Firefox do svého telefonu a tabletuStáhněte si Firefox do svého telefonu a tabletuStáhněte si Firefox do svého telefonu a tabletuStáhněte si Firefox do svého telefonu a tabletuStáhněte si Firefox do svého telefonu a tabletuStáhněte si Firefox do svého telefonu a tabletuStáhněte si Firefox do svého telefonu a tabletuStáhněte si Firefox do svého telefonu a tabletuStáhněte si Firefox do svého telefonu a tabletu', 'Stáhněte si Firefox do svého telefonu a tabletu', 1, 'draft', NULL, '2025-10-21 12:41:00', '2025-10-21 12:41:00', NULL),
+(24, 'o vodě dobré', 'o-vode-dobre-1761050608', 'Stáhněte si Firefox do svého telefonu a tabletuStáhněte si Firefox do svého telefonu a tabletuStáhněte si Firefox do svého telefonu a tabletuStáhněte si Firefox do svého telefonu a tabletuStáhněte si Firefox do svého telefonu a tabletuStáhněte si Firefox do svého telefonu a tabletuStáhněte si Firefox do svého telefonu a tabletuStáhněte si Firefox do svého telefonu a tabletuStáhněte si Firefox do svého telefonu a tabletuStáhněte si Firefox do svého telefonu a tabletuStáhněte si Firefox do svého telefonu a tabletuStáhněte si Firefox do svého telefonu a tabletu', 'Stáhněte si Firefox do svého telefonu a tabletuStáhněte si Firefox do svého telefonu a tabletuStáhněte si Firefox do svého telefonu a tabletuStáhněte si Firefox do svého telefonu a tabletu', 1, 'published', '2025-10-21 12:43:28', '2025-10-21 12:43:28', '2025-10-21 12:43:28', NULL),
+(25, 'Jak na to že bbb', 'jak-na-to-ze-bbb-1761588466', 'Na cokoliv přece :) jojo jjj', 'na co to nnn', 1, 'draft', NULL, '2025-10-22 11:30:41', '2025-10-27 18:07:46', NULL);
 
 -- --------------------------------------------------------
 
@@ -89,7 +86,21 @@ INSERT INTO `article_categories` (`id`, `article_id`, `category_id`, `created_at
 (4, 19, 1, '2025-10-09 14:07:32'),
 (5, 20, 8, '2025-10-09 20:10:41'),
 (6, 21, 5, '2025-10-09 21:05:20'),
-(7, 22, 1, '2025-10-09 21:08:41');
+(7, 22, 1, '2025-10-09 21:08:41'),
+(8, 23, 10, '2025-10-21 12:41:00'),
+(9, 24, 11, '2025-10-21 12:43:28'),
+(12, 25, 10, '2025-10-27 18:07:46');
+
+-- --------------------------------------------------------
+
+--
+-- Struktura tabulky `article_images`
+--
+
+CREATE TABLE `article_images` (
+  `article_id` int(11) NOT NULL,
+  `image_id` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_czech_ci;
 
 -- --------------------------------------------------------
 
@@ -113,11 +124,13 @@ CREATE TABLE `categories` (
 
 INSERT INTO `categories` (`id`, `name`, `slug`, `description`, `parent_id`, `created_at`, `deleted_at`) VALUES
 (1, 'Nezařazeno', 'nezarazeno', 'Kategorie pro články bez zařazení', NULL, '2025-10-09 10:08:03', NULL),
-(2, 'Technologie', 'technologie', 'Články o technologiích', 1, '2025-09-11 19:41:52', NULL),
-(4, 'vesmír', 'vesmir', 'blabla o vesmíru', 2, '2025-10-09 07:39:22', NULL),
+(2, 'Technologie', 'technologie', 'Články o technologiích', NULL, '2025-09-11 19:41:52', NULL),
+(4, 'vesmír', 'vesmir', 'blabla o vesmíru', NULL, '2025-10-09 07:39:22', NULL),
 (5, 'galerie života', 'galerie-zivota', 'obrázky, básníčky...', 3, '2025-10-09 08:33:07', NULL),
 (6, 'o ničem;', 'o-nicem', 'o všem možném', 3, '2025-10-09 08:46:25', NULL),
-(8, 'Novinky', 'novinky', 'Aktuální novinky a události', NULL, '2025-09-11 19:41:52', NULL);
+(8, 'Novinky', 'novinky', 'Aktuální novinky a události', NULL, '2025-09-11 19:41:52', NULL),
+(10, 'dobrá voda', 'dobra-voda', 'o dobré vodě', 2, '2025-10-21 12:37:03', NULL),
+(11, 'nejlepší voda', 'nejlepsi-voda', 'o nejlepší vodě', 10, '2025-10-21 12:37:40', NULL);
 
 -- --------------------------------------------------------
 
@@ -127,12 +140,25 @@ INSERT INTO `categories` (`id`, `name`, `slug`, `description`, `parent_id`, `cre
 
 CREATE TABLE `galleries` (
   `id` int(11) NOT NULL,
-  `title` varchar(255) NOT NULL,
+  `parent_id` int(11) DEFAULT NULL,
+  `name` varchar(255) NOT NULL,
   `slug` varchar(255) NOT NULL,
   `description` text DEFAULT NULL,
-  `author_id` int(11) NOT NULL,
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+  `featured_image_id` int(11) DEFAULT NULL,
+  `created_at` datetime DEFAULT current_timestamp(),
+  `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `deleted_at` datetime DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_czech_ci;
+
+--
+-- Vypisuji data pro tabulku `galleries`
+--
+
+INSERT INTO `galleries` (`id`, `parent_id`, `name`, `slug`, `description`, `featured_image_id`, `created_at`, `updated_at`, `deleted_at`) VALUES
+(1, 5, 'květinky', 'kvetinky', 'obrázky kvetoucích květinek a podobně', NULL, '2025-10-27 23:11:39', '2025-10-28 00:58:47', NULL),
+(4, 5, 'pamlsky', 'pamlsky', 'žrádýlko hhh', NULL, '2025-10-27 23:30:37', '2025-11-13 13:55:29', NULL),
+(5, NULL, 'květinkynn', 'kvetinkynn', 'květiny', NULL, '2025-10-27 23:52:17', '2025-10-30 18:12:22', NULL),
+(6, NULL, 'lopaty', 'lopaty', 'no přece ty nástroje na nabírání sypkých hmot', NULL, '2025-10-30 18:10:42', '2025-11-14 10:24:28', NULL);
 
 -- --------------------------------------------------------
 
@@ -141,14 +167,73 @@ CREATE TABLE `galleries` (
 --
 
 CREATE TABLE `gallery_images` (
-  `id` int(11) NOT NULL,
   `gallery_id` int(11) NOT NULL,
-  `filename` varchar(255) NOT NULL,
+  `image_id` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_czech_ci;
+
+--
+-- Vypisuji data pro tabulku `gallery_images`
+--
+
+INSERT INTO `gallery_images` (`gallery_id`, `image_id`) VALUES
+(1, 1),
+(4, 5),
+(5, 2),
+(5, 5),
+(6, 4);
+
+-- --------------------------------------------------------
+
+--
+-- Struktura tabulky `images`
+--
+
+CREATE TABLE `images` (
+  `id` int(11) NOT NULL,
+  `file_path` varchar(500) NOT NULL,
+  `thumb_path` varchar(500) NOT NULL,
+  `original_name` varchar(255) NOT NULL,
   `title` varchar(255) DEFAULT NULL,
   `description` text DEFAULT NULL,
-  `sort_order` int(11) DEFAULT 0,
-  `uploaded_at` timestamp NOT NULL DEFAULT current_timestamp()
+  `file_size` int(11) NOT NULL,
+  `width` int(11) NOT NULL,
+  `height` int(11) NOT NULL,
+  `mime_type` varchar(100) NOT NULL,
+  `created_at` datetime DEFAULT current_timestamp(),
+  `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `deleted_at` datetime DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_czech_ci;
+
+--
+-- Vypisuji data pro tabulku `images`
+--
+
+INSERT INTO `images` (`id`, `file_path`, `thumb_path`, `original_name`, `title`, `description`, `file_size`, `width`, `height`, `mime_type`, `created_at`, `updated_at`, `deleted_at`) VALUES
+(1, 'img_6903a01897ec11.53350443.jpg', 'img_6903a01897ec11.53350443_thumb.jpg', 'IMG_20220224_125941_984.jpg', 'malý', 'jhzžtgvv', 262562, 842, 1268, 'image/jpeg', '2025-10-30 18:27:52', '2025-11-13 11:22:34', NULL),
+(2, 'img_6903a14852f0c2.96978798.jpg', 'img_6903a14852f0c2.96978798_thumb.jpg', 'IMG_20220224_130244_362.jpg', 'vbvvvcv', 'vcvfcvffnjf', 4045729, 2572, 4133, 'image/jpeg', '2025-10-30 18:32:56', '2025-10-31 21:06:59', NULL),
+(4, 'img_6916fe9a5b2a59.71622705.JPG', 'img_6916fe9a5b2a59.71622705_thumb.JPG', 'IMG_9041.JPG', '', '', 6893572, 6000, 4000, 'image/jpeg', '2025-11-14 11:04:11', '2025-11-14 11:04:11', NULL),
+(5, 'img_6916feb1507028.08156346.JPG', 'img_6916feb1507028.08156346_thumb.JPG', 'IMG_9044.JPG', 'narozeniny máji', 'jde sfouknout dort', 9322680, 6000, 4000, 'image/jpeg', '2025-11-14 11:04:34', '2025-11-14 11:14:48', NULL);
+
+-- --------------------------------------------------------
+
+--
+-- Struktura tabulky `login_attempts`
+--
+
+CREATE TABLE `login_attempts` (
+  `id` int(11) NOT NULL,
+  `username` varchar(100) NOT NULL,
+  `ip_address` varchar(45) NOT NULL,
+  `attempted_at` datetime NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_czech_ci;
+
+--
+-- Vypisuji data pro tabulku `login_attempts`
+--
+
+INSERT INTO `login_attempts` (`id`, `username`, `ip_address`, `attempted_at`) VALUES
+(1, 'admin', '127.0.0.1', '2025-11-13 10:49:57'),
+(2, 'admin', '127.0.0.1', '2025-11-13 10:50:45');
 
 -- --------------------------------------------------------
 
@@ -201,6 +286,13 @@ ALTER TABLE `article_categories`
   ADD KEY `category_id` (`category_id`);
 
 --
+-- Indexy pro tabulku `article_images`
+--
+ALTER TABLE `article_images`
+  ADD PRIMARY KEY (`article_id`,`image_id`),
+  ADD KEY `image_id` (`image_id`);
+
+--
 -- Indexy pro tabulku `categories`
 --
 ALTER TABLE `categories`
@@ -213,16 +305,28 @@ ALTER TABLE `categories`
 --
 ALTER TABLE `galleries`
   ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `slug` (`slug`),
-  ADD KEY `author_id` (`author_id`),
-  ADD KEY `idx_galleries_slug` (`slug`);
+  ADD KEY `fk_galleries_parent` (`parent_id`),
+  ADD KEY `idx_galleries_featured_image` (`featured_image_id`);
 
 --
 -- Indexy pro tabulku `gallery_images`
 --
 ALTER TABLE `gallery_images`
+  ADD PRIMARY KEY (`gallery_id`,`image_id`),
+  ADD KEY `image_id` (`image_id`);
+
+--
+-- Indexy pro tabulku `images`
+--
+ALTER TABLE `images`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indexy pro tabulku `login_attempts`
+--
+ALTER TABLE `login_attempts`
   ADD PRIMARY KEY (`id`),
-  ADD KEY `idx_gallery_images_gallery` (`gallery_id`);
+  ADD KEY `idx_username_time` (`username`,`attempted_at`);
 
 --
 -- Indexy pro tabulku `users`
@@ -241,31 +345,37 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT pro tabulku `articles`
 --
 ALTER TABLE `articles`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=26;
 
 --
 -- AUTO_INCREMENT pro tabulku `article_categories`
 --
 ALTER TABLE `article_categories`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
 
 --
 -- AUTO_INCREMENT pro tabulku `categories`
 --
 ALTER TABLE `categories`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
 -- AUTO_INCREMENT pro tabulku `galleries`
 --
 ALTER TABLE `galleries`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
--- AUTO_INCREMENT pro tabulku `gallery_images`
+-- AUTO_INCREMENT pro tabulku `images`
 --
-ALTER TABLE `gallery_images`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+ALTER TABLE `images`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+
+--
+-- AUTO_INCREMENT pro tabulku `login_attempts`
+--
+ALTER TABLE `login_attempts`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT pro tabulku `users`
@@ -284,18 +394,23 @@ ALTER TABLE `articles`
   ADD CONSTRAINT `articles_ibfk_1` FOREIGN KEY (`author_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
 
 --
+-- Omezení pro tabulku `article_images`
+--
+ALTER TABLE `article_images`
+  ADD CONSTRAINT `article_images_ibfk_1` FOREIGN KEY (`article_id`) REFERENCES `articles` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `article_images_ibfk_2` FOREIGN KEY (`image_id`) REFERENCES `images` (`id`) ON DELETE CASCADE;
+
+--
 -- Omezení pro tabulku `galleries`
 --
 ALTER TABLE `galleries`
-  ADD CONSTRAINT `galleries_ibfk_1` FOREIGN KEY (`author_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+  ADD CONSTRAINT `fk_galleries_featured_image` FOREIGN KEY (`featured_image_id`) REFERENCES `images` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `fk_galleries_parent` FOREIGN KEY (`parent_id`) REFERENCES `galleries` (`id`) ON DELETE SET NULL;
 
 --
 -- Omezení pro tabulku `gallery_images`
 --
 ALTER TABLE `gallery_images`
-  ADD CONSTRAINT `gallery_images_ibfk_1` FOREIGN KEY (`gallery_id`) REFERENCES `galleries` (`id`) ON DELETE CASCADE;
+  ADD CONSTRAINT `gallery_images_ibfk_1` FOREIGN KEY (`gallery_id`) REFERENCES `galleries` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `gallery_images_ibfk_2` FOREIGN KEY (`image_id`) REFERENCES `images` (`id`) ON DELETE CASCADE;
 COMMIT;
-
-/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
-/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
-/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
