@@ -1,5 +1,4 @@
 <?php
-// app/Core/Router.php
 declare(strict_types=1);
 
 namespace App\Core;
@@ -24,16 +23,30 @@ use App\Security\CsrfProtection;
 use App\Logger\Logger;
 
 /**
- * Router pro zpracování HTTP požadavků
- *
+ * Array-based Router pro KRS3 CMS
+ * 
  * @package App\Core
  * @author KRS3
- * @version 2.0
+ * @version 3.0
  */
 class Router
 {
+    /** @var array<string, array<string, array>> Routing configuration */
+    private array $routes = [];
+
+    /** @var Logger Logger instance */
     private Logger $logger;
 
+    /**
+     * Constructor
+     *
+     * @param LoginService $authService Authentication service
+     * @param DatabaseConnection $db Database connection
+     * @param CsrfProtection $csrf CSRF protection service
+     * @param AdminLayout $adminLayout Admin layout renderer
+     * @param Template $template Template engine
+     * @param MenuService $menuService Menu service
+     */
     public function __construct(
         private LoginService $authService,
         private DatabaseConnection $db,
@@ -43,670 +56,448 @@ class Router
         private MenuService $menuService
     ) {
         $this->logger = Logger::getInstance();
+        $this->loadRoutes();
+        
+        $this->logger->info('Router initialized successfully', [
+            'total_routes_loaded' => $this->countTotalRoutes(),
+            'auth_service' => get_class($authService),
+            'csrf_protection' => get_class($csrf)
+        ]);
     }
 
+    /**
+     * Načte routy z konfiguračního souboru
+     * 
+     * @throws \RuntimeException Pokud se soubor s routami nenajde
+     * @return void
+     */
+    private function loadRoutes(): void
+    {
+        $routesPath = __DIR__ . '/../../config/routes.php';
+        
+        if (!file_exists($routesPath)) {
+            $this->logger->critical('Routes configuration file not found', ['path' => $routesPath]);
+            throw new \RuntimeException("Routes configuration file not found: {$routesPath}");
+        }
+
+        $this->routes = require $routesPath;
+        
+        $this->logger->info('Routes configuration loaded successfully', [
+            'path' => $routesPath,
+            'total_routes' => $this->countTotalRoutes(),
+            'methods_available' => array_keys($this->routes)
+        ]);
+    }
+
+    /**
+     * Spočítá celkový počet rout v konfiguraci
+     *
+     * @return int Celkový počet rout
+     */
+    private function countTotalRoutes(): int
+    {
+        $count = 0;
+        foreach ($this->routes as $methodGroup) {
+            $count += count($methodGroup);
+        }
+        return $count;
+    }
+
+    /**
+     * Zpracuje HTTP požadavek
+     *
+     * @param string $path Request path
+     * @param array<string> $urlParts URL parts
+     * @return string Response content
+     */
     public function handleRequest(string $path, array $urlParts): string
     {
+        $fixedPath = $path === '' ? '/' : '/' . $path;
         $startTime = microtime(true);
         $requestMethod = $_SERVER['REQUEST_METHOD'] ?? 'GET';
         $clientIp = $this->getClientIp();
         $userAgent = $this->getUserAgent();
 
-        $this->logger->info('Request received', [
+        $this->logger->info('HTTP request received', [
             'method' => $requestMethod,
-            'path' => $path,
+            'path' => $fixedPath,
             'url_parts' => $urlParts,
             'client_ip' => $clientIp,
-            'user_agent' => $userAgent,
-            'referer' => $_SERVER['HTTP_REFERER'] ?? null
+            'user_agent' => $userAgent
         ]);
 
         try {
-            // Získáme base URL
-            $baseUrl = $this->template->getData()['baseUrl'] ?? '';
-
-            // Vytvoříme služby
-            $articleService = new ArticleService($this->db);
-            $categoryService = new CategoryService($this->db);
-
-            // Vytvoříme controllery
-            $homeController = new HomeController(
-                $articleService,
-                $categoryService,
-                $this->template,
-                $baseUrl,
-                $this->authService,
-                $this->menuService
-            );
-
-            $authController = new AuthController(
-                $this->authService,
-                $this->csrf,
-                $baseUrl,
-                $this->template
-            );
-
-            $adminController = new AdminController(
-                $this->authService,
-                $baseUrl,
-                $this->adminLayout
-            );
-
-            // Zpracování homepage
-            if (empty($urlParts[0]) || $urlParts[0] === 'home') {
-                $this->logger->debug('Routing to homepage');
-                $result = $homeController->showHomepage();
-                $this->logRequestComplete($startTime, 'homepage', 200);
-                return $result;
+            $routeConfig = $this->findMatchingRoute($requestMethod, $fixedPath, $urlParts);
+            
+            if (!$routeConfig) {
+                $this->logger->warning('Route not found - returning 404');
+                return $this->handleNotFound();
             }
 
-            // Routing podle prvního segmentu URL
-            $route = $urlParts[0];
-            $this->logger->debug('Processing route', ['route' => $route]);
-
-            switch ($route) {
-                case 'article':
-                    if (!empty($urlParts[1])) {
-                        $this->logger->debug('Routing to article detail', ['slug' => $urlParts[1]]);
-                        $result = $homeController->showArticleDetail($urlParts[1]);
-                        $this->logRequestComplete($startTime, "article/{$urlParts[1]}", 200);
-                        return $result;
-                    }
-                    break;
-
-                case 'category':
-                    if (!empty($urlParts[1])) {
-                        $this->logger->debug('Routing to category', ['slug' => $urlParts[1]]);
-                        $result = $homeController->showCategoryArticles($urlParts[1]);
-                        $this->logRequestComplete($startTime, "category/{$urlParts[1]}", 200);
-                        return $result;
-                    }
-                    break;
-
-                case 'login':
-                    if ($requestMethod === 'POST') {
-                        $this->logger->debug('Processing login POST request');
-                        $authController->processLogin();
-                        $this->logRequestComplete($startTime, 'login POST', 302);
-                        return '';
-                    }
-
-                    $this->logger->debug('Showing login form');
-                    $result = $authController->showLoginForm();
-                    $this->logRequestComplete($startTime, 'login GET', 200);
-                    return $result;
-
-                case 'logout':
-                    $this->logger->info('Processing logout request', [
-                        'user' => $this->authService->getUsername(),
-                        'client_ip' => $clientIp
-                    ]);
-                    $authController->logout();
-                    $this->logRequestComplete($startTime, 'logout', 302);
-                    return '';
-
-                case 'admin':
-                    $result = $this->handleAdmin($urlParts, $adminController, $articleService, $categoryService, $baseUrl);
-                    $this->logRequestComplete($startTime, 'admin/' . ($urlParts[1] ?? 'dashboard'), 200);
-                    return $result;
-
-                default:
-                    $this->logger->warning('Route not found', [
-                        'path' => $path,
-                        'route' => $route,
-                        'client_ip' => $clientIp
-                    ]);
-
-                    $result = $this->handleNotFound();
-                    $this->logRequestComplete($startTime, '404', 404);
-                    return $result;
-            }
-
-            // Pokud jsme se sem dostali, URL nebyla rozpoznána
-            $this->logger->warning('Route matched but not handled properly', [
-                'path' => $path,
-                'url_parts' => $urlParts
+            $this->logger->debug('Route matched successfully', [
+                'route_name' => $routeConfig['name'],
+                'controller' => $routeConfig['controller'],
+                'method' => $routeConfig['method']
             ]);
 
-            $result = $this->handleNotFound();
-            $this->logRequestComplete($startTime, '404', 404);
+            // Kontrola autentizace
+            if ($routeConfig['requires_auth'] ?? false) {
+                $this->checkAuthentication($fixedPath, $clientIp);
+            }
+
+            // CSRF ochrana
+            if ($routeConfig['csrf'] ?? false) {
+                $this->validateCsrfProtection($routeConfig['name']);
+            }
+
+            $result = $this->executeRoute($routeConfig);
+            $this->logRequestComplete($startTime, $routeConfig['name'], 200);
+            
             return $result;
 
         } catch (\Exception $e) {
-            $executionTime = round((microtime(true) - $startTime) * 1000, 2);
-
-            $this->logger->exception($e, "Router exception occurred");
-            $this->logger->error('Request failed with exception', [
-                'path' => $path,
-                'method' => $requestMethod,
-                'error' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
-                'execution_time_ms' => $executionTime,
-                'client_ip' => $clientIp
-            ]);
-
-            return $this->template->render('pages/500.php', [
-                'message' => 'Došlo k chybě na serveru: ' . $e->getMessage(),
-                'baseUrl' => $this->template->getData()['baseUrl'] ?? '',
-                'backLinkText' => 'Zpět na úvodní stránku'
-            ]);
+            return $this->handleException($e, $startTime, $fixedPath, $requestMethod, $clientIp);
         }
     }
 
     /**
-     * Zpracuje admin routy
+     * Najde matching route z konfigurace
+     *
+     * @param string $method HTTP method
+     * @param string $path Request path
+     * @param array<string> $urlParts URL parts
+     * @return array<string, mixed>|null Route configuration or null
      */
-    private function handleAdmin(
-        array $urlParts,
-        AdminController $adminController,
-        ArticleService $articleService,
-        CategoryService $categoryService,
-        string $baseUrl
-    ): string {
-        $user = $this->authService->getUser();
-        $clientIp = $this->getClientIp();
+    private function findMatchingRoute(string $method, string $path, array $urlParts): ?array
+    {
+        $methodKey = $this->getMethodKey($method);
+        $routeGroup = $this->routes[$methodKey] ?? [];
 
-        // Kontrola přihlášení
+        $this->logger->debug('Searching for matching route', [
+            'method' => $method,
+            'method_key' => $methodKey,
+            'path' => $path,
+            'routes_in_group' => count($routeGroup)
+        ]);
+
+        foreach ($routeGroup as $routePattern => $config) {
+            $params = [];
+            if ($this->matchesRoutePattern($routePattern, $path, $params)) {
+                $config['params'] = $params;
+                
+                $this->logger->debug('Route pattern matched', [
+                    'pattern' => $routePattern,
+                    'params_found' => $params
+                ]);
+                
+                return $config;
+            }
+        }
+
+        $this->logger->debug('No route pattern matched', [
+            'method' => $method,
+            'path' => $path,
+            'patterns_tried' => array_keys($routeGroup)
+        ]);
+
+        return null;
+    }
+
+    /**
+     * Získá správný klíč metody pro routing skupinu
+     *
+     * @param string $method HTTP method
+     * @return string Method key
+     */
+private function getMethodKey(string $method): string
+{
+    // Case-insensitive kontrola pro admin routy
+    $requestUri = $_SERVER['REQUEST_URI'] ?? '';
+    if (stripos($requestUri, '/admin') === 0) {
+        return $method === 'POST' ? 'ADMIN_POST' : 'ADMIN_GET';
+    }
+
+    return $method;
+}
+    /**
+     * Zkontroluje shodu URL s route patternem
+     *
+     * @param string $pattern Route pattern
+     * @param string $path Request path
+     * @param array<string, string> $params Extracted parameters
+     * @return bool True if pattern matches
+     */
+    private function matchesRoutePattern(string $pattern, string $path, array &$params): bool
+    {
+        $basePath = $this->getBasePath();
+        $actualPath = $path === '' ? '/' : $path;
+        
+        // Patterny jsou kompletní, nepřidáváme base path
+        $fullPattern = $pattern;
+
+        $regexPattern = preg_replace('/\{([^}]+)\}/', '(?P<$1>[^/]+)', $fullPattern);
+        $regexPattern = '#^' . str_replace('/', '\/', $regexPattern) . '$#';
+        
+        if (preg_match($regexPattern, $actualPath, $matches)) {
+            foreach ($matches as $key => $value) {
+                if (is_string($key)) {
+                    $params[$key] = $value;
+                }
+            }
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Kontroluje autentizaci uživatele
+     * 
+     * @param string $path Request path
+     * @param string $clientIp Client IP address
+     * @throws \RuntimeException Pokud uživatel není přihlášen
+     * @return void
+     */
+    private function checkAuthentication(string $path, string $clientIp): void
+    {
         if (!$this->authService->isLoggedIn()) {
-            $this->logger->warning('Unauthorized admin access attempt', [
-                'path' => implode('/', $urlParts),
+            $this->logger->warning('Unauthorized access attempt to protected route', [
+                'path' => $path,
                 'client_ip' => $clientIp,
-                'user_agent' => $this->getUserAgent()
+                'user_agent' => $this->getUserAgent(),
+                'session_id' => session_id() ?: 'no-session'
             ]);
 
+            $baseUrl = $this->template->getData()['baseUrl'] ?? '';
             header('Location: ' . $baseUrl . 'login');
             exit;
         }
 
-        $subPage = $urlParts[1] ?? 'dashboard';
-        $action = $urlParts[2] ?? '';
-        $id = isset($urlParts[3]) ? (int)$urlParts[3] : null;
+        $this->logger->debug('User authentication verified', [
+            'user' => $this->authService->getUsername(),
+            'user_id' => $this->authService->getUser()['id'] ?? 'unknown',
+            'path' => $path
+        ]);
+    }
 
-        $this->logger->info('Admin request', [
-            'user_id' => $user['id'],
-            'username' => $user['username'],
-            'sub_page' => $subPage,
-            'action' => $action,
-            'id' => $id,
-            'client_ip' => $clientIp
+    /**
+     * Validuje CSRF token
+     * 
+     * @param string $routeName Route name
+     * @throws \RuntimeException Pokud CSRF token není validní
+     * @return void
+     */
+/**
+ * Validuje CSRF token
+ * 
+ * @param string $routeName Route name
+ * @throws \RuntimeException Pokud CSRF token není validní
+ * @return void
+ */
+private function validateCsrfProtection(string $routeName): void
+{
+ 
+    // ✅ POUŽIJ ECHO PRO DEBUG POST DAT
+    echo "=== POST DATA DEBUG ===";
+    echo "POST keys: " . implode(', ', array_keys($_POST));
+    echo "CSRF token: " . ($_POST['csrf_token'] ?? 'NOT_FOUND');
+    echo "POST count: " . count($_POST);
+    echo "====================";
+
+   // ✅ PŘESUŇ DEBUG SEM - NA ZAČÁTEK METODY
+    $this->logger->debug('POST DATA DEBUG', [
+        'all_post_keys' => array_keys($_POST),
+        'csrf_token_value' => $_POST['csrf_token'] ?? 'NOT_FOUND',
+        'token_name' => $this->csrf->getTokenName(),
+        'post_data_count' => count($_POST)
+    ]);
+	$this->logger->debug('POST DATA DEBUG', [
+        'all_post_keys' => array_keys($_POST),
+        'csrf_token_value' => $_POST['csrf_token'] ?? 'NOT_FOUND',
+        'token_name' => $this->csrf->getTokenName()
+    ]);
+    try {
+        // ✅ OPRAVA: Předáme token z POST data
+        $tokenName = $this->csrf->getTokenName();
+        $token = $_POST[$tokenName] ?? '';
+        
+        $this->logger->debug('CSRF token validation attempt', [
+            'route' => $routeName,
+            'token_name' => $tokenName,
+            'token_present' => !empty($token),
+            'token_length' => strlen($token)
+        ]);
+        
+        $this->csrf->validateToken($token);
+        
+        $this->logger->debug('CSRF token validation successful', [
+            'route' => $routeName
+        ]);
+    } catch (\Exception $e) {
+        $this->logger->warning('CSRF token validation failed', [
+            'route' => $routeName,
+            'error' => $e->getMessage(),
+            'client_ip' => $this->getClientIp(),
+            'user_agent' => $this->getUserAgent()
+        ]);
+        throw $e;
+    }
+}
+
+    /**
+     * Spustí nalezenou routu
+     *
+     * @param array<string, mixed> $config Route configuration
+     * @return string Response content
+     */
+    private function executeRoute(array $config): string
+    {
+        $controller = $this->createController($config['controller']);
+        $method = $config['method'];
+        $params = $config['params'] ?? [];
+
+        $this->logger->info('Executing controller action', [
+            'controller' => get_class($controller),
+            'method' => $method,
+            'params' => $params
         ]);
 
-        switch ($subPage) {
-            case 'articles':
-                return $this->handleAdminArticles($action, $id, $articleService, $categoryService, $baseUrl);
-
-            case 'categories':
-                return $this->handleAdminCategories($action, $id, $categoryService, $baseUrl);
-
-            case 'gallery':
-                return $this->handleAdminGallery($action, $id, $baseUrl);
-
-            case 'images':
-                return $this->handleAdminImages($action, $id, $baseUrl);
-
-            case 'dashboard':
-            default:
-                $this->logger->debug('Showing admin dashboard');
-                return $adminController->showDashboard();
+        try {
+            $result = call_user_func_array([$controller, $method], array_values($params));
+            
+            $this->logger->debug('Controller action executed successfully', [
+                'controller' => get_class($controller),
+                'method' => $method,
+                'result_type' => gettype($result)
+            ]);
+            
+            return $result;
+            
+        } catch (\Exception $e) {
+            $this->logger->error('Controller action execution failed', [
+                'controller' => get_class($controller),
+                'method' => $method,
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
+            ]);
+            throw $e;
         }
     }
 
     /**
-     * Zpracuje administrační požadavky pro články
+     * Vytvoří instanci controlleru s potřebnými závislostmi
+     * 
+     * @param string $controllerName Controller class name
+     * @throws \RuntimeException Pokud controller neexistuje
+     * @return object Controller instance
      */
-    private function handleAdminArticles(
-        string $action,
-        ?int $id,
-        ArticleService $articleService,
-        CategoryService $categoryService,
-        string $baseUrl
-    ): string {
-        $controller = new ArticleController(
-            $articleService,
-            $this->authService,
-            $this->csrf,
-            $baseUrl,
-            $this->adminLayout,
-            $categoryService
-        );
+    private function createController(string $controllerName): object
+    {
+        $baseUrl = $this->template->getData()['baseUrl'] ?? '';
 
-        $this->logger->debug('Admin articles action', [
-            'action' => $action,
-            'article_id' => $id,
-            'user' => $this->authService->getUsername()
+        $this->logger->debug('Creating controller instance', [
+            'controller_name' => $controllerName,
+            'base_url' => $baseUrl
         ]);
 
-        switch ($action) {
-            case 'new':
-                $this->logger->debug('Showing article create form');
-                return $controller->showCreateForm();
+        switch ($controllerName) {
+            case 'HomeController':
+                $articleService = new ArticleService($this->db);
+                $categoryService = new CategoryService($this->db);
+                return new HomeController(
+                    $articleService,
+                    $categoryService,
+                    $this->template,
+                    $baseUrl,
+                    $this->authService,
+                    $this->menuService
+                );
 
-            case 'create':
-                $this->logger->info('Creating new article', [
-                    'user' => $this->authService->getUsername()
+            case 'AuthController':
+                return new AuthController(
+                    $this->authService,
+                    $this->csrf,
+                    $baseUrl,
+                    $this->template
+                );
+
+            case 'AdminController':
+                return new AdminController(
+                    $this->authService,
+                    $baseUrl,
+                    $this->adminLayout
+                );
+
+            case 'ArticleController':
+                $articleService = new ArticleService($this->db);
+                $categoryService = new CategoryService($this->db);
+                return new ArticleController(
+                    $articleService,
+                    $this->authService,
+                    $this->csrf,
+                    $baseUrl,
+                    $this->adminLayout,
+                    $categoryService
+                );
+
+            case 'CategoryController':
+                $categoryService = new CategoryService($this->db);
+                return new CategoryController(
+                    $categoryService,
+                    $this->authService,
+                    $this->csrf,
+                    $baseUrl,
+                    $this->adminLayout
+                );
+
+            case 'GalleryController':
+                $galleryService = new GalleryService($this->db);
+                return new GalleryController(
+                    $galleryService,
+                    $this->authService,
+                    $this->csrf,
+                    $baseUrl,
+                    $this->adminLayout
+                );
+
+            case 'ImagesController':
+                $imageService = new ImageService($this->db);
+                return new ImagesController(
+                    $imageService,
+                    $this->authService,
+                    $this->csrf,
+                    $baseUrl,
+                    $this->adminLayout,
+                    $this->db
+                );
+
+            default:
+                $this->logger->critical('Unknown controller requested', [
+                    'controller_name' => $controllerName,
+                    'available_controllers' => [
+                        'HomeController', 'AuthController', 'AdminController', 
+                        'ArticleController', 'CategoryController', 'GalleryController', 'ImagesController'
+                    ]
                 ]);
-                $controller->createArticle();
-                return '';
-
-            case 'edit':
-                if ($id) {
-                    $this->logger->debug('Showing article edit form', ['article_id' => $id]);
-                    return $controller->showEditForm($id);
-                }
-                break;
-
-            case 'update':
-                if ($id) {
-                    $this->logger->info('Updating article', [
-                        'article_id' => $id,
-                        'user' => $this->authService->getUsername()
-                    ]);
-                    $controller->updateArticle($id);
-                }
-                return '';
-
-            case 'delete':
-                if ($id) {
-                    $this->logger->warning('Soft deleting article', [
-                        'article_id' => $id,
-                        'user' => $this->authService->getUsername(),
-                        'client_ip' => $this->getClientIp()
-                    ]);
-                    $controller->deleteArticle($id);
-                }
-                return '';
-
-            case 'restore':
-                if ($id) {
-                    $this->logger->info('Restoring article', [
-                        'article_id' => $id,
-                        'user' => $this->authService->getUsername()
-                    ]);
-                    $controller->restoreArticle($id);
-                }
-                return '';
-
-            case 'permanent-delete':
-                if ($id) {
-                    $this->logger->critical('Permanently deleting article', [
-                        'article_id' => $id,
-                        'user' => $this->authService->getUsername(),
-                        'client_ip' => $this->getClientIp()
-                    ]);
-                    $controller->permanentDeleteArticle($id);
-                }
-                return '';
-
-            default:
-                $this->logger->debug('Showing articles list');
-                return $controller->showArticles();
+                throw new \RuntimeException("Unknown controller: {$controllerName}");
         }
-
-        $this->logger->warning('Invalid article action', [
-            'action' => $action,
-            'id' => $id
-        ]);
-
-        return $this->handleNotFound();
-    }
-
-    /**
-     * Zpracuje administrační požadavky pro kategorie
-     */
-    private function handleAdminCategories(
-        string $action,
-        ?int $id,
-        CategoryService $categoryService,
-        string $baseUrl
-    ): string {
-        $controller = new CategoryController(
-            $categoryService,
-            $this->authService,
-            $this->csrf,
-            $baseUrl,
-            $this->adminLayout
-        );
-
-        $this->logger->debug('Admin categories action', [
-            'action' => $action,
-            'category_id' => $id,
-            'user' => $this->authService->getUsername()
-        ]);
-
-        switch ($action) {
-            case 'create':
-                $this->logger->debug('Showing category create form');
-                return $controller->create();
-
-            case 'store':
-                $this->logger->info('Creating new category', [
-                    'user' => $this->authService->getUsername()
-                ]);
-                $controller->store();
-                return '';
-
-            case 'edit':
-                if ($id) {
-                    $this->logger->debug('Showing category edit form', ['category_id' => $id]);
-                    return $controller->edit($id);
-                }
-                break;
-
-            case 'update':
-                if ($id) {
-                    $this->logger->info('Updating category', [
-                        'category_id' => $id,
-                        'user' => $this->authService->getUsername()
-                    ]);
-                    $controller->update($id);
-                }
-                return '';
-
-            case 'delete':
-                if ($id) {
-                    $this->logger->warning('Soft deleting category', [
-                        'category_id' => $id,
-                        'user' => $this->authService->getUsername(),
-                        'client_ip' => $this->getClientIp()
-                    ]);
-                    $controller->delete($id);
-                }
-                return '';
-
-            case 'restore':
-                if ($id) {
-                    $this->logger->info('Restoring category', [
-                        'category_id' => $id,
-                        'user' => $this->authService->getUsername()
-                    ]);
-                    $controller->restore($id);
-                }
-                return '';
-
-            case 'permanent-delete':
-                if ($id) {
-                    $this->logger->critical('Permanently deleting category', [
-                        'category_id' => $id,
-                        'user' => $this->authService->getUsername(),
-                        'client_ip' => $this->getClientIp()
-                    ]);
-                    $controller->permanentDelete($id);
-                }
-                return '';
-
-            default:
-                $this->logger->debug('Showing categories list');
-                return $controller->index();
-        }
-
-        $this->logger->warning('Invalid category action', [
-            'action' => $action,
-            'id' => $id
-        ]);
-
-        return $this->handleNotFound();
-    }
-
-    /**
-     * Zpracuje administrační požadavky pro Galerii
-     */
-    private function handleAdminGallery(
-        string $action,
-        ?int $id,
-        string $baseUrl
-    ): string {
-        $galleryService = new GalleryService($this->db);
-        $controller = new GalleryController(
-            $galleryService,
-            $this->authService,
-            $this->csrf,
-            $baseUrl,
-            $this->adminLayout
-        );
-
-        $this->logger->debug('Admin gallery action', [
-            'action' => $action,
-            'gallery_id' => $id,
-            'user' => $this->authService->getUsername()
-        ]);
-
-        switch ($action) {
-            case 'create':
-                $this->logger->debug('Showing gallery create form');
-                return $controller->create();
-
-            case 'store':
-                $this->logger->info('Creating new gallery', [
-                    'user' => $this->authService->getUsername()
-                ]);
-                $controller->store();
-                return '';
-
-            case 'restore':
-                if ($id) {
-                    $this->logger->info('Restoring deleted gallery', [
-                        'user' => $this->authService->getUsername(),
-                        'gallery_id' => $id
-                    ]);
-                    $controller->restore($id);
-                }
-                return '';
-
-            case 'edit':
-                if ($id) {
-                    $this->logger->debug('Showing gallery edit form', ['gallery_id' => $id]);
-                    return $controller->edit($id);
-                }
-                break;
-
-            case 'update':
-                if ($id) {
-                    $this->logger->info('Updating gallery', [
-                        'gallery_id' => $id,
-                        'user' => $this->authService->getUsername()
-                    ]);
-                    $controller->update($id);
-                }
-                return '';
-
-            case 'view':
-                if ($id) {
-                    $this->logger->debug('Showing gallery view', ['gallery_id' => $id]);
-                    return $controller->view($id);
-                }
-                break;
-
-            case 'manage':
-                $this->logger->debug('Showing gallery management');
-                return $controller->index();
-
-            case 'confirm-delete':
-                if ($id) {
-                    $this->logger->debug('Showing gallery delete confirmation', ['gallery_id' => $id]);
-                    return $controller->confirmDelete($id);
-                }
-                break;
-
-            case 'delete':
-                if ($id) {
-                    $this->logger->warning('Deleting gallery', [
-                        'gallery_id' => $id,
-                        'user' => $this->authService->getUsername(),
-                        'client_ip' => $this->getClientIp()
-                    ]);
-                    $controller->delete($id);
-                }
-                return '';
-
-			case 'confirm-permanent-delete':
-			    if ($id) {
-			        $this->logger->debug('Showing gallery permanent delete confirmation', ['gallery_id' => $id]);
-			        return $controller->confirmPermanentDelete($id);
-			    }
-			    break;
-
-			case 'permanent-delete':
-			    if ($id) {
-			        $this->logger->critical('Permanently deleting gallery', [
-			            'gallery_id' => $id,
-			            'user' => $this->authService->getUsername(),
-			            'client_ip' => $this->getClientIp()
-			        ]);
-			        $controller->permanentDelete($id);
-			    }
-			    return '';
-            default:
-                $this->logger->debug('Showing gallery index');
-                return $controller->index();
-        }
-
-        $this->logger->warning('Invalid gallery action', [
-            'action' => $action,
-            'id' => $id
-        ]);
-
-        return $this->handleNotFound();
-    }
-
-    /**
-     * Zpracuje administrační požadavky pro Obrázky
-     */
-    private function handleAdminImages(
-        string $action,
-        ?int $id,
-        string $baseUrl
-    ): string {
-        $imageService = new \App\Services\ImageService($this->db);
-        $controller = new \App\Controllers\ImagesController(
-            $imageService,
-            $this->authService,
-            $this->csrf,
-            $baseUrl,
-            $this->adminLayout,
-            $this->db
-        );
-
-        $this->logger->debug('Admin images action', [
-            'action' => $action,
-            'image_id' => $id,
-            'user' => $this->authService->getUsername()
-        ]);
-
-        switch ($action) {
-            case 'manage':
-                $this->logger->debug('Showing images management');
-                return $controller->manage();
-
-            case 'upload':
-                $this->logger->debug('Showing upload form');
-                return $controller->upload();
-
-            case 'upload-image':
-                if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-                    $this->logger->info('Uploading image', [
-                        'user' => $this->authService->getUsername()
-                    ]);
-                    $controller->uploadImage();
-                }
-                return '';
-
-			case 'edit':
-			    if ($id) {
-			        $this->logger->debug('Showing image edit form', ['image_id' => $id]);
-			        return $controller->edit($id);
-			    }
-			    break;
-
-			case 'update':
-			    if ($id) {
-			        $this->logger->info('Updating image', [
-			            'image_id' => $id,
-			            'user' => $this->authService->getUsername()
-			        ]);
-			        $controller->update($id);
-			    }
-			    return '';
-
-
-            case 'delete':
-                if ($id) {
-                    $this->logger->info('Deleting image', [
-                        'image_id' => $id,
-                        'user' => $this->authService->getUsername(),
-                        'client_ip' => $this->getClientIp()
-                    ]);
-                    $controller->deleteImage($id);
-                }
-                return '';
-
-            case 'restore':
-                if ($id) {
-                    $this->logger->info('Restoring image from trash', [
-                        'image_id' => $id,
-                        'user' => $this->authService->getUsername()
-                    ]);
-                    $controller->restoreImage($id);
-                }
-                return '';
-
-            case 'confirm-permanent-delete':
-                if ($id) {
-                    $this->logger->debug('Showing image permanent delete confirmation', ['image_id' => $id]);
-                    return $controller->confirmPermanentDeleteImage($id);
-                }
-                break;
-
-            case 'permanent-delete':
-                if ($id) {
-                    $this->logger->critical('Permanently deleting image', [
-                        'image_id' => $id,
-                        'user' => $this->authService->getUsername(),
-                        'client_ip' => $this->getClientIp()
-                    ]);
-                    $controller->permanentDeleteImage($id);
-                }
-                return '';
-			case 'featured-image-modal':
-			    $this->logger->debug('Showing featured image modal');
-			    return $controller->featuredImageModal();
-
-			case 'select-featured-image':
-			    if ($id) {
-			        $this->logger->info('Selecting featured image', [
-			            'gallery_id' => $id,
-			            'user' => $this->authService->getUsername()
-			        ]);
-			        return $controller->selectFeaturedImage($id);
-			    }
-			    return '';
-
-			case 'image-info':
-			    if ($id) {
-			        $this->logger->debug('Getting image info', ['image_id' => $id]);
-			        return $controller->getImageInfo($id);
-			    }
-			    return '';
-            default:
-                $this->logger->debug('Showing images management (default)');
-                return $controller->manage();
-        }
-
-        $this->logger->warning('Invalid image action', [
-            'action' => $action,
-            'id' => $id
-        ]);
-
-        return $this->handleNotFound();
     }
 
     /**
      * Zpracuje chybovou stránku 404
+     *
+     * @return string 404 page content
      */
     private function handleNotFound(): string
     {
         $siteName = Config::site('name');
         $baseUrl = $this->template->getData()['baseUrl'] ?? '';
+
+        $this->logger->info('Rendering 404 page', [
+            'site_name' => $siteName,
+            'base_url' => $baseUrl
+        ]);
 
         return $this->template->render('layouts/frontend.php', [
             'title' => Config::text('pages.404', ['site_name' => $siteName]),
@@ -724,33 +515,143 @@ class Router
     }
 
     /**
+     * Zpracuje výjimku
+     *
+     * @param \Exception $e Exception
+     * @param float $startTime Request start time
+     * @param string $path Request path
+     * @param string $method HTTP method
+     * @param string $clientIp Client IP
+     * @return string Error page content
+     */
+    private function handleException(
+        \Exception $e, 
+        float $startTime, 
+        string $path, 
+        string $method, 
+        string $clientIp
+    ): string {
+        $executionTime = round((microtime(true) - $startTime) * 1000, 2);
+
+        $this->logger->exception($e, "Router exception occurred during request processing");
+        $this->logger->error('Request processing failed', [
+            'path' => $path,
+            'method' => $method,
+            'error' => $e->getMessage(),
+            'file' => $e->getFile(),
+            'line' => $e->getLine(),
+            'execution_time_ms' => $executionTime,
+            'client_ip' => $clientIp,
+            'user_agent' => $this->getUserAgent()
+        ]);
+
+        return $this->template->render('pages/500.php', [
+            'message' => 'Došlo k chybě na serveru: ' . $e->getMessage(),
+            'baseUrl' => $this->template->getData()['baseUrl'] ?? '',
+            'backLinkText' => 'Zpět na úvodní stránku'
+        ]);
+    }
+
+    /**
      * Zaloguje dokončení requestu
+     *
+     * @param float $startTime Request start time
+     * @param string $route Route name
+     * @param int $statusCode HTTP status code
+     * @return void
      */
     private function logRequestComplete(float $startTime, string $route, int $statusCode): void
     {
         $executionTime = round((microtime(true) - $startTime) * 1000, 2);
 
-        $this->logger->info('Request completed', [
+        $this->logger->info('Request completed successfully', [
             'route' => $route,
             'status_code' => $statusCode,
             'execution_time_ms' => $executionTime,
-            'memory_peak_mb' => round(memory_get_peak_usage() / 1024 / 1024, 2)
+            'memory_peak_mb' => round(memory_get_peak_usage() / 1024 / 1024, 2),
+            'memory_usage_mb' => round(memory_get_usage() / 1024 / 1024, 2)
         ]);
     }
 
     /**
      * Získá IP adresu klienta
+     *
+     * @return string Client IP address
      */
     private function getClientIp(): string
     {
-        return $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+        $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+        
+        if ($this->logger->isLevelEnabled('DEBUG')) {
+            $this->logger->debug('Client IP detection', [
+                'remote_addr' => $_SERVER['REMOTE_ADDR'] ?? 'not_set',
+                'http_x_forwarded_for' => $_SERVER['HTTP_X_FORWARDED_FOR'] ?? 'not_set',
+                'http_client_ip' => $_SERVER['HTTP_CLIENT_IP'] ?? 'not_set',
+                'detected_ip' => $ip
+            ]);
+        }
+        
+        return $ip;
     }
 
     /**
      * Získá User Agent
+     *
+     * @return string User agent string
      */
     private function getUserAgent(): string
     {
         return $_SERVER['HTTP_USER_AGENT'] ?? 'unknown';
+    }
+
+    /**
+     * Zjistí base path automaticky z konfigurace nebo URL
+     *
+     * @return string Base path
+     */
+    private function getBasePath(): string
+    {
+        // 1. Zkusíme z configu
+        $templateData = $this->template->getData();
+        $baseUrl = $templateData['baseUrl'] ?? 'NOT_SET_IN_TEMPLATE';
+        
+        if ($baseUrl && $baseUrl !== '/' && $baseUrl !== 'NOT_SET_IN_TEMPLATE') {
+            $path = parse_url($baseUrl, PHP_URL_PATH) ?? $baseUrl;
+            return rtrim($path, '/');
+        }
+        
+        return '';
+    }
+
+    /**
+     * Debug metoda pro získání všech rout (pouze pro vývoj)
+     *
+     * @return array<string, array> All routes
+     */
+    public function getRoutes(): array
+    {
+        $this->logger->debug('Router configuration accessed via getRoutes()');
+        return $this->routes;
+    }
+
+    /**
+     * Vrátí statistiku rout (pro monitoring)
+     *
+     * @return array<string, mixed> Route statistics
+     */
+    public function getRouteStats(): array
+    {
+        $stats = [
+            'total_routes' => $this->countTotalRoutes(),
+            'methods' => []
+        ];
+
+        foreach ($this->routes as $method => $routes) {
+            $stats['methods'][$method] = count($routes);
+        }
+
+        $this->logger->debug('Route statistics generated', $stats);
+        
+        return $stats;
     }
 }

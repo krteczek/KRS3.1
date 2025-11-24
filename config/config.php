@@ -18,8 +18,8 @@ return [
 
     'site' => [
         'name' => 'KRS Redakční systém',
-        'url' => 'http://localhost/KRS3',
-        'base_path' => '/KRS3/public/',
+        'url' => 'http://localhost/KRS3.1',
+        'base_path' => '/KRS3.1/public/',
         'timezone' => 'Europe/Prague'
     ],
 

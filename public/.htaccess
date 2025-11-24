@@ -1,15 +1,15 @@
 <IfModule mod_rewrite.c>
     RewriteEngine On
 
-    # Enable rewriting
-    RewriteBase /KRS3/public/
+    # ✅ OPRAVA: Správná cesta - přidej .1
+    RewriteBase /KRS3.1/public/
 
     # If the requested filename is not a real file or directory
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteCond %{REQUEST_FILENAME} !-d
 
-    # Redirect everything to index.php
-    RewriteRule ^(.*)$ index.php?url=$1 [QSA,L]
+    # ✅ OPRAVA: Změň na moderní přístup bez query parametru
+    RewriteRule ^(.*)$ index.php [QSA,L]
 </IfModule>
 
 # Fix for Apache 2.4

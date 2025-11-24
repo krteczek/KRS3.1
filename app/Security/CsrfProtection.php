@@ -533,4 +533,14 @@ class CsrfProtection
 
         return $message . ' | ' . json_encode($context, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
     }
+    
+    /**
+ * Vrátí název tokenu pro formuláře
+ *
+ * @return string Název tokenu
+ */
+public function getTokenName(): string
+{
+    return $this->config['token_name'];
+}
 }

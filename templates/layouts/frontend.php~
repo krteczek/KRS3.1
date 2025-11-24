@@ -1,9 +1,7 @@
-<?php  
-// NA ZAČÁTEK SOUBORU přidej:
+<?php 
+// Na začátek souboru přidej:
 $user = $user ?? ['isLoggedIn' => false, 'username' => ''];
-
-
-// ?>
+?>
 
 <!DOCTYPE html>
 <html lang="cs">
