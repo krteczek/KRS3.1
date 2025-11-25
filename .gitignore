@@ -1,2 +1,4 @@
 *.log
 /public/uploads
+*.php~
+public/.htaccess~
